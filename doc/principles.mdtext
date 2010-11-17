@@ -1,0 +1,63 @@
+# Photon Principles
+
+The core priorities of the Photon project are:
+
+- Speed.
+- Ease of development.
+
+Starting version 1.0 speed regressions will not be allowed. That is,
+each new version of Photon will have to be at least as fast as the
+previous if not better for a set of standardized tests.
+
+# Technology
+
+Daemon. Yes, a daemon in PHP. This works perfectly well as it is used
+in combination with Mongrel2. Mongrel2 allows us to start/stop daemons
+in PHP extremely easily without disruption of the requests. For
+example, you can set your daemon to shut itself down after 500
+requests or after reaching a certain level of memory consumption. You
+let the mongrel2 process supervisor restart the process (it is PHP so
+it is extremely fast) and you just enjoy automatic cleaning of the
+memory leaks while getting an extremely robust system.
+
+Depending on your system (that is, if you have many cores) you can run
+many backend PHP processes to fully use your cores and get the maximum
+out of your system. You can also have a smart way to start/stop PHP
+backend processes depending on the load (you can even start them on
+other systems).
+
+# Methodology
+
+In memory. The goal is to hit the disk only when really needed. So all
+the tradeoffs are towards putting more in memory and have less disks
+access and system calls.
+
+Cryptography to allow stateless communication (signed cookies) and
+permit authentication without the need to hit the database or even
+open a connection to the database.
+
+Smart "core" objects which are database independent even so most of
+the code is structured to take benefit of MongoDB.
+
+MongoDB, because it is fast and nicely answers our needs:
+
+- Fast development of new models.
+- No real needs of migrations, they can be handled at the code level on a running system.
+- Memory mapped, that is, no disk access when the dataset is small.
+
+# Critics
+
+It Sucks, I Cannot Use It On Shared Hosting. Yes, but the goal here is
+to provide a high performance PHP framework for websites with
+performance constraints. If you are on a shared hosting, you would be
+better served with a already very fast framework like Pluf.
+
+A daemon in PHP, PHP is a memory sieve, so we can forget about
+it. Already the fast-cgi approach has a per children request limit
+(500 by default) to kill and restart a children after a while to plug
+the memory leaks. So, this is the same approach.
+
+ømq is another piece of infrastructure we do not need. Yes and no, the
+wonder of ømq is that we can even use it to dispatch the requests to
+other processes (Python, Ruby, Java) to offload some of the work to
+specialized systems.
