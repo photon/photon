@@ -1,0 +1,47 @@
+# Configuration of Your Application
+
+The configuration of an application with Photon is extremely simple,
+at the top of your PHP code, you load the configuration container
+class. By convention, you should load it as `Conf`. You can then get
+the configuration value with a simple call:
+
+    use photon\config\Container as Conf;
+    $foo = Conf::f('mycomponent_key', array('Sane default value'));
+
+What is really important to keep in mind:
+
+* Set **sane and consistent default values** for your application or
+  component configuration. The minimum number of configuration key,
+  the easier it will be for the end users to install your application
+  or reuse your component.
+
+* Prefix the keys to avoid conflict with the core Photon configuration
+  variables and other components. For example use the key
+  `mycomponent_admin` if you have created the `mycomponent` component.
+
+* Reuse as much as possible the core configuration keys, for example
+  the admin email address, `from_email`, `debug` settings, etc. This
+  will ensure consistent behaviour of the components and ease of
+  configuration.
+
+* If you change a configuration key in a request, you need to set it
+  back just after, to handle correctly the next request.
+
+# The Configuration File
+
+The configuration file is a simple PHP file but you can use anything
+you want which can then produce a simple PHP array and inject it into
+the configuration object. You can use YAML, ini file or what you want.
+
+Each method has pros/contras, but basically, the goal is simply to
+provide the application server with an array of key/value pairs at
+startup time. Nothing more.
+
+For examples:
+
+    $myconf = include 'path/to/config.php';
+    $myconf = parse_ini_file('path/to/config.ini');
+    $myconf = YourYAMLParser::load('path/to/config.yaml');
+    $myconf = array('debug' => true, 'photon_rocks' => true);
+    Conf::load($myconf);
+
