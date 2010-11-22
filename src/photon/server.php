@@ -49,7 +49,7 @@ class Server
     /**
      * Where the answer is pushed.
      */
-    public $pub_addr = 'tcp://127.0.0.1:9996'; 
+    public $pub_addr = 'tcp://127.0.0.1:9996';
 
     /**
      * zeromq connection.

@@ -5,8 +5,7 @@
  * to be available at the right point in the URL space.
  */
 
-return array(
-             array('regex' => '#^/$#',
+return array(array('regex' => '#^/$#',
                    'view' => array('\helloworld\views\Views', 'index'),
                    'name' => 'helloworld_index',
                    ),
@@ -15,5 +14,3 @@ return array(
                    'name' => 'helloworld_you',
                    ),
              );
-
-

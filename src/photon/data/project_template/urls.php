@@ -6,7 +6,6 @@
  */
 
 return array(
-             array('regex' => '#^/hello$#',
-                   'sub' => include __DIR__.'/apps/helloworld/urls.php'),
-             );
-
+    array('regex' => '#^/hello$#',
+           'sub' => include __DIR__ . '/apps/helloworld/urls.php'),
+);

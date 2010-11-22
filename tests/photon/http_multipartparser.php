@@ -4,18 +4,18 @@
 //       This can be PHPUnit as it improved a lot (but I hope it is not
 //       to verbose and "heavy".
 
-include_once __DIR__.'/../../src/photon/http/multipartparser.php';
+include_once __DIR__ . '/../../src/photon/http/multipartparser.php';
 
-$datafile = fopen(__DIR__.'/../data/multi_video.upload', 'r');
+$datafile = fopen(__DIR__ . '/../data/multi_video.upload', 'r');
 $boundary = '---------------------------10102754414578508781458777923';
 
 $iterator = new \photon\http\multipartparser\BoundaryIter($datafile, $boundary);
 
 while (false !== ($part=$iterator->getPart())) {
     //    print_r($part);
- }
+}
 fclose($datafile);
-$d = fopen(__DIR__.'/../data/multi_video.upload', 'r');
+$d = fopen(__DIR__ . '/../data/multi_video.upload', 'r');
 $headers = (object) array('content-type' => 'multipart/form-data; boundary=---------------------------10102754414578508781458777923');
 
 $parser = new \photon\http\multipartparser\MultiPartParser($headers, $d);

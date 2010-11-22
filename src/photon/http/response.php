@@ -31,8 +31,8 @@ class NotFound extends Response
     function __construct($request)
     {
         $mimetype = 'text/plain';
-        $content = sprintf('The requested URL %s was not found on this server.'."\n"
-                           .'Please check the URL and try again.'."\n\n".'404 - Not Found',
+        $content = sprintf('The requested URL %s was not found on this server.' . "\n" .
+                           'Please check the URL and try again.' . "\n\n" . '404 - Not Found',
                            str_replace(array('&',     '"',      '<',    '>'),
                                        array('&amp;', '&quot;', '&lt;', '&gt;'),
                                        $request->path));
@@ -40,4 +40,3 @@ class NotFound extends Response
         $this->status_code = 404;
     }
 }
-

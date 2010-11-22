@@ -57,7 +57,7 @@ class Container
     /**
      * Get a key value.
      */
-    public static function f($key, $default=null)
+    public static function f($key, $default = null)
     {
         return (isset(self::$conf[$key])) ? self::$conf[$key] : $default;
     }

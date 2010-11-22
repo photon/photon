@@ -1,4 +1,4 @@
-<?php 
+<?php
 /* -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /*
 # ***** BEGIN LICENSE BLOCK *****
@@ -71,8 +71,7 @@ class Response
      *
      * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
      */
-    public $status_code_list = array(
-                                     '100' => 'CONTINUE',
+    public $status_code_list = array('100' => 'CONTINUE',
                                      '101' => 'SWITCHING PROTOCOLS',
                                      '200' => 'OK',
                                      '201' => 'CREATED',
@@ -122,7 +121,7 @@ class Response
      * @param string MimeType of the response (null) if not given will
      * default to the one given in the configuration 'mimetype'
      */
-    function __construct($content='', $mimetype='text/html; charset=utf-8')
+    function __construct($content = '', $mimetype = 'text/html; charset=utf-8')
     {
         $this->content = $content;
         $this->headers['Content-Type'] = $mimetype;
@@ -134,18 +133,20 @@ class Response
     /**
      * Render a response object.
      */
-    function render($output_body=true)
+    function render($output_body = true)
     {
-        if ($this->status_code >= 200 
-            && $this->status_code != 204 
-            && $this->status_code != 304) {
+        if (200 <= $this->status_code &&
+            204 != $this->status_code &&
+            304 != $this->status_code) {
             $this->headers['Content-Length'] = strlen($this->content);
         }
         $headers = $this->getHeaders();
+
         if ($output_body) {
             // Only one "\r\n" as the $headers already have a trailing one
-            return $headers."\r\n".$this->content;
+            return $headers . "\r\n" . $this->content;
         }
+
         return $headers;
     }
 
@@ -156,29 +157,30 @@ class Response
      */
     function getHeaders()
     {
-        $hdrs = 'HTTP/1.1 '.$this->status_code.' '.$this->status_code_list[$this->status_code]."\r\n";
+        $hdrs = 'HTTP/1.1 ' . $this->status_code . ' ' .
+                $this->status_code_list[$this->status_code] . "\r\n";
         foreach ($this->headers as $header => $ch) {
-            $hdrs .= $header.': '.$ch."\r\n";
+            $hdrs .= $header . ': ' . $ch . "\r\n";
         }
+
         return $hdrs;
         /*
         foreach ($this->cookies as $cookie => $data) {
             // name, data, expiration, path, domain, secure, http only
-            $expire = (null == $data) ? time()-31536000 : time()+31536000;
-            $data = (null == $data) ? '' : $data;
+            $expire = (null == $data) ? time() - 31536000 : time() + 31536000;
+            $data = (null === $data) ? '' : $data;
             setcookie($cookie, $data, $expire,
-                      Pluf::f('cookie_path', '/'), 
-                      Pluf::f('cookie_domain', null), 
-                      Pluf::f('cookie_secure', false), 
-                      Pluf::f('cookie_httponly', true)); 
+                      Pluf::f('cookie_path', '/'),
+                      Pluf::f('cookie_domain', null),
+                      Pluf::f('cookie_secure', false),
+                      Pluf::f('cookie_httponly', true));
         }
         */
     }
 }
 
-
 /**
- * The request object. 
+ * The request object.
  *
  * It is given to the view as first argument.
  */
@@ -191,7 +193,6 @@ class Request
     public $POST = array();
     public $FILES = array();
     /*
-
 
     public $REQUEST = array();
     public $COOKIE = array();
@@ -221,11 +222,11 @@ class Request
             \mb_parse_str($this->mess->headers->QUERY, $this->GET);
             $this->query = $this->mess->headers->QUERY;
         }
-        if ($this->mess->headers->METHOD == 'POST') {
+        if ('POST' === $this->mess->headers->METHOD) {
             if (0 === strpos($this->mess->headers->{'content-type'}, 'multipart/form-data; boundary=')) {
                 $parser = new \photon\http\multipartparser\MultiPartParser($mess->headers, $mess->body);
                 foreach ($parser->parse() as $part) {
-                    if ($part['of_type'] == 'FIELD') {
+                    if ('FIELD' === $part['of_type']) {
                         $this->POST[$part['name']] = $part['data'];
                     } else {
                         $this->FILES[$part['name']] = $part;

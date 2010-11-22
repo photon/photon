@@ -37,18 +37,18 @@ namespace photon\mongrel2;
  * the data in memory and this can create a bit of memory consumption.
  *
  */
-function parse_netstring($ns) 
+function parse_netstring($ns)
 {
     list($len, $rest) = \explode(':', $ns, 2);
     unset($ns);
     $len = (int) $len;
     return array(
         \substr($rest, 0, $len),
-        \substr($rest, $len+1)
+        \substr($rest, $len + 1)
     );
 }
 
-function http_response($body, $code, $status, $headers) 
+function http_response($body, $code, $status, $headers)
 {
     $http = "HTTP/1.1 %s %s\r\n%s\r\n%s";
     $headers = (array) $headers; # If null it will be forced to empty array
@@ -74,7 +74,7 @@ class Message
     /**
      * Called by self::parse
      */
-    public function __construct($sender, $conn_id, $path, $headers, $body) 
+    public function __construct($sender, $conn_id, $path, $headers, $body)
     {
         $this->sender = $sender;
         $this->path = $path;
@@ -93,13 +93,14 @@ class Message
         @fclose($this->body);
     }
 
-    public static function parse($msg) 
+    public static function parse($msg)
     {
         list($sender, $conn_id, $path, $msg) = \explode(' ', $msg, 4);
         list($headers, $msg) = parse_netstring($msg);
         list($body, ) = parse_netstring($msg);
         unset($msg);
         $headers = \json_decode($headers);
+
         return new Message($sender, $conn_id, $path, $headers, $body);
     }
 }
@@ -109,7 +110,7 @@ class Message
  *
  * The connection is used to retrieve a request and send a response.
  */
-class Connection 
+class Connection
 {
     public $sender_id;
     public $sub_addr;
@@ -117,7 +118,7 @@ class Connection
     public $reqs;
     public $resp;
 
-    public function __construct($sender_id, $sub_addr, $pub_addr) 
+    public function __construct($sender_id, $sub_addr, $pub_addr)
     {
         $this->sender_id = $sender_id;
 
@@ -143,7 +144,7 @@ class Connection
      *
      * Before receiving the data, we have no idea about the real size
      * of the data we are getting. The goal is to be smart and avoid
-     * crashing PHP under the load when getting a 50MB or more upload. 
+     * crashing PHP under the load when getting a 50MB or more upload.
      *
      * The fastest solution is to do all in memory and consider the
      * request as a nice string. The safest solution is to put
@@ -173,7 +174,7 @@ class Connection
         $rlen = strlen($rest);
         if ($rlen > $len) {
             $headers = \json_decode(\substr($rest, 0, $len));
-            fseek($fp, -$rlen+$len+1, SEEK_CUR);
+            fseek($fp, -$rlen + $len + 1, SEEK_CUR);
         } else {
             // Need to grab the end of the headers
             $toread = $len - $rlen;
@@ -189,17 +190,17 @@ class Connection
 
         // We are going to support only the POST and JSON requests at
         // the moment.
-        if ($headers->METHOD == 'JSON') {
+        if ('JSON' === $headers->METHOD) {
             // small request normally
-            list($body, ) = parse_netstring(stream_get_contents($fp));
+            list($body,) = parse_netstring(stream_get_contents($fp));
             fclose($fp);
-        } elseif ($headers->METHOD == 'POST') {
+        } elseif ('POST' === $headers->METHOD) {
             // Here the parsing of the body should be done.
-            //$body = stream_get_contents($fp); 
+            //$body = stream_get_contents($fp);
             // just to get the position of the real start of the body
-            $line = fread($fp, 100); 
+            $line = fread($fp, 100);
             list($len, $rest) = \explode(':', $line, 2);
-            fseek($fp, -strlen($rest), SEEK_CUR);            
+            fseek($fp, -strlen($rest), SEEK_CUR);
             $body = $fp;
             /*
             unset($line, $rest);
@@ -216,12 +217,12 @@ class Connection
         return new Message($sender, $conn_id, $path, $headers, $body);
     }
 
-    public function reply($req, $msg) 
+    public function reply($req, $msg)
     {
         $this->send($req->sender, $req->conn_id, $msg);
     }
 
-    public function send($uuid, $conn_id, $msg) 
+    public function send($uuid, $conn_id, $msg)
     {
         $header = \sprintf('%s %d:%s,', $uuid, \strlen($conn_id), $conn_id);
         $this->resp->send($header . ' ' . $msg);
@@ -234,10 +235,8 @@ class Connection
      * @param $idents Array of the client connection ids
      * @param $data Payload
      */
-    public function deliver($uuid, $idents, $data) 
+    public function deliver($uuid, $idents, $data)
     {
         $this->send($uuid, \join(' ', $idents),  $data);
     }
 }
-
-

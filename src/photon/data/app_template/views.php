@@ -2,7 +2,6 @@
 /* -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /**
  * A Photon view is simply a method of a class with a specific signature.
- * 
  */
 
 namespace helloworld\views;

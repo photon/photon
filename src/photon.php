@@ -40,14 +40,12 @@ namespace photon
      * @param string Raw string
      * @return string HTML escaped string
      */
-    function esc($string) 
+    function esc($string)
     {
         return str_replace(array('&',     '"',      '<',    '>'),
                            array('&amp;', '&quot;', '&lt;', '&gt;'),
                            (string) $string);
     }
-
-
 
     /**
      * Returns a parser of the command line arguments.
@@ -57,24 +55,21 @@ namespace photon
         require_once 'Console/CommandLine.php';
         $parser = new \Console_CommandLine(array(
             'description' => 'Photon command line manager.',
-            'version'     => '0.0.1'
-                                                ));
-        $parser->addOption('verbose', 
-                           array(
-                                 'short_name'  => '-v',
+            'version'     => '0.0.1'));
+        $parser->addOption('verbose',
+                           array('short_name'  => '-v',
                                  'long_name'   => '--verbose',
                                  'action'      => 'StoreTrue',
                                  'description' => 'turn on verbose output'
                                  ));
         // add the init subcommand
-        $init_cmd = $parser->addCommand('init', 
-                                        array(
-                                              'description' => 'generate the skeleton of a new Photon project in the current folder'
+        $init_cmd = $parser->addCommand('init',
+                                        array('description' => 'generate the skeleton of a new Photon project in the current folder'
                                               ));
-        $init_cmd->addArgument('project', 
-                               array(
-                                     'description' => 'the name of the project'
+        $init_cmd->addArgument('project',
+                               array('description' => 'the name of the project'
                                      ));
+
         return $parser;
     }
 
@@ -88,17 +83,17 @@ namespace
     function photonAutoLoad($class)
     {
         $parts = explode('\\', $class);
-        if (count($parts) > 1) {
+        if (1 < count($parts)) {
             // We have a namespace.
             $class_name = array_pop($parts);
-            $file = implode(DIRECTORY_SEPARATOR, $parts).'.php';
+            $file = implode(DIRECTORY_SEPARATOR, $parts) . '.php';
         } else {
-            $file = str_replace('_', DIRECTORY_SEPARATOR, $class).'.php';
+            $file = str_replace('_', DIRECTORY_SEPARATOR, $class) . '.php';
         }
         require $file;
     }
 
-    set_include_path(get_include_path().PATH_SEPARATOR.__DIR__);
+    set_include_path(get_include_path() . PATH_SEPARATOR . __DIR__);
     spl_autoload_register('photonAutoLoad', true, true);
 
     try {
@@ -108,32 +103,29 @@ namespace
         // find which command was entered
         printf("In %s\n", $result->command_name);
         switch ($result->command_name) {
-        case 'init':
-            // the user typed the foo command
-            // options and arguments for this command are stored in the
-            // $result->command instance:
-            print_r($result->command);
-            $config['project'] = $result->command->args['project'];
-            $m = new \photon\manager\Init($config);
-            $m->run();
-            exit(0);
-        case 'bar':
-            // the user typed the bar command
-            // options and arguments for this command are stored in the
-            // $result->command instance:
-            print_r($result->command);
-            exit(0);
-        default:
-            // no command entered
-            exit(0);
+            case 'init':
+                // the user typed the foo command
+                // options and arguments for this command are stored in the
+                // $result->command instance:
+                print_r($result->command);
+                $config['project'] = $result->command->args['project'];
+                $m = new \photon\manager\Init($config);
+                $m->run();
+                exit(0);
+
+            case 'bar':
+                // the user typed the bar command
+                // options and arguments for this command are stored in the
+                // $result->command instance:
+                print_r($result->command);
+                exit(0);
+
+            default:
+                // no command entered
+                exit(0);
         }
     } catch (Exception $exc) {
         $parser->displayError($exc->getMessage());
         exit(1);
     }
 }
-
-
-
-
-

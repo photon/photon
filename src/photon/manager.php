@@ -25,10 +25,8 @@
  */
 namespace photon\manager;
 
-
 class Exception extends \Exception
-{
-}
+{}
 
 /**
  * Initialisation of a new project.
@@ -51,7 +49,7 @@ class Init
     public function __construct($config)
     {
         $this->config = $config;
-        $this->project_dir = $this->config['cwd'].'/'.$this->config['project'];
+        $this->project_dir = $this->config['cwd'] . '/' . $this->config['project'];
     }
 
     /**
@@ -60,13 +58,13 @@ class Init
     public function makeDirs()
     {
         $dirs = array($this->project_dir,
-                      $this->project_dir.'/doc',
-                      $this->project_dir.'/apps',
-                      $this->project_dir.'/apps/helloworld',
-                      $this->project_dir.'/www',
-                      $this->project_dir.'/www/media',
-                      $this->project_dir.'/www/media/helloworld',
-                      $this->project_dir.'/templates',
+                      $this->project_dir . '/doc',
+                      $this->project_dir . '/apps',
+                      $this->project_dir . '/apps/helloworld',
+                      $this->project_dir . '/www',
+                      $this->project_dir . '/www/media',
+                      $this->project_dir . '/www/media/helloworld',
+                      $this->project_dir . '/templates',
                       );
         if (is_dir($this->project_dir)) {
             throw new Exception(sprintf('Project folder already exists: %s.',
@@ -87,22 +85,21 @@ class Init
     public function generateFiles()
     {
         // Project files
-        $project_template_dir = __DIR__.'/data/project_template';
+        $project_template_dir = __DIR__ . '/data/project_template';
         $files = array('config.php', 'urls.php');
         foreach ($files as $file) {
-            if (!copy($project_template_dir.'/'.$file, 
-                      $this->project_dir.'/'.$file)) {
+            if (!copy($project_template_dir . '/' . $file,
+                      $this->project_dir . '/' . $file)) {
                 throw new Exception(sprintf('Failed to copy: %s to %s.',
-                                            $project_template_dir.'/'.$file, 
-                                            $this->project_dir.'/'.$file));
+                                            $project_template_dir . '/' . $file,
+                                            $this->project_dir . '/' . $file));
             }
-        }               
+        }
         // TODO: Generate the unique private key
-        
+
         // App files
-        $app_template_dir = __DIR__.'/data/app_template';
+        $app_template_dir = __DIR__ . '/data/app_template';
         $files = array('config.php', 'urls.php');
-        
     }
 
     /**
@@ -120,7 +117,4 @@ class Init
  *
  */
 class InitApp
-{
-
-}
-
+{}

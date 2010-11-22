@@ -57,12 +57,12 @@ class MultiPartParser
     public function __construct($headers, &$body)
     {
         if (0 !== strpos($headers->{'content-type'}, 'multipart/')) {
-            throw new Exception(sprintf('Invalid Content-Type: %s.', 
+            throw new Exception(sprintf('Invalid Content-Type: %s.',
                                         $headers->{'content-type'}));
         }
         $ctype = http_parse_params($headers->{'content-type'});
         $this->boundary = self::getHeaderOption('boundary', $ctype);
-        if ($this->boundary == null) {
+        if (null == $this->boundary) {
             throw new Exception('Invalid multipart boundary.');
         }
         $this->body = $body;
@@ -84,27 +84,28 @@ class MultiPartParser
             $end = $part[2];
             foreach ($part[0] as $key=>$val) {
                 $params = http_parse_params($val);
-                if ($key == 'Content-Disposition') {
+                if ($key === 'Content-Disposition') {
                     // Here we get if we have a POST or a FILE
                     if (null !== self::getHeaderOption('filename', $params)) {
                         $type = 'FILE';
                         $field['size'] = $end - $start;
-                        $field['data'] = new FileStreamWrapper($this->body, 
+                        $field['data'] = new FileStreamWrapper($this->body,
                                                                $start, $end);
                     } else {
-                        $data = new FileStreamWrapper($this->body, 
+                        $data = new FileStreamWrapper($this->body,
                                                       $start, $end);
                         $field['data'] = $data->read();
                     }
                     $field['name'] = self::getHeaderOption('name', $params);
                     $field['of_type'] = $type;
                 }
-                if ($key == 'Content-Type') {
+                if ($key === 'Content-Type') {
                     $field['type'] = $params->params[0];
                 }
             }
             $fields[] = $field;
         }
+
         return $fields;
     }
 
@@ -121,8 +122,9 @@ class MultiPartParser
                         return $value;
                     }
                 }
-            } 
-        }  
+            }
+        }
+
         return null;
     }
 }
@@ -149,8 +151,8 @@ class BoundaryIter
         $this->stream = $stream;
         $this->boundary = $boundary;
         $this->rollback = strlen($boundary) + 6;
-        $this->sep = '--'.$this->boundary;
-        $this->end_sep = '--'.$this->boundary.'--';
+        $this->sep = '--' . $this->boundary;
+        $this->end_sep = '--' . $this->boundary . '--';
     }
 
     /**
@@ -171,7 +173,7 @@ class BoundaryIter
             fseek($this->stream, -2, SEEK_CUR); // Before the --
             return false;
         }
-        if (substr($boundary, 0, strlen($this->sep)) != $this->sep) {
+        if ($this->sep != substr($boundary, 0, strlen($this->sep))) {
             // Bad boundary.
             return false;
         }
@@ -179,7 +181,7 @@ class BoundaryIter
         // maximum of 1024 bytes in the file header, if more, it
         // failed.
         // Split at \r\n\r\n as it is the end of headers mark
-        list($headers, $rest) = explode("\r\n\r\n", 
+        list($headers, $rest) = explode("\r\n\r\n",
                                         fread($this->stream, 1024),
                                         2);
         $headers = http_parse_headers($headers);
@@ -193,7 +195,7 @@ class BoundaryIter
             // Do we have a boundary in the $chunk?
             $pos = strpos($chunk, $this->sep);
             if (false !== $pos) {
-                // Yes, this is the end of data chunk, 
+                // Yes, this is the end of data chunk,
                 fseek($this->stream, -strlen($chunk)+$pos, SEEK_CUR);
                 $end = ftell($this->stream) - 2; // remove the \r\n
                 break;
@@ -209,9 +211,11 @@ class BoundaryIter
                 $old_offset = ftell($this->stream);
             }
         }
-        if ($start !== null and $end !== null and $headers) {
+
+        if (null !== $start && null !== $end && $headers) {
             return array($headers, $start, $end);
         }
+
         return false;
     }
 }
@@ -223,12 +227,11 @@ class BoundaryIter
  * stream. To avoid duplication of data, the wrapper knows where the
  * file starts and ends and can be used to manipulate the data. That
  * is, you can use it to copy the data on the disk or where you want.
- *
  */
 class FileStreamWrapper
 {
-    public $start_offset; 
-    public $end_offset; 
+    public $start_offset;
+    public $end_offset;
     public $body; /**< File descriptor of the temp storage. */
 
     public function __construct($body, $start, $end)
@@ -246,21 +249,23 @@ class FileStreamWrapper
         $current_offset = ftell($this->body);
         fseek($this->body, $this->start_offset, SEEK_SET);
         $len = $this->end_offset - $this->start_offset;
-        if ($len < 8193) {
+        if (8193 > $len) {
             $data = fread($this->body, $len);
             fseek($this->body, $current_offset, SEEK_SET);
+
             return $data;
         }
-        $nchunks = (int) floor($len/8192.0);
+        $nchunks = (int) floor($len / 8192.0);
         $lchunk = $len % 8192;
         $i = 0;
         $content = '';
         while ($i < $nchunks) {
             $content .= fread($this->body, 8192);
-            $i++;
+            ++$i;
         }
         $content .= fread($this->body, $lchunk);
         fseek($this->body, $current_offset, SEEK_SET);
+
         return $content;
     }
 }

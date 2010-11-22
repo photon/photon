@@ -46,6 +46,7 @@ class Dispatcher
     {
         $req = new \photon\http\Request($mreq);
         $response = self::match($req);
+
         return array($req, $response);
     }
 
@@ -57,14 +58,14 @@ class Dispatcher
      * @param Pluf_HTTP_Request Request object
      * @return Pluf_HTTP_Response Response object
      */
-    public static function match($req, $firstpass=true)
+    public static function match($req, $firstpass = true)
     {
         $views = Conf::f('urls', array());
         try {
             $to_match = $req->path;
             $n = count($views);
             $i = 0;
-            while ($i<$n) {
+            while ($i < $n) {
                 $ctl = $views[$i];
                 if (preg_match($ctl['regex'], $to_match, $match)) {
                     if (!isset($ctl['sub'])) {
@@ -78,12 +79,13 @@ class Dispatcher
                         continue;
                     }
                 }
-                $i++;
+                ++$i;
             }
         } catch (Exception $e) { // Need to only catch the 404 error exception
             // Need to add a 404 error handler
             // something like Pluf::f('404_handler', 'class::method')
         }
+
         return new \photon\http\response\NotFound($req);
     }
 
@@ -102,32 +104,32 @@ class Dispatcher
     {
         $req->view = array($ctl, $match);
         $m = new $ctl['model']();
-        if (isset($m->{$ctl['method'].'_precond'})) {
+        if (isset($m->{$ctl['method'] . '_precond'})) {
             // Here we have preconditions to respects. If the "answer"
             // is true, then ok go ahead, if not then it a response so
             // return it or an exception so let it go.
-            $preconds = $m->{$ctl['method'].'_precond'};
+            $preconds = $m->{$ctl['method'] . '_precond'};
             if (!is_array($preconds)) {
                 $preconds = array($preconds);
             }
             foreach ($preconds as $precond) {
                 if (!is_array($precond)) {
-                    $res = call_user_func_array(
-                                                explode('::', $precond), 
+                    $res = call_user_func_array(explode('::', $precond),
                                                 array(&$req)
                                                 );
                 } else {
-                    $res = call_user_func_array(
-                                                explode('::', $precond[0]), 
-                                                array_merge(array(&$req), 
+                    $res = call_user_func_array(explode('::', $precond[0]),
+                                                array_merge(array(&$req),
                                                             array_slice($precond, 1))
                                                 );
                 }
+
                 if ($res !== true) {
                     return $res;
                 }
-            } 
+            }
         }
+
         if (!isset($ctl['params'])) {
             return $m->$ctl['method']($req, $match);
         } else {
@@ -135,5 +137,3 @@ class Dispatcher
         }
     }
 }
-
-
