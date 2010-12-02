@@ -62,14 +62,19 @@ namespace photon
                                  'action'      => 'StoreTrue',
                                  'description' => 'turn on verbose output'
                                  ));
+        $parser->addOption('conf',
+                           array('long_name'   => '--conf',
+                                 'action'      => 'StoreString',
+                                 'description' => 'where the configuration is to be found. By default, the configuration file is the config.php in the current working directory'
+                                 ));
         // add the init subcommand
         $init_cmd = $parser->addCommand('init',
-                                        array('description' => 'generate the skeleton of a new Photon project in the current folder'
-                                              ));
+                                        array('description' => 'generate the skeleton of a new Photon project in the current folder'));
         $init_cmd->addArgument('project',
-                               array('description' => 'the name of the project'
-                                     ));
-
+                               array('description' => 'the name of the project'));
+        // add the runserver subcommand
+        $rs_cmd = $parser->addCommand('runserver',
+                                      array('description' => 'run the development server to test your application'));
         return $parser;
     }
 
@@ -99,33 +104,31 @@ namespace
     try {
         $parser = \photon\getParser();
         $result = $parser->parse();
-        $config = array('cwd' => getcwd());
+        $params = array('cwd' => getcwd());
+        $params = $params + $result->options;
         // find which command was entered
-        printf("In %s\n", $result->command_name);
         switch ($result->command_name) {
             case 'init':
                 // the user typed the foo command
                 // options and arguments for this command are stored in the
                 // $result->command instance:
-                print_r($result->command);
-                $config['project'] = $result->command->args['project'];
-                $m = new \photon\manager\Init($config);
+                $params['project'] = $result->command->args['project'];
+                $m = new \photon\manager\Init($params);
                 $m->run();
-                exit(0);
-
-            case 'bar':
-                // the user typed the bar command
-                // options and arguments for this command are stored in the
-                // $result->command instance:
-                print_r($result->command);
-                exit(0);
-
+                break;
+            case 'runserver':
+                // the user typed the runserver command
+                $m = new \photon\manager\RunServer($params);
+                $m->run();
+                break;
             default:
                 // no command entered
                 exit(0);
         }
-    } catch (Exception $exc) {
-        $parser->displayError($exc->getMessage());
+        exit(0);
+
+    } catch (Exception $e) {
+        $parser->displayError($e->getMessage());
         exit(1);
     }
 }

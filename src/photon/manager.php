@@ -24,9 +24,60 @@
  * Support module of the command line utility.
  */
 namespace photon\manager;
+use photon\config\Container as Conf;
 
 class Exception extends \Exception
 {}
+
+class Base
+{
+    public $params;
+    public $project_dir;
+
+    /**
+     * Generate the structure of a new project.
+     *
+     * @param $params Parameters from the command line
+     */
+    public function __construct($params)
+    {
+        $this->params = $params;
+        if (isset($this->params['project'])) {
+            $this->project_dir = $this->params['cwd'] . '/' . $this->params['project'];
+        }
+    }
+
+    /**
+     * Output a message if in verbose mode.
+     */
+    public function verbose($message, $eol=PHP_EOL)
+    {
+        if ($this->params['verbose']) {
+            echo $message.$eol;
+        }
+    }
+
+    /**
+     * Returns an array with the configuration.
+     *
+     * Either the configuration is in the config.php file in the
+     * current working directory or it is defined by the --conf
+     * parameter.
+     */
+    public function getConfig()
+    {
+        $config_file = $this->params['cwd'] . '/config.php';
+        if (isset($this->params['conf'])) {
+            $config_file = $this->params['conf'];
+        }
+        if (!file_exists($config_file)) {
+            throw new Exception(sprintf('The configuration file is not available: %s.',
+                                        $config_file));
+        }
+        $this->verbose(sprintf('Use config file: %s.', realpath($config_file)));
+        return include $config_file;
+    }
+}
 
 /**
  * Initialisation of a new project.
@@ -36,22 +87,8 @@ class Exception extends \Exception
  * corresponding Mongrel2 configuration file to test your application.
  *
  */
-class Init
+class Init extends Base
 {
-    public $config;
-    public $project_dir;
-
-    /**
-     * Generate the structure of a new project.
-     *
-     * @param $config Configuration from the command line
-     */
-    public function __construct($config)
-    {
-        $this->config = $config;
-        $this->project_dir = $this->config['cwd'] . '/' . $this->config['project'];
-    }
-
     /**
      * Make the base project directory structure.
      */
@@ -109,6 +146,30 @@ class Init
     {
         $this->makeDirs();
         $this->generateFiles();
+    }
+}
+
+/**
+ * Run the development server.
+ *
+ * Note that the only way to stop it is just to kill the server at the
+ * moment, I will add handling of signals and an ipc "kill port"
+ * later. Note that the ipc "kill port" will be more than that, it
+ * will be an ipc "command port" to, for examples, announce that a
+ * server upgrade needs a code freeze. That is, all the requests will
+ * send a "temporarily not available" answer, then the app can arakiri
+ * itself and we load the new daemons with the new version after the
+ * migration... yeah... zeromq really means "flexibility".
+ */
+class RunServer extends Base
+{
+    public function run()
+    {
+        Conf::load($this->getConfig());
+        $this->verbose('Starting the development server.');
+        $this->verbose('Press ^C to exit.');
+        $server = new \photon\server\Server(Conf::f('server_conf', array()));
+        $server->start();
     }
 }
 

@@ -25,6 +25,6 @@ return array(
              'tmp_folder' => '/tmp',
 
              // The template folders are where your templates are stored.
-             'template_folders' => 
+             'template_folders' => array(),
              );
              
