@@ -68,13 +68,10 @@ class Server
         $this->conn = new \photon\mongrel2\Connection($this->sender_id,
                                                       $this->sub_addr,
                                                       $this->pub_addr);
-        //$end = microtime(true);
         while ($mess = $this->conn->recv()) {
             list($req, $response) = \photon\core\Dispatcher::dispatch($mess);
             $this->conn->reply($mess, $response->render());
             unset($mess); // Needed to clean the memory
-            //file_put_contents('./perf.log', (microtime(true)-$end)."\n", FILE_APPEND);
-            //$end = microtime(true);
         }
     }
 }

@@ -87,7 +87,7 @@ namespace
      */
     function photonAutoLoad($class)
     {
-        $parts = explode('\\', $class);
+        $parts = array_filter(explode('\\', $class));
         if (1 < count($parts)) {
             // We have a namespace.
             $class_name = array_pop($parts);

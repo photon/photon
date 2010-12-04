@@ -22,6 +22,8 @@
 
 namespace photon\http;
 
+use photon\config\Container as Conf;
+
 /**
  * Response object to be constructed by the views.
  *
@@ -62,9 +64,9 @@ class Response
     /**
      * Cookies to send.
      *
-     * $this->cookies['my_cookie'] = 'content of the cookie';
+     * $this->COOKIE['my_cookie'] = 'content of the cookie';
      */
-    public $cookies = array();
+    public $COOKIE = null;
 
     /**
      * Status code list.
@@ -127,7 +129,7 @@ class Response
         $this->headers['Content-Type'] = $mimetype;
         $this->headers['X-Powered-By'] = 'Photon - http://photon-project.com';
         $this->status_code = 200;
-        $this->cookies = array();
+        $this->COOKIE = new Cookie();
     }
 
     /**
@@ -153,7 +155,6 @@ class Response
     /**
      * Get the headers.
      *
-     * FIXME: Need the support of the cookies.
      */
     function getHeaders()
     {
@@ -162,20 +163,10 @@ class Response
         foreach ($this->headers as $header => $ch) {
             $hdrs .= $header . ': ' . $ch . "\r\n";
         }
+        $hdrs .=  CookieHandler::build($this->COOKIE, 
+                                       Conf::f('secret_key', ''));
 
         return $hdrs;
-        /*
-        foreach ($this->cookies as $cookie => $data) {
-            // name, data, expiration, path, domain, secure, http only
-            $expire = (null == $data) ? time() - 31536000 : time() + 31536000;
-            $data = (null === $data) ? '' : $data;
-            setcookie($cookie, $data, $expire,
-                      Pluf::f('cookie_path', '/'),
-                      Pluf::f('cookie_domain', null),
-                      Pluf::f('cookie_secure', false),
-                      Pluf::f('cookie_httponly', true));
-        }
-        */
     }
 }
 
@@ -192,10 +183,12 @@ class Request
     public $query = '';
     public $POST = array();
     public $FILES = array();
+    public $COOKIE = array();
+
     /*
 
     public $REQUEST = array();
-    public $COOKIE = array();
+
     public $FILES = array();
 
     public $method = '';
@@ -236,6 +229,9 @@ class Request
                 \mb_parse_str(stream_get_contents($mess->body), $this->POST);
             }
         }
+        $this->COOKIE = CookieHandler::parse($this->mess->headers, 
+                                             Conf::f('secret_key', ''));
+
         /*
         print_r(array($this->GET, $this->POST, $this->FILES));
         printf("Current memory: %s\n", memory_get_usage());
@@ -256,5 +252,243 @@ class Request
         $this->uid = $GLOBALS['_PX_uniqid']; 
         $this->time = (isset($_SERVER['REQUEST_TIME'])) ? $_SERVER['REQUEST_TIME'] : time();
         */
+    }
+}
+
+/**
+ * Cookie manager.
+ *
+ * Cookies are a bit annoying, that is, they store a value, but the
+ * value is full of meta data when we set it (secure, comment, path,
+ * domain, key+value, expiration time). So, you cannot really just use
+ * an associative array to store them. But most of the time, you just
+ * want an associative array like way to set them, this means that one
+ * needs a flexible way to set them.
+ *
+ * So, in the $request object, you have the COOKIE property
+ * containing an associative array of the cookies. Only the valid
+ * cookies are available here as the cookies are automatically signed.
+ *
+ * In the $response object, you can set cookies with the COOKIE
+ * property, this is not an associative array, but act as if it is.
+ *
+ * <pre>
+ * // Set the cookie 'foo' with value 'bar', all the meta data are
+ * // default data.
+ * $response->COOKIE['foo'] = 'bar'; 
+ * // Full control over the cookie info
+ * $response->COOKIE->setCookie('foo', 'bar', [$expire = 0 [, string $path 
+ *                               [, string $domain [, bool $secure = false 
+ *                               [, bool $httponly = false ]]]]]] );
+ * // Shortcut to delete a cookie.
+ * $response->COOKIE->delCookie('foo');
+ * </pre>
+ */
+class Cookie implements \ArrayAccess
+{
+    /**
+     * A cookie can store multiple values, but you need several
+     * cookies to store several values with different expiration date,
+     * path or domain. The $all storage is a simple associative array,
+     * but the cookies in it are then merged by the CookieManager.
+     *
+     * The cookie manager is the one doing signature/compression of
+     * the cookies.
+     */
+    private $all = array();
+
+    public function __construct($cookies=array()) 
+    {
+        foreach ($cookies as $name => $value) {
+            $this->offsetSet($name, $value);
+        }
+    }
+    
+    /**
+     * Returns all the cookies in a list of arrays.
+     *
+     * @return array All the cookies
+     */
+    public function getAll()
+    {
+        return $this->all;
+    }
+
+    /**
+     * Set a cookie, the API follows the setcookie php function.
+     *
+     * The extension is that the value of the cookie can be any kind
+     * of serializabled object. Beware for it not to be too big, but
+     * it means that you can store simple arrays for example.
+     * 
+     * @see http://www.php.net/setcookie
+     *
+     * @param $name string Name of the cookie
+     * @param $value mixed Value of the cookie
+     * @parma $expire int Unix timestamp for expiration day time (session only)
+     * @param $path string Path restriction for the cookie (null)
+     * @param $domain string Domain to apply the cookie to (null)
+     * @param $secure bool Is the cookie a secure cookie (false)
+     * @param $httponly bool (false)
+     * @return bool Success
+     */
+    public function setCookie($name, $value, $expire=0, $path=null,
+                              $domain=null, $secure=false, $httponly=false)
+    {
+        $cookie = array('cookies' => array($name => $value),
+                        'flags' => 0,
+                        'expires' => $expire,
+                        'path' => $path,
+                        'domain' => $domain);
+        if ($secure) {
+            $cookie['flags'] = HTTP_COOKIE_SECURE;
+        }
+        if ($httponly) {
+            $cookie['flags'] = $cookie['flags'] | HTTP_COOKIE_HTTPONLY;
+        }
+        $this->all[$name] = $cookie;
+
+        return true;
+    }
+
+    /**
+     * Delete a cookie.
+     *
+     * @param $name string Name of the cookie
+     */
+    public function delCookie($name)
+    {
+        $this->setCookie($name, '-', 1);
+    }
+
+    /**
+     * Set the cookie in the storage.
+     *
+     * It calls $this->setCookie() with the default parameters. It
+     * does not accept the setting of a "null" offset cookie.
+     */
+    public function offsetSet($offset, $value) 
+    {
+        if (null === $offset) {
+            throw new Exception('You need to provide a cookie name.');
+        } else {
+            $this->setCookie($offset, $value);
+        }
+    }
+
+    public function offsetExists($offset) 
+    {
+        return isset($this->all[$offset]);
+    }
+
+    public function offsetUnset($offset) 
+    {
+        unset($this->all[$offset]);
+    }
+
+    public function offsetGet($offset) 
+    {
+        return isset($this->all[$offset]) ? $this->all[$offset]['cookies'][$offset] : null;
+    }    
+}
+
+
+/**
+ * Handling of the cookies.
+ *
+ * Generate and parse the cookies. Cookies are automatically signed
+ * with a SHA1 HMAC.
+ *
+ * Usage to get the cookies of a "Cookie:" header.
+ *
+ * <pre>
+ * $request->COOKIE = CookieHandler::parse($req->headers, $key);
+ * </pre>
+ *
+ * To generate the Set-Cookie: headers. In the answer, one can have
+ * many "Set-Cookie" headers, so the string of the Set-Cookie headers
+ * is returned.
+ *
+ * <pre>
+ * $set_cookie_headers = CookieHandler::build($req->COOKIE, $key);
+ * </pre>
+ *
+ * @see http://curl.haxx.se/rfc/cookie_spec.html
+ *
+ */
+class CookieHandler
+{
+    /**
+     * Parse the request headers and get the cookies.
+     */
+    public static function parse($headers, $key)
+    {
+        if (!isset($headers->cookie)) {
+            return array();
+        }
+        $cookies = (array) $headers->cookie;
+        $out = array();
+        foreach ($cookies as $cookie) {
+            $out = array_merge($out, self::parse_cookie($cookie, $key));
+        }
+
+        return $out;
+    }
+
+    /**
+     * Build the header string of the cookies.
+     */
+    public static function build($cookies, $key)
+    {
+        $c = $cookies->getAll();
+        if (0 === count($c)) {
+            return '';
+        }
+        // Now, we merge the cookies having the same path, flag,
+        // domain and expiration
+        $rcookies = array();
+        foreach ($c as $ck) {
+            $k = $ck['flags'] . '#1#' . $ck['expires'] . '#2#'
+                . $ck['path'] . '#3#' . $ck['domain'];
+            if (isset($rcookies[$k])) {
+                $rcookies[$k]['cookies'] = array_merge($rcookies[$k]['cookies'],
+                                                       $ck['cookies']);
+            } else {
+                $rcookies[$k] = $ck;
+            }
+        }
+        $headers = '';
+        foreach ($rcookies as $ck) {
+            foreach ($ck['cookies'] as $name => $val) {
+                $ck['cookies'][$name] = \photon\crypto\Sign::dumps($val, $key);
+            }
+            $headers .= 'Set-Cookie: ' . http_build_cookie($ck) . "\r\n";
+        }
+
+        return $headers;
+    }
+
+    /**
+     * Parse a cookie string.
+     *
+     * Automatically perform the signature check.
+     *
+     * @param $cookie Cookie string
+     * @param $key Shared key for HMAC signature
+     * @return array Valid cookies in associative array
+     */
+    public static function parse_cookie($cookie, $key)
+    {
+        $c = \http_parse_cookie($cookie);
+        $cookies = array();
+        foreach ($c->cookies as $name => $val) {
+            try {
+                $cookies[$name] = \photon\crypto\Sign::loads($val, $key);
+            }  catch (\Exception $e) { 
+                // We simply ignore bad cookies.
+            }
+        }
+
+        return $cookies;
     }
 }

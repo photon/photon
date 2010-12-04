@@ -24,6 +24,7 @@
  * Support module of the command line utility.
  */
 namespace photon\manager;
+
 use photon\config\Container as Conf;
 
 class Exception extends \Exception
@@ -67,7 +68,7 @@ class Base
     public function getConfig()
     {
         $config_file = $this->params['cwd'] . '/config.php';
-        if (isset($this->params['conf'])) {
+        if (null !== $this->params['conf']) {
             $config_file = $this->params['conf'];
         }
         if (!file_exists($config_file)) {
@@ -166,6 +167,14 @@ class RunServer extends Base
     public function run()
     {
         Conf::load($this->getConfig());
+        // If the ./apps subfolder is found, it is automatically added
+        // to the include_path.
+        if (file_exists($this->params['cwd'].'/apps')) {
+            set_include_path(get_include_path() . PATH_SEPARATOR 
+                             . $this->params['cwd'].'/apps');
+            $this->verbose(sprintf('Include path is now: %s',
+                                   get_include_path()));
+        }
         $this->verbose('Starting the development server.');
         $this->verbose('Press ^C to exit.');
         $server = new \photon\server\Server(Conf::f('server_conf', array()));
