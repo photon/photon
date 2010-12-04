@@ -82,7 +82,7 @@ class Sign
         }
         $base64d = urlsafe_b64encode($serialized);
         if ($is_compressed) {
-            $base64d = '.'.$base64d;
+            $base64d = '.' . $base64d;
         }
         return self::signs($base64d, $key);
     }
@@ -98,7 +98,7 @@ class Sign
     {
         $base64d = self::unsigns($s, $key);
         $decompress = false;
-        if ($base64d[0] == '.') {
+        if ('.' === $base64d[0]) {
             // It's compressed; uncompress it first
             $base64d = substr($base64d, 1);
             $decompress = true;
@@ -125,7 +125,7 @@ class Sign
      */
     public static function signs($value, $key)
     {
-        return $value.'.'.self::base64_hmac($value, $key);
+        return $value . '.' . self::base64_hmac($value, $key);
     }
 
 
@@ -140,7 +140,7 @@ class Sign
      */
     public static function unsigns($signed_value, $key)
     {
-        $compressed = ($signed_value[0] == '.') ? '.' : '';
+        $compressed = ('.' === $signed_value[0]) ? '.' : '';
         if ($compressed) {
             $signed_value = substr($signed_value, 1);
         }
@@ -148,8 +148,8 @@ class Sign
             throw new Exception('Missing signature (no . found in value).');
         }
         list($value, $sig) = explode('.', $signed_value, 2);
-        if (self::base64_hmac($compressed.$value, $key) == $sig) {
-            return $compressed.$value;
+        if (self::base64_hmac($compressed . $value, $key) == $sig) {
+            return $compressed . $value;
         } else {
             throw new Exception(sprintf('Signature failed: "%s".', $sig));
         }
