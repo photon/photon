@@ -383,7 +383,7 @@ class Cookie implements \ArrayAccess
 
     public function offsetUnset($offset) 
     {
-        unset($this->all[$offset]);
+        $this->delCookie($offset);
     }
 
     public function offsetGet($offset) 
