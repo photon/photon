@@ -370,10 +370,9 @@ class Cookie implements \ArrayAccess
     public function offsetSet($offset, $value) 
     {
         if (null === $offset) {
-            throw new Exception('You need to provide a cookie name.');
-        } else {
-            $this->setCookie($offset, $value);
+            throw new \Exception('You need to provide a cookie name.');
         }
+        $this->setCookie($offset, $value);
     }
 
     public function offsetExists($offset) 
