@@ -100,7 +100,8 @@ class MultiPartParser
                     $field['of_type'] = $type;
                 }
                 if ($key === 'Content-Type') {
-                    $field['type'] = $params->params[0];
+                    $field['type'] = (isset($params->params[0])) ? 
+                        $params->params[0] : null;
                 }
             }
             $fields[] = $field;
@@ -246,6 +247,9 @@ class FileStreamWrapper
      */
     public function read()
     {
+        if ($this->end_offset <= $this->start_offset) {
+            return '';
+        }
         $current_offset = ftell($this->body);
         fseek($this->body, $this->start_offset, SEEK_SET);
         $len = $this->end_offset - $this->start_offset;
