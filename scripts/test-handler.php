@@ -37,6 +37,6 @@ namespace
     $server_conf = array('pub_addr' => 'ipc://handler-res',
                          'sub_addr' => 'ipc://mongrel-req'
                          );
-    $server = new \photon\server\Server($server_conf);
+    $server = new \photon\server\TestServer($server_conf);
     $server->start();
 }

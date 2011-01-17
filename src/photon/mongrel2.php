@@ -69,7 +69,9 @@ class Message
     public $path;
     public $conn_id;
     public $headers;
-    public $body; /**< A handler to the in memory storage of the body */
+    public $body; /**< mixed A handler to the in memory storage of the
+                   *  body, an empty string or a decoded JSON string.
+                   */
 
     /**
      * Called by self::parse
@@ -90,7 +92,9 @@ class Message
      */
     public function __destruct()
     {
-        @fclose($this->body);
+        if (is_resource($this->body)) {
+            @fclose($this->body);
+        }
     }
 
     public static function parse($msg)
@@ -108,7 +112,10 @@ class Message
 /**
  * ZMQ connection between Mongrel2 and the application server.
  *
- * The connection is used to retrieve a request and send a response.
+ * The connection is used to retrieve a request and send a
+ * response. You can use this class if you do not want to poll. For
+ * polling, uses the PollConnection which is a bit more low level for
+ * you to integrate it into your poller.
  */
 class Connection
 {
@@ -117,18 +124,22 @@ class Connection
     public $pub_addr;
     public $reqs;
     public $resp;
+    public $ctx; /**< zeromq context. Reused everywhere if needed. */
 
-    public function __construct($sender_id, $sub_addr, $pub_addr)
+    public function __construct($sender_id, $sub_addr, $pub_addr, $ctx=null)
     {
         $this->sender_id = $sender_id;
 
-        $ctx = new \ZMQContext();
-        //$reqs = $ctx->getSocket(\ZMQ::SOCKET_UPSTREAM);
-        //$reqs->connect($sub_addr);
-        $reqs = new \ZMQSocket(new \ZMQContext(), \ZMQ::SOCKET_UPSTREAM);
+        if (null === $ctx) {
+            $this->ctx = new \ZMQContext();
+        } else {
+            $this->ctx = $ctx;
+        }
+
+        $reqs = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_UPSTREAM);
         $reqs->connect($sub_addr);
 
-        $resp = $ctx->getSocket(\ZMQ::SOCKET_PUB);
+        $resp = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PUB);
         $resp->connect($pub_addr);
         $resp->setSockOpt(\ZMQ::SOCKOPT_IDENTITY, $sender_id);
 
@@ -155,17 +166,23 @@ class Connection
      */
     public function recv() 
     {
-        $body = null;
         $fp = fopen('php://temp/maxmemory:5242880', 'r+');
         fputs($fp, $this->reqs->recv());
         rewind($fp);
-        /*
-        $data = stream_get_contents($fp);
-        file_put_contents('example.payload.'.time(), $data);
-        rewind($fp);
-        */
+
+        return $this->parse($fp);
+    }
+
+    /**
+     * Parse the Mongrel2 request and returns a message.
+     *
+     * @param $fp Open file descriptor to access the message.
+     * @return Message object.
+     */
+    public function parse($fp)
+    {
+        $body = null;
         $line = fread($fp, 8192);
-        //        file_put_contents('example.payload', $data);
         list($sender, $conn_id, $path, $smsg) = \explode(' ', $line, 4);
         // From $smsg, get the size of the headers
         list($len, $rest) = \explode(':', $smsg, 2);
@@ -201,19 +218,14 @@ class Connection
             $line = fread($fp, 100);
             list($len, $rest) = \explode(':', $line, 2);
             fseek($fp, -strlen($rest), SEEK_CUR);
+            // The body is parsed in the \photon\http\Request class,
+            // only if needed. 
             $body = $fp;
-            /*
-            unset($line, $rest);
-            $parser = new \photon\http\multipartparser\MultiPartParser($headers, $fp);
-            $body = $parser->parse();
-            */
-            //fclose($fp);
         } else {
             $body = '';
             fclose($fp);
         } 
-        //        printf("Max memory usage: %s\n", memory_get_peak_usage());
-        //        printf("Current memory usage: %s\n", memory_get_usage());
+
         return new Message($sender, $conn_id, $path, $headers, $body);
     }
 
@@ -240,3 +252,4 @@ class Connection
         $this->send($uuid, \join(' ', $idents),  $data);
     }
 }
+

@@ -65,16 +65,64 @@ namespace photon
         $parser->addOption('conf',
                            array('long_name'   => '--conf',
                                  'action'      => 'StoreString',
+                                 'help_name'   => 'path/conf.php',
                                  'description' => 'where the configuration is to be found. By default, the configuration file is the config.php in the current working directory'
                                  ));
-        // add the init subcommand
+
         $init_cmd = $parser->addCommand('init',
                                         array('description' => 'generate the skeleton of a new Photon project in the current folder'));
         $init_cmd->addArgument('project',
                                array('description' => 'the name of the project'));
-        // add the runserver subcommand
-        $rs_cmd = $parser->addCommand('runserver',
+        $rs_cmd = $parser->addCommand('testserver',
                                       array('description' => 'run the development server to test your application'));
+        $rt_cmd = $parser->addCommand('runtests',
+                                      array('description' => 'run the tests of your project. Uses config.test.php as default config file'));
+        $rt_cmd->addOption('directory',
+                           array('long_name'   => '--coverage-html',
+                                 'action'      => 'StoreString',
+                                 'help_name'   => 'path/folder',
+                                 'description' => 'directory to store the code coverage report'
+                                 ));
+
+        $rt_cmd->addOption('bootstrap',
+                           array('long_name'   => '--bootstrap',
+                                 'action'      => 'StoreString',
+                                 'help_name'   => 'path/bootstrap.php',
+                                 'description' => 'bootstrap PHP file given to PHPUnit. By default the photon/testbootstrap.php file'
+                                 ));
+
+        $rst_cmd = $parser->addCommand('selftest',
+                                      array('description' => 'run the Photon self test procedure'));
+        $rst_cmd->addOption('directory',
+                           array('long_name'   => '--coverage-html',
+                                 'action'      => 'StoreString',
+                                 'help_name'   => 'path/folder',
+                                 'description' => 'directory to store the code coverage report'
+                                 ));
+
+        $rserver_cmd = $parser->addCommand('server',
+                                      array('description' => 'run or command the Photon servers'));
+        $rserver_cmd->addOption('all',
+                           array('long_name'   => '--all',
+                                 'action'      => 'StoreTrue',
+                                 'description' => 'run the subcommand for all the running Photon processes'
+                                 ));
+
+        $rserver_cmd->addOption('server_id',
+                           array('long_name'   => '--server-id',
+                                 'action'      => 'StoreString',
+                                 'help_name'   => 'id',
+                                 'description' => 'run the subcommand for the given server id. If you start a process, it will receive this server id. The default subcommand is "start".'
+                                 ));
+
+
+        $rserver_cmd->addCommand('start',
+                                 array('description' => 'start a Photon server'));
+        $rserver_cmd->addCommand('stop',
+                                 array('description' => 'stop one or more Photon server'));
+        $rserver_cmd->addCommand('list',
+                                 array('description' => 'list the running Photon servers'));
+
         return $parser;
     }
 
@@ -82,24 +130,9 @@ namespace photon
 
 namespace
 {
-    /**
-     * Autoloader for Photon.
-     */
-    function photonAutoLoad($class)
-    {
-        $parts = array_filter(explode('\\', $class));
-        if (1 < count($parts)) {
-            // We have a namespace.
-            $class_name = array_pop($parts);
-            $file = implode(DIRECTORY_SEPARATOR, $parts) . '.php';
-        } else {
-            $file = str_replace('_', DIRECTORY_SEPARATOR, $class) . '.php';
-        }
-        require $file;
-    }
-
-    set_include_path(get_include_path() . PATH_SEPARATOR . __DIR__);
-    spl_autoload_register('photonAutoLoad', true, true);
+    // This add the current directory in the include path and add the
+    // Photon autoloader to the SPL autoload stack.
+    include_once __DIR__ . '/photon/autoload.php';
 
     try {
         $parser = \photon\getParser();
@@ -109,21 +142,57 @@ namespace
         // find which command was entered
         switch ($result->command_name) {
             case 'init':
-                // the user typed the foo command
                 // options and arguments for this command are stored in the
                 // $result->command instance:
                 $params['project'] = $result->command->args['project'];
                 $m = new \photon\manager\Init($params);
                 $m->run();
                 break;
-            case 'runserver':
-                // the user typed the runserver command
-                $m = new \photon\manager\RunServer($params);
+            case 'testserver':
+                $m = new \photon\manager\TestServer($params);
                 $m->run();
+                break;
+            case 'runtests':
+                $params['directory'] = $result->command->options['directory'];
+                $params['bootstrap'] = $result->command->options['bootstrap'];
+                $m = new \photon\manager\RunTests($params);
+                exit($m->run());
+                break;
+            case 'selftest':
+                $params['directory'] = $result->command->options['directory'];
+                $m = new \photon\manager\SelfTest($params);
+                exit($m->run());
+                break;
+            case 'server':
+                // Server is a special command which has
+                // subcommands. The sub commands are start/stop/list,
+                // but they do not take any options, the options are
+                // set at the server command level.
+                // This is why you have runStart, runStop and runList
+                // depending on the subcommand.
+
+                switch ($result->command->command_name) {
+                case 'stop':
+                    $m = new \photon\manager\CommandServer($params);
+                    exit($m->runStop());
+                    break;
+                case 'list':
+                    $m = new \photon\manager\CommandServer($params);
+                    exit($m->runList());
+                    break;
+                case 'start':
+                default:
+                    // Will go daemon.
+                    $m = new \photon\manager\Server($params);
+                    exit($m->run()); 
+                    break;
+                }
                 break;
             default:
                 // no command entered
-                exit(0);
+                print "No command entered, nothing to do.\n";
+                $parser->displayUsage();
+                exit(5);
         }
         exit(0);
 

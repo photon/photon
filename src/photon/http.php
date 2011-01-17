@@ -178,20 +178,20 @@ class Response
 class Request
 {
     public $mreq = null;
-    public $path = '';
-    public $GET = array();
     public $query = '';
+    public $GET = array();
+    public $PATH = '';
     public $POST = array();
     public $FILES = array();
     public $COOKIE = array();
-
+    public $METHOD = '';
     /*
 
     public $REQUEST = array();
 
     public $FILES = array();
 
-    public $method = '';
+
     public $uri = '';
     public $view = '';
     public $remote_addr = '';
@@ -210,6 +210,7 @@ class Request
     {
         $this->mess = $mess;
         $this->path = $this->mess->path;
+        $this->METHOD = $this->mess->headers->METHOD;
 
         if (isset($this->mess->headers->QUERY)) {
             \mb_parse_str($this->mess->headers->QUERY, $this->GET);

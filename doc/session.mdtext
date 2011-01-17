@@ -1,0 +1,60 @@
+# Management of the Client Session
+
+A client session in a disconnected protocol like HTTP is always a bit
+messy to manage. That is, you never know when the client is not
+anymore "here" because the client is never really connected. Usually a
+session stops after a timeout. The timeout can be few minutes or
+several years, it usually depends on the life the cookie tracking the
+session. The problem is that sometimes, you do not want to use cookies
+to track user sessions, for example, you use directly the HTTP
+authentification mechanism or matching based on the ip address and
+some unique information about the client (User agent, screen
+resolution, etc. this method is known as finger printing).
+
+So, to have good session management, one need a flexible way to know
+in which session the current client request is.
+
+The flow is basically, the following:
+
+1- Client connects to server and send information with the request;
+2- From the information, the server deduct a session unique identifier;
+3- From the unique id, the server loads the corresponding session data;
+4- The session data is associated to the request.
+
+If at step 3, no session data are found, the server can create a new
+empty session or consider no session at all.
+
+# Relation between Session, User, Authentication, etc.
+
+The role of a session is to store a minimal amount of transient
+information related to the client. The purpose is not to store long
+term data, for example, the session information could be fully stored
+in cookies or in volatile memory. The only effect of loosing session
+data should not be worse than logging out the user if logged in,
+losing possible A/B testing information or other related minor stuff.
+
+## Examples of session usage
+
+- Store the id of the user after login;
+- Store A/B test information;
+- Store website customization, like font size, language, etc.
+
+# Default Photon Session Storage
+
+Photon has two storages for the session data by default with both of
+them using a cookie to store the session id once defined.
+
+## Cookie Storage
+
+All the data are stored in signed cookies. The system is smart enough
+to limit the data transfer and avoid sending too many cookies.
+
+## In Memory Storage
+
+The data is stored in an in process storage, this means that you can
+have only one Photon process running for the session system to work at
+the moment as the data are not synchronized between the
+processes. This could be added in the future, but it is most likely
+better to just put the data in MongoDB or Memcached if you really need
+something like that.
+

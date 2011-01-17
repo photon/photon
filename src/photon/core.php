@@ -38,14 +38,54 @@ use photon\config\Container as Conf;
 class Dispatcher
 {
     /**
-     * The unique method to call.
+     * Dispatch a Mongrel2 request object and returns the request
+     * object and the response object.
      *
      * @param $mreq Request Mongrel2 request object.
+     * @return array(Photon request, Photon response)
      */
     public static function dispatch(&$mreq)
     {
         $req = new \photon\http\Request($mreq);
-        $response = self::match($req);
+
+        // FOPT: One can generate the lists at the initialisation of
+        // the server to avoid the repetitive calls to method_exists.
+        $middleware = array();
+        foreach (Conf::f('middleware_classes', array()) as $mw) {
+            $middleware[] = new $mw();
+        }
+        $response = false;
+        try {
+            foreach ($middleware as $mw) {
+                if (method_exists($mw, 'process_request')) {
+                    $response = $mw->process_request($req);
+                    if ($response !== false) {
+                        // $response is a response, the middleware has
+                        // preempted the request and the possible
+                        // corresponding view will not called.
+                        break;
+                    }    
+                }
+            }
+            if ($response === false) {   
+                $response = self::match($req);
+            }
+            if (!empty($req->response_vary_on)) {
+                $response->headers['Vary'] = $req->response_vary_on;
+            }
+            $middleware = array_reverse($middleware);
+            foreach ($middleware as $mw) {
+                if (method_exists($mw, 'process_response')) {
+                    $response = $mw->process_response($req, $response);
+                }    
+            }
+        } catch (\Exception $e) {
+            if (true !== Conf::f('debug', false)) {
+                $response = new Pluf_HTTP_Response_ServerError($e, $req);
+            } else {
+                $response = new Pluf_HTTP_Response_ServerErrorDebug($e);
+            }
+        }
 
         return array($req, $response);
     }
@@ -81,7 +121,7 @@ class Dispatcher
                 }
                 ++$i;
             }
-        } catch (Exception $e) { // Need to only catch the 404 error exception
+        } catch (\Exception $e) { // Need to only catch the 404 error exception
             // Need to add a 404 error handler
             // something like Pluf::f('404_handler', 'class::method')
         }
@@ -103,6 +143,9 @@ class Dispatcher
     public static function send($req, $ctl, $match)
     {
         $req->view = array($ctl, $match);
+        /// $ctl['view'] is a callable.
+        
+
         $m = new $ctl['model']();
         if (isset($m->{$ctl['method'] . '_precond'})) {
             // Here we have preconditions to respects. If the "answer"
