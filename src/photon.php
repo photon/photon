@@ -120,8 +120,14 @@ namespace photon
                                  array('description' => 'start a Photon server'));
         $rserver_cmd->addCommand('stop',
                                  array('description' => 'stop one or more Photon server'));
-        $rserver_cmd->addCommand('list',
-                                 array('description' => 'list the running Photon servers'));
+        $lcd = $rserver_cmd->addCommand('list',
+                                        array('description' => 'list the running Photon servers'));
+        $rserver_cmd->addOption('timeout',
+                        array('long_name'   => '--wait',
+                              'action'      => 'StoreString',
+                              'description' => 'waiting time in seconds for the answers. Needed if your servers are under heavy load'
+                                 ));
+ 
 
         return $parser;
     }
@@ -170,13 +176,14 @@ namespace
                 // set at the server command level.
                 // This is why you have runStart, runStop and runList
                 // depending on the subcommand.
-
+                $params['wait'] = $result->command->options['timeout'];
                 switch ($result->command->command_name) {
                 case 'stop':
                     $m = new \photon\manager\CommandServer($params);
                     exit($m->runStop());
                     break;
                 case 'list':
+                    $params += $result->command->command->options;
                     $m = new \photon\manager\CommandServer($params);
                     exit($m->runList());
                     break;
