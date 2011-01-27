@@ -85,7 +85,7 @@ class ServerError extends Response
             $tmpl = new Pluf_Template('500.html');
             $content = $tmpl->render($context);
             $mimetype = null;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $mimetype = 'text/plain';
             $content = 'The server encountered an unexpected condition which prevented it from fulfilling your request.'."\n\n"
                 .'An email has been sent to the administrators, we will correct this error as soon as possible. Thank you for your comprehension.'

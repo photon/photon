@@ -22,7 +22,7 @@
 
 
 namespace photon\tests\translations\translate;
-
+use \photon\translation\Translation;
 include_once __DIR__ . '/../../translation.php';
 
 class TranslateTest extends \PHPUnit_Framework_TestCase
@@ -44,5 +44,124 @@ class TranslateTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0, $russian(1));
         $this->assertEquals(2, $russian(0));
     }
+
+    public function testPluralLocale()
+    {
+        $this->assertEquals('plural', _n('singular', 'plural', 2));
+        Translation::$plural_forms['en'] = function ($n) { return (int) ($n != 1); };
+        $this->assertEquals('plural', _n('singular', 'plural', 2));
+        unset(Translation::$plural_forms['en']);
+        $str = 'singular#plural';
+        Translation::$loaded['en'] = array($str =>
+                                                               array('Singular',
+                                                                     'Plural'));
+        $this->assertEquals('Singular', _n('singular', 'plural', 1));
+        $this->assertEquals('Plural', _n('singular', 'plural', 2));
+        unset(Translation::$loaded['en']);
+    }
+
+    public function testLoadPoFile()
+    {
+        $hash = Translation::readPoFile(__DIR__ . '/../data/fr.po');
+        $this->assertEquals(array('seconde', 'secondes'),
+                            $hash['second#seconds']);
+    }
+
+    public function testParseErrorPo()
+    {
+        $po = '
+# French translations of Pluf.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Pluf\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-Basepath: ../../../\n"
+
+msgid "search stats"
+foobar "stats de l\'index"
+
+#: Pluf/Search/Stats.php:34
+msgid "search stats"
+msgstr "stats de l\'index"';
+        $this->assertEquals(false, Translation::parsePoContent($po));
+
+        $po = '
+# French translations of Pluf.
+#
+
+bingo
+
+msgid ""
+msgstr ""
+"Project-Id-Version: Pluf\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-Basepath: ../../../\n"
+
+msgid "search stats"
+msgstr "stats de l\'index\n"
+
+#: Pluf/Search/Stats.php:34
+msgid "search stats 32"
+msgstr "stats de l\'index"';
+        $this->assertEquals(false, Translation::parsePoContent($po));
+    }
+
+
+    public function testLoadLocale()
+    {
+        $pos = Translation::loadLocale('fr', array(), array('/doesnotexist'), false);
+        //explode(PATH_SEPARATOR, get_include_path()));
+        $this->assertEquals(0, count($pos));
+    }
+
+    public function testSetLocale()
+    {
+        $locales = shell_exec('locale -a');
+        if (false === strpos($locales, 'fr_FR')) {
+            $this->markTestSkipped('fr_FR locale not available.');
+            return;
+        }
+        $current = setlocale(LC_CTYPE, 0);
+        Translation::setLocale('fr');
+        $new = setlocale(LC_CTYPE, 0);
+        $this->assertEquals('fr_FR.UTF-8', $new);
+        Translation::setLocale($current);
+        $new = setlocale(LC_CTYPE, 0);
+        $this->assertEquals($current, $new);
+    }
+
+    public function testSprintf()
+    {
+        $rep = Translation::sprintf('Foo %%bar%% %%coffee%%.',
+                                    array('bar' => 'BAR',
+                                          'coffee' => 'tea'));
+        $this->assertEquals('Foo BAR tea.', $rep);
+    }
+
+    public function testAcceptedLanguage()
+    {
+        $lang = Translation::getAcceptedLanguage(array('fr', 'en', 'de'),
+                                                 'da, en-gb;q=0.8, en;q=0.7');
+        $this->assertEquals('en', $lang);
+
+        $lang = Translation::getAcceptedLanguage(array('fr', 'en', 'en_DK', 'de'),
+                                                 'da, en-gb;q=0.8, en-dk;q=0.7, en;q=0.7');
+        $this->assertEquals('en_DK', $lang);
+
+        $lang = Translation::getAcceptedLanguage(array('fr', 'en', 'en_DK', 'de'),
+                                                 'de-at, fr-fr');
+        $this->assertEquals('de', $lang);
+
+        $lang = Translation::getAcceptedLanguage(array('fr', 'en', 'en_DK', 'de'),
+                                                 'jp-jp');
+        $this->assertEquals('fr', $lang);
+
+        $lang = Translation::getAcceptedLanguage(array('fr', 'en', 'en_DK', 'de'),
+                                                 '');
+        $this->assertEquals('fr', $lang);
+    }
+
+
 }
 

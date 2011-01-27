@@ -29,6 +29,8 @@ namespace photon\core;
 
 use photon\config\Container as Conf;
 
+class Exception extends \Exception {}
+
 /**
  * Dispatch a request to the correct handler.
  *
@@ -48,8 +50,9 @@ class Dispatcher
     {
         $req = new \photon\http\Request($mreq);
 
-        // FOPT: One can generate the lists at the initialisation of
-        // the server to avoid the repetitive calls to method_exists.
+        // FUTUREOPT: One can generate the lists at the initialisation
+        // of the server to avoid the repetitive calls to
+        // method_exists.
         $middleware = array();
         foreach (Conf::f('middleware_classes', array()) as $mw) {
             $middleware[] = new $mw();
@@ -98,7 +101,7 @@ class Dispatcher
      * @param Pluf_HTTP_Request Request object
      * @return Pluf_HTTP_Response Response object
      */
-    public static function match($req, $firstpass = true)
+    public static function match($req, $firstpass=true)
     {
         $views = Conf::f('urls', array());
         try {
@@ -178,5 +181,129 @@ class Dispatcher
         } else {
             return $m->$ctl['method']($req, $match, $ctl['params']);
         }
+    }
+}
+
+
+/**
+ * Generate a ready to use URL to be used in location/redirect or forms.
+ *
+ * When redirecting a user, depending of the format of the url with
+ * mod_rewrite or not, the parameters must all go in the GET or
+ * everything but the action. This class provide a convinient way to
+ * generate those url and parse the results for the dispatcher.
+ */
+class URL
+{
+    /**
+     * Generate the URL.
+     *
+     * The & is encoded as &amp; in the url.
+     *
+     * @param $action Action url
+     * @param $params Associative array of the parameters (array())
+     * @param $encode Encode the & in the url (true)
+     * @return string Ready to use URL.
+     */
+    public static function generate($action, $params=array(), $encode=true)
+    {
+        $url = $action;
+        if (count($params)) {
+            $url .= '?' . http_build_query($params, '', ($encode) ? '&amp;' : '&');
+        }
+        return $url;
+    }
+
+    /**
+     * Provide the full URL (without domain) to a view.
+     *
+     * @param string View.
+     * @param array Parameters for the view (array()).
+     * @param array Extra GET parameters for the view (array()).
+     * @param bool Should the URL be encoded (true).
+     * @return string URL.
+     */
+    public static function forView($view, $params=array(), $get_params=array(), $encoded=true)
+    {
+        return self::generate(Conf::f('base_urls') .
+                              self::reverse(Conf::f('urls', array()), $view, $params), 
+                              $get_params, $encoded);
+    }
+
+    /**
+     * Reverse an URL.
+     *
+     * @param $views Array of all the views
+     * @param $view_name Name of the view
+     * @param $params Parameters for the view
+     * @return string URL.
+     */
+    public static function reverse($views, $view_name, $params=array())
+    {
+        $regbase = array();
+        $regbase = self::find($views, $view_name, $regbase);
+        if (false === $regbase) {
+            throw new Exception(sprintf('Error, the view: %s has not been found.', $view_name));
+        }
+        $url = '';
+        foreach ($regbase as $regex) {
+            $url .= self::buildReverse($regex, $params);
+        }
+        //$url = $regbase[0] . $url;
+
+        return $url;
+    }
+
+
+    /**
+     * Go in the list of views to find the matching one.
+     *
+     * @param $views Array of the views
+     * @param $view_name View to find
+     * @param $regbase Regex of the view up to now and base
+     * @return mixed Regex of the view or false
+     */
+    public static function find($views, $view_name, $regbase)
+    {
+        foreach ($views as $dview) {
+            if (isset($dview['sub'])) {
+                $regbase2 = $regbase;
+                $regbase2[] = $dview['regex'];
+                $res = self::find($dview['sub'], $view_name, $regbase2);
+                if ($res) {
+
+                    return $res;
+                }
+                continue;
+            }
+            if ($view_name == $dview['name']) {
+                $regbase[] = $dview['regex'];
+
+                return $regbase;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Build the reverse URL without the path base.
+     *
+     * Credits to Django, again...
+     *
+     * @param string Regex for the URL.
+     * @param array Parameters
+     * @return string URL filled with the parameters.
+     */
+    public static function buildReverse($url_regex, $params=array())
+    {
+        $url = str_replace(array('\\.', '\\-'), array('.', '-'), $url_regex);
+        if (count($params)) {
+            $groups = array_fill(0, count($params), '#\(([^)]+)\)#'); 
+            $url = preg_replace($groups, $params, $url, 1);
+        }
+        preg_match('/^#\^?([^#\$]+)/', $url, $matches);
+
+        return $matches[1];
     }
 }

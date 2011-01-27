@@ -32,9 +32,7 @@
  */
 namespace photon\http\multipartparser;
 
-class Exception extends \Exception
-{
-}
+class Exception extends \Exception {}
 
 /**
  * Core class to parse a multipart request.
@@ -240,6 +238,11 @@ class FileStreamWrapper
         $this->start_offset = $start;
         $this->end_offset = $end;
         $this->body = $body;
+    }
+
+    public function __toString()
+    {
+        return $this->read();
     }
 
     /**

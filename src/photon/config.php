@@ -55,6 +55,16 @@ class Container
     }
 
     /**
+     * Dump the content of the conf. 
+     *
+     * Basically the reverse of load().
+     */
+    public static function dump()
+    {
+        return self::$conf;
+    }
+
+    /**
      * Get a key value.
      */
     public static function f($key, $default = null)

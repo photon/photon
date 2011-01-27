@@ -2,7 +2,7 @@
 /* -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /*
 # ***** BEGIN LICENSE BLOCK *****
-# This file is part of Photon, the High Speed PHP Framework.
+# This file is part of Photon, The High Performance PHP Framework.
 # Copyright (C) 2010, 2011 Loic d'Anterroches and contributors.
 #
 # Photon is free software; you can redistribute it and/or modify
@@ -21,9 +21,9 @@
 # ***** END LICENSE BLOCK ***** */
 
 /**
- * Translation utility. 
+ * Translation utilities. 
  *
- * This class provides utilities to load and cache translation
+ * This namespace provides utilities to load and cache translation
  * strings. The functions using the values are directly available when
  * loading Pluf. They are __ and _n for simple translations and for
  * plural dependent translations respectively.
@@ -40,38 +40,91 @@
  */
 namespace photon\translation;
 
+use photon\config\Container as Conf;
+
 class Translation
 {
     /**
      * By default, we use English.
      */
     public static $current_lang = 'en'; 
+
+    /**
+     * Anonymous functions doing the plural form conversion.
+     *
+     * Associative array indexed by language.
+     */
     public static $plural_forms = array();
 
-    public static function loadSetLocale($lang)
+    /**
+     * Loaded locales.
+     *
+     * Associative array indexed by language.
+     */
+    public static $loaded = array();
+
+    public static function setLocale($lang)
     {
         self::$current_lang = $lang;
-        setlocale(LC_TIME, array($lang.'.UTF-8',
-                                 $lang.'_'.strtoupper($lang).'.UTF-8',
-                                 $lang,
-                                 $lang.'_'.strtoupper($lang)));
+        $lang5 = $lang.'_'.strtoupper($lang);
 
-        if (isset($GLOBALS['_PX_locale'][$lang])) {
+        $new_locale = setlocale(LC_TIME, 
+                                array($lang.'.UTF-8', $lang5.'.UTF-8', 
+                                      $lang, $lang5));
+        setlocale(LC_CTYPE, $new_locale);
+        setlocale(LC_COLLATE, $new_locale);
+        setlocale(LC_MESSAGES, $new_locale);
+        setlocale(LC_MONETARY, $new_locale);
+
+        if (isset(self::$loaded[$lang])) {
+
             return; // We consider that it was already loaded.
         }
-        $GLOBALS['_PX_locale'][$lang] = array();
-        foreach (Pluf::f('installed_apps') as $app) {
-            if (false != ($pofile=Pluf::fileExists($app.'/locale/'.$lang.'/'.strtolower($app).'.po'))) {
-                $GLOBALS['_PX_locale'][$lang] += Pluf_Translation::readPoFile($pofile);
+        self::loadLocale($lang, Conf::f('installed_apps', array()), 
+                         explode(PATH_SEPARATOR, get_include_path()));
+    }
+    
+    /**
+     * Load the locales of a lang.
+     *
+     * It does not activate the locale.
+     *
+     * @param $lang Language to load
+     * @param $apps Array of application to load the language for
+     * @param $apps_paths Paths in which are the applications
+     * @param $photon Load the Photon translations (true)
+     * @return array Path to loaded file
+     */
+    public static function loadLocale($lang, $apps, $apps_paths, $photon=true)
+    {
+        self::$loaded[$lang] = array();
+        $tmpl = '%s/%s/locale/%s/%s.po';
+        $loaded = array();
+        if ($photon) {
+            $pofile = sprintf('%s/locale/%s/photon.po', __DIR__, $lang); 
+            if (file_exists($pofile)) {
+                self::$loaded[$lang] += self::readPoFile($pofile);
+                $loaded[] = $pofile;
             }
         }
-    }
+        foreach ($apps as $app) {
+            foreach ($apps_paths as $apps_path) {
+                $pofile = sprintf('%s/%s/locale/%s/%s.po', 
+                                  $apps_path, $app, $lang, strtolower($app));
+                if (file_exists($pofile)) {
+                    self::$loaded[$lang] += self::readPoFile($pofile);
+                    $loaded[] = $pofile;
+                    break;
+                }
+            }
+        }
+        if (count($loaded)) {
+            self::$plural_forms[$lang] = plural_to_php(file_get_contents($loaded[0]));
+        }
 
-    public static function getLocale()
-    {
-        return self::$current_lang;
+        return $loaded;
     }
-
+    
     /**
      * Return the "best" accepted language from the list of available
      * languages.
@@ -82,25 +135,53 @@ class Translation
      *
      * @param $available array Available languages in the system
      * @param $accepted string String of comma separated accepted languages ('')
-     * @return mixed Language 2 or 5 letter iso code or false
+     * @return string Language 2 or 5 letter iso code, first of
+     *                available if not match
      */
-    public static function getAcceptedLanguage($available, $accepted)
+    public static function getAcceptedLanguage($available, $accepted='')
     {
-        $acceptedlist = explode(',', $accepted);
-        foreach ($acceptedlist as $lang) {
-            $lang = explode(';', $lang);
-            $lang = trim($lang[0]);
+        if (0 === strlen($accepted)) {
+
+            return $available[0];
+        }
+        // We get and sort the accepted in priority order
+        $accepted = array_map(function($item) { return explode(';', $item); }, 
+                              explode(',', $accepted));
+        usort($accepted, 
+              function($a, $b) {
+                  $sa = (count($a) == 1) ? 1.0 : (float) substr($a[1], 2);
+                  $sb = (count($b) == 1) ? 1.0 : (float) substr($b[1], 2);
+                  if ($sa == $sb) {
+                      return 1;
+                  }
+                  return ($sa < $sb) ? 1 : -1;
+              });
+        // We convert to have the correct xx_XX format for the "long" langs.
+        $accepted = array_map(function($item) { 
+                $lang = explode('-', trim($item[0]));
+                if (1 === count($lang)) {
+                    return $lang[0];
+                } 
+                return $lang[0] . '_' . strtoupper($lang[1]);
+            }, 
+            $accepted);
+        foreach ($accepted as $lang) {
             if (in_array($lang, $available)) {
+
                 return $lang;
             }
+        }
+        foreach ($accepted as $lang) {
             // for the xx-XX cases we may have only the "main" language
             // form like xx is available
             $lang = substr($lang, 0, 2);
             if (in_array($lang, $available)) {
+
                 return $lang;
             }
         }
-        return false;
+
+        return $available[0];
     }
 
     /**
@@ -115,6 +196,11 @@ class Translation
         return $string;
     }
 
+    public static function readPoFile($file)
+    {
+        return self::parsePoContent(file_get_contents($file));
+    }
+
     /**
      * Read a .po file.
      *
@@ -126,20 +212,14 @@ class Translation
      * @license http://opensource.org/licenses/lgpl-license.php GNU Lesser General Public License 2.1
      * @license http://opensource.org/licenses/apache2.0.php Apache License 2.0
      */
-    public static function readPoFile($file)
+    public static function parsePoContent($fc)
     {
-        if (false !== ($hash=self::getCachedFile($file))) {
-            return $hash;
-        }
-        // read .po file
-        $fc = file_get_contents($file);
         // normalize newlines
         $fc = str_replace(array("\r\n", "\r"), array("\n", "\n"), $fc);
 
-        // results array
-        $hash = array ();
-        // temporary array
-        $temp = array ();
+
+        $hash = array(); // results array
+        $temp = array();
         // state
         $state = null;
         $fuzzy = false;
@@ -232,41 +312,74 @@ class Translation
                 $hash[$entry['msgid']]= $entry['msgstr'];
             }
         }
-        self::cacheFile($file, $hash);
         return $hash;
     }
+}
 
+/**
+ * Translation middleware.
+ *
+ * Load the translation of the website based on the useragent.
+ */
+class Middleware
+{
     /**
-     * Load optimized version of a language file if available.
+     * Process the request.
      *
-     * @return mixed false or array with value
+     * Find which language to use. By priority:
+     * 1. a session value
+     * 2. a cookie
+     * 3. the browser Accept-Language header
+     *
+     * @param $request The request
+     * @return bool false
      */
-    public static function getCachedFile($file)
+    function process_request(&$request)
     {
-        $phpfile = Pluf::f('tmp_folder').'/Pluf_L10n-'.md5($file).'.phps';
-        if (file_exists($phpfile) 
-            && (filemtime($file) < filemtime($phpfile))) {
-            return include $phpfile;
+        $lang = false;
+        if (!empty($request->session)) {
+            $lang = $request->session->getData('language', false);
+            if ($lang && !in_array($lang, Conf::f('languages', array('en')))) {
+                $lang = false;
+            }
         }
+        if ($lang === false && !empty($request->COOKIE[Conf::f('lang_cookie', 'lang')])) {
+            $lang = $request->COOKIE[Conf::f('lang_cookie', 'lang')];
+            if ($lang && !in_array($lang, Conf::f('languages', array('en')))) {
+                $lang = false;
+            }
+        }
+        if ($lang === false) {
+            // will default to 'en'
+            $lang = Translation::getAcceptedLanguage(Conf::f('languages', array('en')));
+        }
+        Translation::loadSetLocale($lang);
+        $request->language_code = $lang;
         return false;
     }
 
     /**
-     * Cache an optimized version of a language file.
+     * Process the response of a view.
      *
-     * @param string File
-     * @param array Parsed hash
+     * @param Pluf_HTTP_Request The request
+     * @param Pluf_HTTP_Response The response
+     * @return Pluf_HTTP_Response The response
      */
-    public static function cacheFile($file, $hash)
+    function process_response($request, $response)
     {
-        $phpfile = Conf::f('tmp_folder').'/photon_translation-'.md5($file).'.phps';
-        file_put_contents($phpfile, 
-                          '<?php return '.var_export($hash, true).'; ?>',
-                          LOCK_EX);
-        @chmod($phpfile, 0666);
+        $vary_h = array();
+        if (!empty($response->headers['Vary'])) {
+            $vary_h = preg_split('/\s*,\s*/', $response->headers['Vary'],
+                                 -1, PREG_SPLIT_NO_EMPTY);
+        }
+        if (!in_array('accept-language', $vary_h)) {
+            $vary_h[] = 'accept-language';
+        }
+        $response->headers['Vary'] = implode(', ', $vary_h);
+        $response->headers['Content-Language'] = $request->language_code;
+        return $response;
     }
 }
-
 
 function poCleanHelper($x) 
 {

@@ -54,12 +54,17 @@
  * just dropped the main database.".
  */
 
-use photon\config\Container as Conf;
-
 namespace 
 {
     include_once __DIR__ . '/autoload.php';
-    $config = include ini_get('photon.config');
+    $config = array('tmp_folder' => sys_get_temp_dir(),
+                    'debug' => true,
+                    'secret_key' => 'SECRET_KEY');
+    $init = ini_get('photon.config');
+    if (file_exists($init)) {
+        $init = include ini_get('photon.config');
+        $config = array_merge($config, $init);
+    }
     $config['runtests'] = true;
-    Conf::load($config);
+    \photon\config\Container::load($config);
 }

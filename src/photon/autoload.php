@@ -20,6 +20,8 @@
 #
 # ***** END LICENSE BLOCK ***** */
 
+
+
 /**
  * Autoloader for Photon.
  */
@@ -37,9 +39,75 @@ function photonAutoLoad($class)
     // require_once instead of require penalty is low. But the
     // require_once will prevent double loading a file and will result
     // in non confusing error messages.
+    // printf("Class: %s, file: %s\n", $class, $file);    
     require_once $file;
 }
 
-set_include_path(realpath(__DIR__ . '/../')  . PATH_SEPARATOR 
-                 . get_include_path());
+/**
+ * Load a namespaced function.
+ *
+ * Sometimes, you want to access a function in a namespace but the
+ * namespace file has not been loaded yet. This function allows you to
+ * do it simply. This function is not part of a namespace and always
+ * loaded with Photon.
+ *
+ * @param $func Function with namespace, for example '\\fooo\\bar\\fonction'
+ */
+/* Not yet used.
+function photonLoadFunction($func)
+{
+    if (false !== strpos($func, '::')) {
+        return true; // We be loaded by the autoload.
+    }
+    if (function_exists($func)) {
+        return true;
+    }
+    $parts = array_filter(explode('\\', $ns));
+    $func_base_name = array_pop($parts);
+    $file = implode(DIRECTORY_SEPARATOR, $parts) . '.php';
+    require_once $file;
+} 
+*/
+
+/**
+ * Translate a string.
+ *
+ * @param $str String to be translated
+ * @return string Translated string
+ */
+function __($str)
+{
+    return (!empty(\photon\translation\Translation::$loaded[\photon\translation\Translation::$current_lang][$str][0]))
+        ? \photon\translation\Translation::$loaded[\photon\translation\Translation::$current_lang][$str][0]
+        : $str;
+}
+
+/**
+ * Translate the plural form of a string.
+ *
+ * @param $sing Singular form of the string
+ * @param $plur Plural form of the string
+ * @param $n Number of elements
+ * @return string Translated string
+ */
+function _n($sing, $plur, $n)
+{
+    if (isset(\photon\translation\Translation::$plural_forms[\photon\translation\Translation::$current_lang])) {
+        $cl = \photon\translation\Translation::$plural_forms[\photon\translation\Translation::$current_lang];
+        $idx = $cl($n);
+    } else {
+        $idx = (int) ($n != 1);  // Default to English form
+    }
+    $str = $sing . '#' . $plur;
+    if (!empty(\photon\translation\Translation::$loaded[\photon\translation\Translation::$current_lang][$str][$idx])) {
+
+        return \photon\translation\Translation::$loaded[\photon\translation\Translation::$current_lang][$str][$idx];
+    }
+
+    return ($n == 1) ? $sing : $plur;
+}
+
+set_include_path(realpath(__DIR__ . '/../') 
+                 . PATH_SEPARATOR . get_include_path());
 spl_autoload_register('photonAutoLoad', true, true);
+

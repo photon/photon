@@ -430,13 +430,13 @@ class CommandServer extends Base
     {
         Conf::load($this->getConfig());
         $this->setupSenderCom();
-
+        $timeout = ($this->params['wait'] > 0) ? $this->params['wait'] * 1000 : 1000;
         // We send the order to all the servers. Servers must
         // subscribe to ALL and to their own id.
         $this->sendCommand('PING');
         $this->sendCommand('LIST');
         $this->info('Waiting for the answers...');
-        $answers = $this->read(1000);
+        $answers = $this->read($timeout);
         $idlen = 0;
         foreach (array_keys($answers) as $id) {
             if (strlen($id) > $idlen) {
@@ -480,13 +480,13 @@ class CommandServer extends Base
     {
         Conf::load($this->getConfig());
         $this->setupSenderCom();
-
+        $timeout = ($this->params['wait'] > 0) ? $this->params['wait'] * 1000 : 1000;
         // We send the order to all the servers. Servers must
         // subscribe to ALL and to their own id.
         $this->sendCommand('PING');
         $this->sendCommand('STOP');
         $this->info('Waiting for the answers...');
-        $answers = $this->read(1000);
+        $answers = $this->read($timeout);
         $idlen = 0;
         foreach (array_keys($answers) as $id) {
             if (strlen($id) > $idlen) {
@@ -673,13 +673,16 @@ class SelfTest extends Base
             if (!file_exists($this->params['directory'])) {
                 mkdir($this->params['directory']);
             }
-            passthru('phpunit --coverage-html '.realpath($this->params['directory']).' '.realpath(__DIR__).'/tests/*/*.php', $rvar);
+            $this->verbose('phpunit --bootstrap '.realpath(__DIR__).'/testbootstrap.php --coverage-html '.realpath($this->params['directory']).' '.realpath(__DIR__).'/tests/');
+            passthru('phpunit --bootstrap '.realpath(__DIR__).'/testbootstrap.php --coverage-html '.realpath($this->params['directory']).' '.realpath(__DIR__).'/tests/', $rvar);
             $this->info(sprintf('Code coverage report: %s/index.html.',
                                 realpath($this->params['directory'])));
         } else {
             $xmlout = tempnam(Conf::f('tmp_folder', sys_get_temp_dir()), 'phpunit').'.xml';
-            passthru('phpunit --coverage-clover '.$xmlout.' '.realpath(__DIR__).'/tests/*/*.php', $rvar);
+            $this->verbose('phpunit --bootstrap '.realpath(__DIR__).'/testbootstrap.php --coverage-clover '.$xmlout.' '.realpath(__DIR__).'/tests/');
+            passthru('phpunit --bootstrap '.realpath(__DIR__).'/testbootstrap.php --coverage-clover '.$xmlout.' '.realpath(__DIR__).'/tests/', $rvar);
             $xml = simplexml_load_string(file_get_contents($xmlout));
+            
             unlink($xmlout);
             $this->info(sprintf('Code coverage %s/%s (%s%%)',
                                 $xml->project->metrics['coveredstatements'],

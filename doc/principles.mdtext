@@ -45,6 +45,11 @@ MongoDB, because it is fast and nicely answers our needs:
 - No real needs of migrations, they can be handled at the code level on a running system.
 - Memory mapped, that is, no disk access when the dataset is small.
 
+Use PHP. This may be a surprising remark, but most of the frameworks
+tend to reinvent the PHP builtin functions and classes, just don't do
+it. Use PHP as much as possible, this is faster and safer on the long
+run.
+
 # Critics
 
 It Sucks, I Cannot Use It On Shared Hosting. Yes, but the goal here is
