@@ -316,70 +316,70 @@ class Translation
     }
 }
 
-/**
- * Translation middleware.
- *
- * Load the translation of the website based on the useragent.
- */
-class Middleware
-{
-    /**
-     * Process the request.
-     *
-     * Find which language to use. By priority:
-     * 1. a session value
-     * 2. a cookie
-     * 3. the browser Accept-Language header
-     *
-     * @param $request The request
-     * @return bool false
-     */
-    function process_request(&$request)
-    {
-        $lang = false;
-        if (!empty($request->session)) {
-            $lang = $request->session->getData('language', false);
-            if ($lang && !in_array($lang, Conf::f('languages', array('en')))) {
-                $lang = false;
-            }
-        }
-        if ($lang === false && !empty($request->COOKIE[Conf::f('lang_cookie', 'lang')])) {
-            $lang = $request->COOKIE[Conf::f('lang_cookie', 'lang')];
-            if ($lang && !in_array($lang, Conf::f('languages', array('en')))) {
-                $lang = false;
-            }
-        }
-        if ($lang === false) {
-            // will default to 'en'
-            $lang = Translation::getAcceptedLanguage(Conf::f('languages', array('en')));
-        }
-        Translation::loadSetLocale($lang);
-        $request->language_code = $lang;
-        return false;
-    }
+// /**
+//  * Translation middleware.
+//  *
+//  * Load the translation of the website based on the useragent.
+//  */
+// class Middleware
+// {
+//     /**
+//      * Process the request.
+//      *
+//      * Find which language to use. By priority:
+//      * 1. a session value
+//      * 2. a cookie
+//      * 3. the browser Accept-Language header
+//      *
+//      * @param $request The request
+//      * @return bool false
+//      */
+//     function process_request(&$request)
+//     {
+//         $lang = false;
+//         if (!empty($request->session)) {
+//             $lang = $request->session->getData('language', false);
+//             if ($lang && !in_array($lang, Conf::f('languages', array('en')))) {
+//                 $lang = false;
+//             }
+//         }
+//         if ($lang === false && !empty($request->COOKIE[Conf::f('lang_cookie', 'lang')])) {
+//             $lang = $request->COOKIE[Conf::f('lang_cookie', 'lang')];
+//             if ($lang && !in_array($lang, Conf::f('languages', array('en')))) {
+//                 $lang = false;
+//             }
+//         }
+//         if ($lang === false) {
+//             // will default to 'en'
+//             $lang = Translation::getAcceptedLanguage(Conf::f('languages', array('en')));
+//         }
+//         Translation::loadSetLocale($lang);
+//         $request->language_code = $lang;
+//         return false;
+//     }
 
-    /**
-     * Process the response of a view.
-     *
-     * @param Pluf_HTTP_Request The request
-     * @param Pluf_HTTP_Response The response
-     * @return Pluf_HTTP_Response The response
-     */
-    function process_response($request, $response)
-    {
-        $vary_h = array();
-        if (!empty($response->headers['Vary'])) {
-            $vary_h = preg_split('/\s*,\s*/', $response->headers['Vary'],
-                                 -1, PREG_SPLIT_NO_EMPTY);
-        }
-        if (!in_array('accept-language', $vary_h)) {
-            $vary_h[] = 'accept-language';
-        }
-        $response->headers['Vary'] = implode(', ', $vary_h);
-        $response->headers['Content-Language'] = $request->language_code;
-        return $response;
-    }
-}
+//     /**
+//      * Process the response of a view.
+//      *
+//      * @param Pluf_HTTP_Request The request
+//      * @param Pluf_HTTP_Response The response
+//      * @return Pluf_HTTP_Response The response
+//      */
+//     function process_response($request, $response)
+//     {
+//         $vary_h = array();
+//         if (!empty($response->headers['Vary'])) {
+//             $vary_h = preg_split('/\s*,\s*/', $response->headers['Vary'],
+//                                  -1, PREG_SPLIT_NO_EMPTY);
+//         }
+//         if (!in_array('accept-language', $vary_h)) {
+//             $vary_h[] = 'accept-language';
+//         }
+//         $response->headers['Vary'] = implode(', ', $vary_h);
+//         $response->headers['Content-Language'] = $request->language_code;
+//         return $response;
+//     }
+// }
 
 function poCleanHelper($x) 
 {

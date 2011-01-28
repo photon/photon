@@ -111,8 +111,14 @@ msgstr "stats de l\'index"';
     public function testLoadLocale()
     {
         $pos = Translation::loadLocale('fr', array(), array('/doesnotexist'), false);
-        //explode(PATH_SEPARATOR, get_include_path()));
         $this->assertEquals(0, count($pos));
+    }
+
+    public function testLoadLocaleWithPhoton()
+    {
+        $pos = Translation::loadLocale('fr', array('dummyapp'), 
+                                       array(realpath(__DIR__ . '/../data/')), true);
+        $this->assertEquals(2, count($pos));
     }
 
     public function testSetLocale()

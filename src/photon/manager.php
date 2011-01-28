@@ -668,7 +668,9 @@ class SelfTest extends Base
     public function run()
     {
         $this->verbose('Run Photon selftesting routines...');
+        $this->info(sprintf('Photon %s by Loïc d\'Anterroches and contributors.', \photon\VERSION));
         Conf::load($this->getConfig());
+        $this->info('Using ', ''); // To avoid a confusion with PHPUnit
         if (isset($this->params['directory'])) {
             if (!file_exists($this->params['directory'])) {
                 mkdir($this->params['directory']);

@@ -43,7 +43,10 @@ class Exception extends \Exception {}
  * $mystring = \photon\crypto\Sign::unsigns($signed, $key);
  * </pre>
  *
- * Usage to pack and sign an object:
+ * Usage to pack and sign an object, the object is packed using
+ * json_encode and of course decoded with json_decode. This means that
+ * it is not aimed as serializing complex objects.
+ *
  * <pre>
  * $signed = \photon\crypto\Sign::dumps($myobject, $key);
  * // send the string over the wire
@@ -71,7 +74,7 @@ class Sign
      */
     public static function dumps($obj, $key, $compress=true)
     {
-        $serialized = serialize($obj);
+        $serialized = json_encode($obj); 
         $is_compressed = false; // Flag for if it's been compressed or not
         if ($compress) {
             $compressed = gzdeflate($serialized, 9);
@@ -107,7 +110,7 @@ class Sign
         if ($decompress) {
             $serialized = gzinflate($serialized);
         }
-        return unserialize($serialized);
+        return json_decode($serialized); 
     }
 
     /**

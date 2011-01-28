@@ -73,9 +73,10 @@ class Dispatcher
             if ($response === false) {   
                 $response = self::match($req);
             }
-            if (!empty($req->response_vary_on)) {
-                $response->headers['Vary'] = $req->response_vary_on;
-            }
+            // // FUTURE: Need an elegant way to handle these vary etc.
+            // if ($response !== false && !empty($req->response_vary_on)) {
+            //     $response->headers['Vary'] = $req->response_vary_on;
+            // }
             $middleware = array_reverse($middleware);
             foreach ($middleware as $mw) {
                 if (method_exists($mw, 'process_response')) {
@@ -84,9 +85,10 @@ class Dispatcher
             }
         } catch (\Exception $e) {
             if (true !== Conf::f('debug', false)) {
-                $response = new Pluf_HTTP_Response_ServerError($e, $req);
+                $response = new \photon\http\response\ServerError($e, $req);
             } else {
-                $response = new Pluf_HTTP_Response_ServerErrorDebug($e);
+                $response = new \photon\http\response\ServerErrorDebug($e->getMessage());
+                $response->setContent($e, $req);
             }
         }
 
@@ -101,8 +103,9 @@ class Dispatcher
      * @param Pluf_HTTP_Request Request object
      * @return Pluf_HTTP_Response Response object
      */
-    public static function match($req, $firstpass=true)
+    public static function match($req)
     {
+        $checked = array();
         $views = Conf::f('urls', array());
         try {
             $to_match = $req->path;
@@ -110,6 +113,7 @@ class Dispatcher
             $i = 0;
             while ($i < $n) {
                 $ctl = $views[$i];
+                $checked[] = $ctl;
                 if (preg_match($ctl['regex'], $to_match, $match)) {
                     if (!isset($ctl['sub'])) {
                         return self::send($req, $ctl, $match);
@@ -124,12 +128,13 @@ class Dispatcher
                 }
                 ++$i;
             }
-        } catch (\Exception $e) { // Need to only catch the 404 error exception
-            // Need to add a 404 error handler
-            // something like Pluf::f('404_handler', 'class::method')
+        } catch (\photon\http\error\NotFound $e) { 
+            // We catch only the not found errors at the moment.
         }
 
-        return new \photon\http\response\NotFound($req);
+        $response = new \photon\http\response\NotFound($req);
+        $response->dispatch_path = $checked;
+        return $response;
     }
 
     /**
@@ -138,49 +143,67 @@ class Dispatcher
      * The called view can throw an exception. This is fine and
      * normal.
      *
-     * @param Pluf_HTTP_Request Current request
-     * @param array The url definition matching the request
-     * @param array The match found by preg_match
-     * @return Pluf_HTTP_Response Response object
+     * @param $req Photon request 
+     * @param $ctl The url definition matching the request
+     * @param $matches The matches found by preg_match
+     * @return mixed Response or None
      */
     public static function send($req, $ctl, $match)
     {
         $req->view = array($ctl, $match);
-        /// $ctl['view'] is a callable.
+
+        if (is_array($ctl['view'])) {
+            list($mn, $mv) = $ctl['view'];
+            $m = new $mn();
+            if (!isset($ctl['params'])) {
+                return $m->{$mv}($req, $match);
+            } else {
+                return $m->{$mv}($req, $match, $ctl['params']);
+            }
+        } else {
+            // simple callable function
+            $v = $ctl['view'];
+            if (!isset($ctl['params'])) {
+                return $v($req, $match);
+            } else {
+                return $v($req, $match, $ctl['params']);
+            }
+        }
+
         
 
-        $m = new $ctl['model']();
-        if (isset($m->{$ctl['method'] . '_precond'})) {
-            // Here we have preconditions to respects. If the "answer"
-            // is true, then ok go ahead, if not then it a response so
-            // return it or an exception so let it go.
-            $preconds = $m->{$ctl['method'] . '_precond'};
-            if (!is_array($preconds)) {
-                $preconds = array($preconds);
-            }
-            foreach ($preconds as $precond) {
-                if (!is_array($precond)) {
-                    $res = call_user_func_array(explode('::', $precond),
-                                                array(&$req)
-                                                );
-                } else {
-                    $res = call_user_func_array(explode('::', $precond[0]),
-                                                array_merge(array(&$req),
-                                                            array_slice($precond, 1))
-                                                );
-                }
+        // $m = new $ctl['model']();
+        // if (isset($m->{$ctl['method'] . '_precond'})) {
+        //     // Here we have preconditions to respects. If the "answer"
+        //     // is true, then ok go ahead, if not then it a response so
+        //     // return it or an exception so let it go.
+        //     $preconds = $m->{$ctl['method'] . '_precond'};
+        //     if (!is_array($preconds)) {
+        //         $preconds = array($preconds);
+        //     }
+        //     foreach ($preconds as $precond) {
+        //         if (!is_array($precond)) {
+        //             $res = call_user_func_array(explode('::', $precond),
+        //                                         array(&$req)
+        //                                         );
+        //         } else {
+        //             $res = call_user_func_array(explode('::', $precond[0]),
+        //                                         array_merge(array(&$req),
+        //                                                     array_slice($precond, 1))
+        //                                         );
+        //         }
 
-                if ($res !== true) {
-                    return $res;
-                }
-            }
-        }
+        //         if ($res !== true) {
+        //             return $res;
+        //         }
+        //     }
+        // }
 
-        if (!isset($ctl['params'])) {
-            return $m->$ctl['method']($req, $match);
-        } else {
-            return $m->$ctl['method']($req, $match, $ctl['params']);
-        }
+        // if (!isset($ctl['params'])) {
+        //     return $m->$ctl['method']($req, $match);
+        // } else {
+        //     return $m->$ctl['method']($req, $match, $ctl['params']);
+        // }
     }
 }
 

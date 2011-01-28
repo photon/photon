@@ -30,6 +30,8 @@
 
 namespace photon
 {
+    const VERSION = '0.0.1';
+
     /**
      * Shortcut needed all over the place.
      *
@@ -55,7 +57,7 @@ namespace photon
         require_once 'Console/CommandLine.php';
         $parser = new \Console_CommandLine(array(
             'description' => 'Photon command line manager.',
-            'version'     => '0.0.1'));
+            'version'     => VERSION));
         $parser->addOption('verbose',
                            array('short_name'  => '-v',
                                  'long_name'   => '--verbose',

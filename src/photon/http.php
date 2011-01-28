@@ -24,6 +24,8 @@ namespace photon\http;
 
 use photon\config\Container as Conf;
 
+class Exception extends \Exception {}
+
 /**
  * Response object to be constructed by the views.
  *
@@ -123,7 +125,7 @@ class Response
      * @param string MimeType of the response (null) if not given will
      * default to the one given in the configuration 'mimetype'
      */
-    function __construct($content = '', $mimetype = 'text/html; charset=utf-8')
+    function __construct($content='', $mimetype='text/html; charset=utf-8')
     {
         $this->content = $content;
         $this->headers['Content-Type'] = $mimetype;
@@ -298,6 +300,15 @@ class Cookie implements \ArrayAccess
      */
     private $all = array();
 
+    /**
+     * Store the deleted cookies.
+     *
+     * You want to have isset() returns false after you delete a
+     * cookie even so your cookie exists and is marked as going to be
+     * deleted.
+     */
+    private $delete = array();
+
     public function __construct($cookies=array()) 
     {
         foreach ($cookies as $name => $value) {
@@ -307,6 +318,8 @@ class Cookie implements \ArrayAccess
     
     /**
      * Returns all the cookies in a list of arrays.
+     *
+     * This includes the cookies set in the past for deletion.
      *
      * @return array All the cookies
      */
@@ -371,19 +384,24 @@ class Cookie implements \ArrayAccess
     public function offsetSet($offset, $value) 
     {
         if (null === $offset) {
-            throw new \Exception('You need to provide a cookie name.');
+            throw new Exception('You need to provide a cookie name.');
         }
         $this->setCookie($offset, $value);
+        unset($this->delete[$offset]);
     }
 
     public function offsetExists($offset) 
     {
+        if (isset($this->delete[$offset])) {
+            return false;
+        }
         return isset($this->all[$offset]);
     }
 
     public function offsetUnset($offset) 
     {
         $this->delCookie($offset);
+        $this->delete[$offset] = true;
     }
 
     public function offsetGet($offset) 
