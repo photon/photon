@@ -27,6 +27,8 @@ use \photon\config\Container as Conf;
 use \photon\http\Response as Response;
 use \photon\http\Request as Request;
 
+include_once __DIR__ . '/../../http/response.php';
+
 class baseTest extends \PHPUnit_Framework_TestCase
 {
     protected $conf;
@@ -92,4 +94,48 @@ class baseTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(array('title' => ''), $req->POST);
         fclose($datafile);
     }
+
+    public function testForbidden()
+    {
+        $resp = new \photon\http\response\Forbidden('##content##');
+        $out = $resp->render();
+        $this->assertEquals(0, strpos($out, 'HTTP/1.1 403 FORBIDDEN'));
+    }
+
+    public function testServerError()
+    {
+        $mess = (object) array('headers' => (object) array('QUERY' => 'a=b&c=d',
+                                                           'METHOD' => 'GET'),
+                               'path' => '/home',
+                               'sender' => 'mongrel2',
+                               'body' => '',
+                               'conn_id' => '1234');
+
+        $req = new Request($mess);
+        try {
+            throw new \Exception('Bad exception', 123);
+        } catch (\Exception $e) {
+        }
+        $res = \photon\http\response\pretty_server_error($e, $req);
+    }
+
+    public function testServerErrorWithTemplate()
+    {
+        $mess = (object) array('headers' => (object) array('QUERY' => 'a=b&c=d',
+                                                           'METHOD' => 'GET'),
+                               'path' => '/home',
+                               'sender' => 'mongrel2',
+                               'body' => '',
+                               'conn_id' => '1234');
+
+        $req = new Request($mess);
+        try {
+            throw new \Exception('Bad exception', 123);
+        } catch (\Exception $e) {
+        }
+        Conf::set('template_folders', array(__DIR__));
+        $res = new \photon\http\response\ServerError($e);
+        $this->assertEquals('Server Error!'."\n", $res->content);
+    }
+
 }

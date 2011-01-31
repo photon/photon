@@ -68,17 +68,17 @@ class ServerError extends Response
     {
         $content = '';
         $admins = Conf::f('admins', array());
-        if (count($admins) > 0) {
-            // Get a nice stack trace and send it by emails.
-            $stack = pretty_server_error($exception);
-            $subject = $exception->getMessage();
-            $subject = substr(strip_tags(nl2br($subject)), 0, 50).'...';
-            foreach ($admins as $admin) {
-                $email = new Pluf_Mail($admin[1], $admin[1], $subject);
-                $email->addTextMessage($stack);
-                $email->sendMail();
-            }
-        }
+        // if (count($admins) > 0) {
+        //     // Get a nice stack trace and send it by emails.
+        //     $stack = pretty_server_error($exception);
+        //     $subject = $exception->getMessage();
+        //     $subject = substr(strip_tags(nl2br($subject)), 0, 50).'...';
+        //     foreach ($admins as $admin) {
+        //         $email = new Pluf_Mail($admin[1], $admin[1], $subject);
+        //         $email->addTextMessage($stack);
+        //         $email->sendMail();
+        //     }
+        // }
         try {
             $context = new template\Context(array('message' => $exception->getMessage()));
             $renderer = new template\Renderer('500.html');
@@ -120,9 +120,6 @@ function pretty_server_error($e, $req)
                'return html_entity_decode(str_replace("&nbsp;", " ", $line));');
     $desc = get_class($e)." making ".$req->METHOD." request to ".$req->PATH;
     $out = $desc."\n";
-    if ($e->getCode()) { 
-        $out .= $e->getCode(). ' : '; 
-    }
     $out .= $e->getMessage()."\n\n";
     $out .= 'PHP: '.$e->getFile().', line '.$e->getLine()."\n";
     $out .= 'URI: '.$req->METHOD.' '.$req->PATH."\n\n";
@@ -145,11 +142,11 @@ function pretty_server_error($e, $req)
             foreach ( $lines as $k => $line ) {
                 if ( $k > $end ) { break; }
                 $line = trim(strip_tags($line));
-                if ( $k < $start && isset($frames[$frame_id+1]["function"])
-                     && preg_match('/function( )*'.preg_quote($frames[$frame_id+1]["function"]).'/',
-                                   $line) ) {
-                    $start = $k;
-                }
+                // if ( $k < $start && isset($frames[$frame_id+1]["function"])
+                //      && preg_match('/function( )*'.preg_quote($frames[$frame_id+1]["function"]).'/',
+                //                    $line) ) {
+                //     $start = $k;
+                // }
                 if ( $k >= $start ) {
                     if ( $k != $frame['line'] ) {
                         $out2 .= ($start+$i).': '.$clean($line)."\n"; 
@@ -167,17 +164,17 @@ function pretty_server_error($e, $req)
     } 
     $out .= "\n\n\n\n";
     $out .= '** Request **'."\n\n";
-    $out .= 'Sender:   ' . $req->mreq->sender . "\n";
-    $out .= 'Path:     ' . $req->mreq->path . "\n";
-    $out .= 'Conn id:  ' . $req->mreq->conn_id . "\n";
+    $out .= 'Sender:   ' . $req->mess->sender . "\n";
+    $out .= 'Path:     ' . $req->mess->path . "\n";
+    $out .= 'Conn id:  ' . $req->mess->conn_id . "\n";
 
     $out .= "\n".'* Request headers *'."\n\n";
-    foreach ($req->mreq->headers as $hdr => $val) {
+    foreach ($req->mess->headers as $hdr => $val) {
         $out .= 'Variable: ' . $hdr . "\n";
         $out .= 'Value:    ' . $val . "\n";
     }
     $out .= "\n".'* Request body *'."\n\n";
-    $out .= (string) $req->mreq->body . "\n\n";
+    $out .= (string) $req->mess->body . "\n\n";
 
     return $out;
 }
@@ -376,9 +373,6 @@ function html_pretty_server_error($e, $req)
 <div id="summary">
   <h1>' . $o($desc) . '</h1>
   <h2>';
-    if ($e->getCode()) { 
-        $out .= $o($e->getCode()). ' : '; 
-    }
     $out .= ' ' . $o($e->getMessage()) . '</h2>
   <table>
     <tr>
@@ -448,11 +442,11 @@ function html_pretty_server_error($e, $req)
             foreach ( $lines as $k => $line ) {
                 if ( $k > $end ) { break; }
                 $line = trim(strip_tags($line));
-                if ( $k < $start && isset($frames[$frame_id+1]["function"])
-                     && preg_match('/function( )*'.preg_quote($frames[$frame_id+1]["function"]).'/',
-                                   $line) ) {
-                    $start = $k;
-                }
+                // if ( $k < $start && isset($frames[$frame_id+1]["function"])
+                //      && preg_match('/function( )*'.preg_quote($frames[$frame_id+1]["function"]).'/',
+                //                    $line) ) {
+                //     $start = $k;
+                // }
                 if ( $k >= $start ) {
                     if ( $k != $frame['line'] ) {
                 $out2 .= '<li><code>'.$clean($line).'</code></li>'."\n"; }
@@ -479,15 +473,7 @@ function html_pretty_server_error($e, $req)
     <span id="req_switch">▶</span></a></h2>
   <div id="req_list" class="section">';
     $out .= '
-    <h3>Request <span>(parsed)</span></h3>';
-
-    $superglobals = array('$_GET','$_POST','$_COOKIE','$_SERVER','$_ENV');
-    /*
-    foreach ( $superglobals as $sglobal ) {
-        $sfn = create_function('','return '.$sglobal.';');
-        $out .= '<h4>'.$sglobal.'</h4>';
-        if ( count($sfn()) > 0 ) {
-            $out .= '
+    <h3>Request <span>(parsed)</span></h3>
       <table class="req">
         <thead>
           <tr>
@@ -495,54 +481,42 @@ function html_pretty_server_error($e, $req)
             <th>Value</th>
           </tr>
         </thead>
-        <tbody>';
-            foreach ( $sfn() as $k => $v ) {
-                $out .= '<tr>
-              <td>'.$o($k).'</td>
-              <td class="code">
-                <div>'.$o(print_r($v,TRUE)).'</div>
-                </td>
-            </tr>';
-            }
-            $out .= '
+        <tbody>
+        <tr><td>Sender</td>
+        <td class="code"><div>'.$o(print_r($req->mess->sender,TRUE)).'</div></td>
+        </tr>
+        <tr><td>Path</td>
+        <td class="code"><div>'.$o(print_r($req->mess->path,TRUE)).'</div></td>
+        </tr>
+        <tr><td>Connection Id</td>
+        <td class="code"><div>'.$o(print_r($req->mess->conn_id,TRUE)).'</div></td>
+        </tr>
         </tbody>
-      </table>';
-        } else { 
-            $out .= '
-      <p class="whitemsg">No data</p>';
-        } 
-        }*/
+      </table>
+    <h4>Request Headers</h4>
+      <table class="req">
+        <thead>
+          <tr>
+            <th>Variable</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+';
+    foreach ($req->mess->headers as $hdr => $val) {
+        $out .= '        <tr><td>' . $o($hdr) . '</td>
+        <td class="code"><div>' . $o($val) . '</div></td>
+        </tr>';
+    }
+        $out .= '        </tbody>
+      </table>
+   <h4>Request Body</h4>
+<pre>';
+$out .= (string) $o($req->mess->body) . '</pre>';
     $out .= '
       
   </div>
 </div>';
-    if ( function_exists('headers_list') ) { 
-        $out .= '
-<div id="response">
-
-  <h2>Response
-    <a href=\'#\' onclick="return sectionToggle(\'resp_switch\',\'resp_list\')">
-    <span id="resp_switch">▶</span></a></h2>
-  
-  <div id="resp_list" class="section">
-
-    <h3>Headers</h3>';
-        $resp_headers = headers_list();
-        if (count($resp_headers) > 0) {
-            $out .= '
-    <p class="headers">';
-            foreach ( $resp_headers as $resp_h ) {
-                $out .= $o($resp_h);
-                $out .= '<br>';
-            }
-            $out .= '    </p>';
-        } else {
-            $out .= '
-      <p>No headers.</p>';
-        } 
-        $out .= '
-</div>';
-    } 
     $out .= '
 </body>
 </html>

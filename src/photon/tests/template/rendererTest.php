@@ -26,6 +26,16 @@ namespace photon\tests\template\rendererTest;
 use photon\template as template;
 use \photon\config\Container as Conf;
 
+class TagFailure extends template\tag\Tag
+{
+    public function start($fail=true)
+    {
+        if ($fail) {
+            throw new \Exception('Failure!');
+        }
+    }
+}
+
 class rendererTest extends \PHPUnit_Framework_TestCase
 {
     public function setUp()
@@ -66,5 +76,28 @@ class rendererTest extends \PHPUnit_Framework_TestCase
                                           array(__dir__));
         $this->assertequals('/home'."\n", $renderer->render());
     }
+
+    public function testWriteFailure()
+    {
+        $renderer = new template\Renderer('data-template-tag-url.html', 
+                                          array(__dir__));
+        $renderer->template_content = '';
+        $this->setExpectedException('\photon\template\Exception');
+        $renderer->write('/no.write.access.here');
+    }
+
+    public function testRenderFailure()
+    {
+        $renderer = new template\Renderer('data-template-failuretag.html', 
+                                          array(__dir__), null,
+                                          array('tags' => 
+                                                array('failured' => '\photon\tests\template\rendererTest\TagFailure')));
+
+        $renderer->render(new template\Context(array('fail' => false)));
+        $this->setExpectedException('\Exception');
+        $renderer->render(new template\Context(array('fail' => true)));
+
+    }
+
 }
 

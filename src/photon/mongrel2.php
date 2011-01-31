@@ -48,18 +48,6 @@ function parse_netstring($ns)
     );
 }
 
-function http_response($body, $code, $status, $headers)
-{
-    $http = "HTTP/1.1 %s %s\r\n%s\r\n%s";
-    $headers = (array) $headers; # If null it will be forced to empty array
-    $headers['Content-Length'] = \strlen($body);
-    $hd = '';
-    foreach($headers as $k => $v) {
-        $hd .= \sprintf("%s: %s\r\n", $k, $v);
-    }
-    return \sprintf($http, $code, $status, $hd, $body);
-}
-
 /**
  * Wraps the Mongrel2 message to the application server.
  */
@@ -195,7 +183,7 @@ class Connection
         } else {
             // Need to grab the end of the headers
             $toread = $len - $rlen;
-            $headers = \json_decode(fread($fp, $toread));
+            $headers = \json_decode($rest . fread($fp, $toread));
             fread($fp, 1); // The comma
         }
         // Now the body of the request is available by just doing a simple:
@@ -231,13 +219,14 @@ class Connection
 
     public function reply($req, $msg)
     {
-        $this->send($req->sender, $req->conn_id, $msg);
+        return $this->send($req->sender, $req->conn_id, $msg);
     }
 
     public function send($uuid, $conn_id, $msg)
     {
         $header = \sprintf('%s %d:%s,', $uuid, \strlen($conn_id), $conn_id);
-        $this->resp->send($header . ' ' . $msg);
+
+        return $this->resp->send($header . ' ' . $msg);
     }
 
     /**
@@ -249,7 +238,13 @@ class Connection
      */
     public function deliver($uuid, $idents, $data)
     {
-        $this->send($uuid, \join(' ', $idents),  $data);
+        return $this->send($uuid, \join(' ', $idents),  $data);
+    }
+
+    public function close()
+    {
+        $this->reqs = null;
+        $this->resp = null;
     }
 }
 
