@@ -97,7 +97,7 @@ class templateTest extends \PHPUnit_Framework_TestCase
         $compiler = new compiler\Compiler('data-template-modifier.html', 
                                           array(__DIR__));
         $this->assertEquals('<?php \photon\template\Renderer::secho(\photon\template\Modifier::safe($t->_vars->hello)); ?>'."\n\n", $compiler->compile());
-        $this->assertEquals('<?php photonLoadFunction(\'\photon\template\Modifier::safe\'); ?><?php \photon\template\Renderer::secho(\photon\template\Modifier::safe($t->_vars->hello)); ?>'."\n\n", $compiler->getCompiledTemplate());
+        $this->assertEquals('<?php \photonLoadFunction(\'\photon\template\Modifier::safe\'); ?><?php \photon\template\Renderer::secho(\photon\template\Modifier::safe($t->_vars->hello)); ?>'."\n\n", $compiler->getCompiledTemplate());
     }
 
     public function testBadTemplateFile()

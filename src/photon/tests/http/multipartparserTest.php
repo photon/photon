@@ -45,7 +45,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
     public function testVideoUploadContent()
     {
-        $datafile = fopen(__DIR__ . '/../data/multi_video.upload', 'r+b');
+        $datafile = fopen(__DIR__ . '/../data/multi_video.upload', 'rb');
         $headers = (object) array('content-type' => 'multipart/form-data; boundary=---------------------------10102754414578508781458777923');
         $parser = new \photon\http\multipartparser\MultiPartParser($headers, 
                                                                    $datafile);
@@ -77,7 +77,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
     public function testBoundaryNotMatching()
     {
-        $datafile = fopen(__DIR__ . '/../data/multi_video.upload', 'r+b');
+        $datafile = fopen(__DIR__ . '/../data/multi_video.upload', 'rb');
         $headers = (object) array('content-type' => 'multipart/form-data; boundary=---------------------------WILLNOTMATCH78508781458777923');
         $parser = new \photon\http\multipartparser\MultiPartParser($headers, 
                                                                    $datafile);
@@ -88,7 +88,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
     public function testNoBoundaryEnd()
     {
-        $datafile = fopen(__DIR__ . '/../data/multi_video.upload.corrupted', 'r+b');
+        $datafile = fopen(__DIR__ . '/../data/multi_video.upload.corrupted', 'rb');
         $headers = (object) array('content-type' => 'multipart/form-data; boundary=---------------------------10102754414578508781458777923');
         $parser = new \photon\http\multipartparser\MultiPartParser($headers, 
                                                                    $datafile);
@@ -99,7 +99,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
     public function testReadDataFields()
     {
-        $datafile = fopen(__DIR__ . '/../data/multi_video.upload', 'r+b');
+        $datafile = fopen(__DIR__ . '/../data/multi_video.upload', 'rb');
         $headers = (object) array('content-type' => 'multipart/form-data; boundary=---------------------------10102754414578508781458777923');
         $parser = new \photon\http\multipartparser\MultiPartParser($headers, 
                                                                    $datafile);
@@ -112,7 +112,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
     public function testReadSmallDataFields()
     {
-        $datafile = fopen(__DIR__ . '/../data/small.upload', 'r+b');
+        $datafile = fopen(__DIR__ . '/../data/small.upload', 'rb');
         $headers = (object) array('content-type' => 'multipart/form-data; boundary=---------------------------10102754414578508781458777923');
         $parser = new \photon\http\multipartparser\MultiPartParser($headers, 
                                                                    $datafile);

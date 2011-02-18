@@ -184,7 +184,8 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
                                 ));
         $headers = (object) array('METHOD' => 'GET');
         $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
-        list($req, $resp) = Dispatcher::dispatch($msg);
+        $req = new \photon\http\Request($msg);
+        list($req, $resp) = Dispatcher::dispatch($req);
         $this->assertNotEquals(false, strpos($resp->content, 'coredispatchTest'));
         Conf::set('debug', false);
         list($req, $resp) = Dispatcher::dispatch($msg);

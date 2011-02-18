@@ -83,7 +83,7 @@ class baseTest extends \PHPUnit_Framework_TestCase
 
     public function testComplexPost()
     {
-        $datafile = fopen(__DIR__ . '/../data/multi_video.upload', 'r+b');
+        $datafile = fopen(__DIR__ . '/../data/multi_video.upload', 'rb');
         $mess = (object) array('headers' => (object) array('QUERY' => 'a=b&c=d',
                                                            'content-type' => 'multipart/form-data; boundary=---------------------------10102754414578508781458777923',
                                                            'METHOD' => 'POST'),

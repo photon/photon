@@ -64,7 +64,7 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
 
     public function testMessage()
     {
-        $datafile = fopen(__DIR__ . '/../data/example.payload', 'r+b');
+        $datafile = fopen(__DIR__ . '/../data/example.payload', 'rb');
         $front = strlen('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 422:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"POST","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},21894:');
         fseek($datafile, $front, SEEK_CUR);
         $mess = new mongrel2\Message('34f9ceee-cd52-4b7f-b197-88bf2f0ec378',
