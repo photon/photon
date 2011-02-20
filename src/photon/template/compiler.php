@@ -286,7 +286,7 @@ class Compiler
         $result = $this->compile();
         $code = array();
         foreach ($this->_usedModifiers as $modifier) {
-            $code[] = 'photonLoadFunction(\''.$modifier.'\'); ';
+            $code[] = '\photonLoadFunction(\''.$modifier.'\'); ';
         }
         if (count($code)) {
 

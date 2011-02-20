@@ -59,12 +59,12 @@ class Server
     /**
      * Where the control requests are given.
      */
-    public $ipc_control_orders = 'ipc://photon-control-orders';
+    public $ipc_internal_orders = 'ipc://photon-internal-orders';
 
     /**
      * Where the control answer is pushed.
      */
-    public $ipc_control_answers = 'ipc://photon-control-answers';
+    public $ipc_internal_answers = 'ipc://photon-internal-answers';
 
     /**
      * Wrapper for the zeromq connections.
@@ -110,9 +110,9 @@ class Server
         // We need to be able to listen to the control requests and
         // send answers.
         $this->ctl_ans = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PUSH); 
-        $this->ctl_ans->connect($this->ipc_control_answers);
+        $this->ctl_ans->connect($this->ipc_internal_answers);
         $this->ctl_ord = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_SUB); 
-        $this->ctl_ord->connect($this->ipc_control_orders);
+        $this->ctl_ord->connect($this->ipc_internal_orders);
         $this->ctl_ord->setSockOpt(\ZMQ::SOCKOPT_SUBSCRIBE, 'ALL');
         $this->ctl_ord->setSockOpt(\ZMQ::SOCKOPT_SUBSCRIBE, $this->phid);
         usleep(200000); 
@@ -176,7 +176,8 @@ class Server
         fputs($fp, $conn->reqs->recv());
         rewind($fp);
         $mess = $conn->parse($fp);
-        list($req, $response) = \photon\core\Dispatcher::dispatch($mess);
+        $req = new \photon\http\Request($mess);
+        list($req, $response) = \photon\core\Dispatcher::dispatch($req);
         // If the response is false, the view is simply not
         // sending an answer, most likely the work was pushed to
         // another backend. Yes, you do not need to reply after a
@@ -322,7 +323,8 @@ class TestServer
                                                       $this->sub_addr,
                                                       $this->pub_addr);
         while ($mess = $this->conn->recv()) {
-            list($req, $response) = \photon\core\Dispatcher::dispatch($mess);
+            $req = new \photon\http\Request($mess);
+            list($req, $response) = \photon\core\Dispatcher::dispatch($req);
             // If the response is false, the view is simply not
             // sending an answer, most likely the work was pushed to
             // another backend. Yes, you do not need to reply after a
@@ -330,7 +332,7 @@ class TestServer
             if (false !== $response) {
                 $this->conn->reply($mess, $response->render());
             }
-            clearstatcache();
+            //clearstatcache();
             unset($mess); // Cleans the memory with the __destruct call.
         }
     }

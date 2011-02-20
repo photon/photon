@@ -53,21 +53,20 @@ function photonAutoLoad($class)
  *
  * @param $func Function with namespace, for example '\\fooo\\bar\\fonction'
  */
-/* Not yet used.
 function photonLoadFunction($func)
 {
     if (false !== strpos($func, '::')) {
-        return true; // We be loaded by the autoload.
+        return false; // We be loaded by the autoload.
     }
     if (function_exists($func)) {
-        return true;
+        return null;
     }
-    $parts = array_filter(explode('\\', $ns));
+    $parts = array_filter(explode('\\', $func));
     $func_base_name = array_pop($parts);
     $file = implode(DIRECTORY_SEPARATOR, $parts) . '.php';
     require_once $file;
+    return true;
 } 
-*/
 
 /**
  * Translate a string.

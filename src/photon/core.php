@@ -43,13 +43,11 @@ class Dispatcher
      * Dispatch a Mongrel2 request object and returns the request
      * object and the response object.
      *
-     * @param $mreq Request Mongrel2 request object.
+     * @param $req Photon request object.
      * @return array(Photon request, Photon response)
      */
-    public static function dispatch(&$mreq)
+    public static function dispatch($req)
     {
-        $req = new \photon\http\Request($mreq);
-
         // FUTUREOPT: One can generate the lists at the initialisation
         // of the server to avoid the repetitive calls to
         // method_exists.
@@ -107,8 +105,8 @@ class Dispatcher
     {
         $checked = array();
         $views = Conf::f('urls', array());
+        $to_match = substr($req->path, strlen(Conf::f('base_urls', '')));
         try {
-            $to_match = $req->path;
             $n = count($views);
             $i = 0;
             while ($i < $n) {

@@ -136,7 +136,7 @@ class Log
      * @param $level Level to log
      * @param $message Message to log
      */
-    private static function _log($level, $message)
+    public static function _log($level, $message)
     {
 
         if (10 !== self::$level && self::$level <= $level) {

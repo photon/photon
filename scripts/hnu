@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# This script is part of Photon, The High Performance PHP Framework.
+# Photon, copyrights 2011, Loïc d'Anterroches and contributors.
+#
+# This script is wrapping photon.php to be able to use:
+# - the PHP version of your choice;
+# - the Photon version of your choice.
+#
+# To not use the default set:
+# - $PHP_PEAR_PHP_BIN to your PHP binary;
+# - $PHP_PHOTON to your photon.php.
+#
+
+# first find which PHP binary to use
+if test "x$PHP_PEAR_PHP_BIN" != "x"; then
+  PHP="$PHP_PEAR_PHP_BIN"
+else
+  PHP="/usr/bin/php"
+fi
+
+# Then look at the photon.php
+if test "x$PHP_PHOTON" != "x"; then
+  PHOTON="$PHP_PHOTON"
+else
+  # Look for photon.php in the PEAR install dir
+  if test "x$PHP_PEAR_INSTALL_DIR" != "x"; then
+    INCDIR=$PHP_PEAR_INSTALL_DIR
+  else
+    INCDIR="/usr/share/php"
+  fi
+  PHOTON="$INCDIR/photon.php"
+fi
+
+exec $PHP $PHOTON "$@"

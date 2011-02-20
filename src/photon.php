@@ -30,7 +30,7 @@
 
 namespace photon
 {
-    const VERSION = '0.0.1';
+    const VERSION = '@version@';
 
     /**
      * Shortcut needed all over the place.
@@ -56,6 +56,7 @@ namespace photon
     {
         require_once 'Console/CommandLine.php';
         $parser = new \Console_CommandLine(array(
+            'name' => 'hnu',
             'description' => 'Photon command line manager.',
             'version'     => VERSION));
         $parser->addOption('verbose',
@@ -118,18 +119,42 @@ namespace photon
                                  ));
 
 
-        $rserver_cmd->addCommand('start',
-                                 array('description' => 'start a Photon server'));
+        $sscd = $rserver_cmd->addCommand('start',
+                                         array('description' => 'start a Photon server'));
+        $sscd->addOption('children',
+                        array('long_name'   => '--children',
+                              'action'      => 'StoreInt',
+                              'description' => 'number of children to fork. By default 3'
+                                 ));
+
         $rserver_cmd->addCommand('stop',
                                  array('description' => 'stop one or more Photon server'));
+
+        $rserver_cmd->addCommand('new',
+                                 array('description' => 'start a new Photon server child'));
+
+        $rserver_cmd->addCommand('less',
+                                 array('description' => 'stop the oldest Photon server child'));
+
         $lcd = $rserver_cmd->addCommand('list',
                                         array('description' => 'list the running Photon servers'));
+        $rserver_cmd->addCommand('childstart',
+                                 array('description' => 'internal use to fork worker children'));
+
+
         $rserver_cmd->addOption('timeout',
                         array('long_name'   => '--wait',
                               'action'      => 'StoreString',
                               'description' => 'waiting time in seconds for the answers. Needed if your servers are under heavy load'
                                  ));
  
+        $tcd = $parser->addCommand('taskstart',
+                                    array('description' => 'internal use to fork background task'));
+
+        $tcd->addArgument('task',
+                          array('description' => 'the name of the task'));
+
+
 
         return $parser;
     }
@@ -184,18 +209,37 @@ namespace
                     $m = new \photon\manager\CommandServer($params);
                     exit($m->runStop());
                     break;
+                case 'new':
+                    $m = new \photon\manager\CommandServer($params);
+                    exit($m->runStart());
+                    break;
+                case 'less':
+                    $m = new \photon\manager\CommandServer($params);
+                    exit($m->runLess());
+                    break;
                 case 'list':
                     $params += $result->command->command->options;
                     $m = new \photon\manager\CommandServer($params);
                     exit($m->runList());
                     break;
+                case 'childstart':
+                    $m = new \photon\manager\ChildServer($params);
+                    exit($m->run(false)); 
+                    break;
                 case 'start':
                 default:
-                    // Will go daemon.
-                    $m = new \photon\manager\Server($params);
+                    // Will go daemon and will fork children with childstart
+                    $params += $result->command->command->options;
+                    $params['argv'] = $argv;
+                    $m = new \photon\manager\ServerManager($params);
                     exit($m->run()); 
                     break;
                 }
+                break;
+            case 'taskstart':
+                $params['task'] = $result->command->args['task'];
+                $m = new \photon\manager\Task($params);
+                exit($m->run());
                 break;
             default:
                 // no command entered
