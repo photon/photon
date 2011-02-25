@@ -59,6 +59,8 @@ class baseTest extends \PHPUnit_Framework_TestCase
     {
         $mess = (object) array('headers' => (object) array('QUERY' => 'a=b&c=d',
                                                            'METHOD' => 'GET'),
+                               'sender' => 'mongrel2',
+                               'conn_id' => '2',
                                'path' => '/home');
         $req = new Request($mess);
         $this->assertEquals($req->path, '/home');
@@ -74,6 +76,8 @@ class baseTest extends \PHPUnit_Framework_TestCase
                                                            'content-type' => 'application/x-www-form-urlencoded',
                                                            'METHOD' => 'POST'),
                                'path' => '/home',
+                               'sender' => 'mongrel2',
+                               'conn_id' => '2',
                                'body' => $fp);
         $req = new Request($mess);
         $this->assertEquals($req->path, '/home');
@@ -88,6 +92,8 @@ class baseTest extends \PHPUnit_Framework_TestCase
                                                            'content-type' => 'multipart/form-data; boundary=---------------------------10102754414578508781458777923',
                                                            'METHOD' => 'POST'),
                                'path' => '/home',
+                               'sender' => 'mongrel2',
+                               'conn_id' => '2',
                                'body' => $datafile);
         $req = new Request($mess);
         $this->assertEquals($req->path, '/home');

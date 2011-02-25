@@ -139,7 +139,7 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
         $conn = new mongrel2\Connection($sender_id, $sub_addr, $pub_addr);
         $conn->close();
         $conn->reqs = new DummyZMQSocket();
-        $conn->reqs->setNextRecv('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 422:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"JSON","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},5:HELLO');
+        $conn->reqs->setNextRecv('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 422:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"JSON","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},7:"HELLO"');
         $mess = $conn->recv();
         $this->assertEquals($mess->path, '/handlertest/foo');
         $this->assertEquals($mess->body, 'HELLO');
@@ -155,7 +155,7 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
             $headers['X-Dummy-' . $i] = str_repeat(chr($i % 26 + 64), 100);
         }
         $headers = json_encode($headers);
-        $msg = sprintf('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo %d:%s,%d:%s,',  strlen($headers), $headers, 5, 'HELLO');
+        $msg = sprintf('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo %d:%s,%d:%s,',  strlen($headers), $headers, 7, '"HELLO"');
         $sender_id = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378';
         $sub_addr = 'ipc://sub-addr';
         $pub_addr = 'ipc://pub-addr';
