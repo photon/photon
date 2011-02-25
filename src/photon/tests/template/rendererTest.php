@@ -79,6 +79,11 @@ class rendererTest extends \PHPUnit_Framework_TestCase
 
     public function testWriteFailure()
     {
+        $uid = getmyuid();
+        if (0 === $uid) {
+            $this->markTestSkipped('The root user will have write access.');
+        }
+        
         $renderer = new template\Renderer('data-template-tag-url.html', 
                                           array(__dir__));
         $renderer->template_content = '';
