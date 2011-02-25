@@ -105,7 +105,11 @@ class Dispatcher
     {
         $checked = array();
         $views = Conf::f('urls', array());
-        $to_match = substr($req->path, strlen(Conf::f('base_urls', '')));
+        if ('@' !== $req->path[0]) {
+            $to_match = substr($req->path, strlen(Conf::f('base_urls', '')));
+        } else {
+            $to_match = $req->path;
+        }
         try {
             $n = count($views);
             $i = 0;

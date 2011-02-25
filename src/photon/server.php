@@ -177,6 +177,7 @@ class Server
         rewind($fp);
         $mess = $conn->parse($fp);
         $req = new \photon\http\Request($mess);
+        $req->conn = $conn;
         list($req, $response) = \photon\core\Dispatcher::dispatch($req);
         // If the response is false, the view is simply not
         // sending an answer, most likely the work was pushed to

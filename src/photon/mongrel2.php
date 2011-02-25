@@ -198,6 +198,7 @@ class Connection
         if ('JSON' === $headers->METHOD) {
             // small request normally
             list($body,) = parse_netstring(stream_get_contents($fp));
+            $body = json_decode($body);
             fclose($fp);
         } elseif ('POST' === $headers->METHOD) {
             // Here the parsing of the body should be done.
@@ -238,7 +239,14 @@ class Connection
      */
     public function deliver($uuid, $idents, $data)
     {
-        return $this->send($uuid, \join(' ', $idents),  $data);
+        if (129 > count($idents)) {
+            return $this->send($uuid, \join(' ', $idents),  $data);
+        }
+        // We need to send multiple times the data. We are going to
+        // send the data in series of 128 to the clients.
+        foreach (array_chunk($idents, 128) as $chunk) {
+            return $this->send($uuid, \join(' ', $chunk),  $data);
+        }
     }
 
     public function close()

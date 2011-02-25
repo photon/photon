@@ -64,7 +64,6 @@ class Runner
         if (null !== self::$ctx) {
             return;
         }
-        print_r(self::$ctx);
         self::$ctx = new \ZMQContext(); 
         foreach (Conf::f('installed_tasks', array()) as $name => $class) {
             // We need to know if this is an async or sync task
@@ -73,7 +72,6 @@ class Runner
             $conf = Conf::f('photon_task_' . $name, array());
             $bind = (isset($conf['sub_addr'])) 
                 ? $conf['sub_addr'] : SUB_ADDR;
-            printf("%s: %s\n", $name, $bind);
             if ('async' === $type) {
                 self::$sockets[$name] = new \ZMQSocket(self::$ctx, 
                                                        \ZMQ::SOCKET_DOWNSTREAM);
@@ -280,8 +278,16 @@ class BaseTask
      static public function signalHandler($signo)
      {
          if (SIGTERM === $signo) {
+             self::preTerm();
              exit(0);
          }
+     }
+
+     /**
+      * Run just before exiting because of a TERM request.
+      */
+     static public function preTerm()
+     {
      }
 
     public function registerSignals()
@@ -420,15 +426,51 @@ class Logger extends AsyncTask
 {
     public $name = 'photon_logger';
     public $log_file = '';
+    static $stack = array();
+    static $n = 0;
 
     /**
-     * We timestamp and write the message.
+     * We timestamp and put the message in the stack, we do not write
+     * yet to return as fast as possible and wait for a new
+     * request. 
      */
     public function work($socket)
     {
         list($taskname, $client, $payload) = explode(' ', $socket->recv(), 3);
-        $mess = sprintf("%s %s %s\n", date(DATE_ISO8601), $client, $payload);
-        file_put_contents($this->log_file, $mess, FILE_APPEND | LOCK_EX);
+        self::$stack[] = sprintf("%s %s %s\n", date(DATE_ISO8601), $client, $payload);
+    }
+
+    /**
+     * We will write to disk only every 60s max or 300 messages.
+     * 
+     * This is rough calculations. We have a 200ms poll time for the
+     * job, so with a low load, we have basically 5 calls to loop()
+     * per second. After 300 calls, we have a minute.
+     *
+     */
+    public function loop()
+    {
+        self::$n++;
+        if (300 < self::$n and count(self::$stack)) {
+            file_put_contents($this->log_file, 
+                              join('', self::$stack),
+                              FILE_APPEND | LOCK_EX);
+            self::$stack = array();
+            self::$n = 0; 
+        }
+    }
+
+    /**
+     * We may have some messages left to flush before dying.
+     */
+    public static function preTerm()
+    {
+        if (count(self::$stack)) {
+            file_put_contents($this->log_file, 
+                              join('', self::$stack),
+                              FILE_APPEND | LOCK_EX);
+            self::$stack = array();
+        }
     }
 }
 

@@ -570,7 +570,9 @@ class ServerManager extends Base
             $this->verbose('Error: Could not fork.');
             return false;
         } elseif ($pid) {
-            // In the parent, we can die.
+            // In the parent, we can write the pid and die
+            $pid_file = Conf::f('pid_file', './run.pid');
+            file_put_contents($pid_file, $pid, LOCK_EX);
             exit(0);
         } else {
             $this->daemon = true;

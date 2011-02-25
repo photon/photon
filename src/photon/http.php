@@ -52,6 +52,15 @@ class Response
     public $content = '';
 
     /**
+     * To whom it should be delivered. 
+     *
+     * By default, it will delivered to the client issuing the
+     * request, but one can set it to another client or an array of
+     * clients.
+     */
+    public $deliver_to = null;
+
+    /**
      * Array of the headers to add.
      *
      * For example $this->headers['Content-Type'] = 'text/html; charset=utf-8';
@@ -179,7 +188,7 @@ class Response
  */
 class Request
 {
-    public $mreq = null;
+    public $mess = null;
     public $query = '';
     public $GET = array();
     public $PATH = '';
@@ -187,21 +196,15 @@ class Request
     public $FILES = array();
     public $COOKIE = array();
     public $METHOD = '';
-    /*
-
-    public $REQUEST = array();
-
-    public $FILES = array();
-
-
-    public $uri = '';
-    public $view = '';
-    public $remote_addr = '';
-    public $http_host = '';
-    public $SERVER = array();
-    public $uid = '';
-    public $time = '';
-    */
+    public $BODY = null;
+    /** 
+     * Sender id set for the handler in the Mongrel2 conf.
+     */
+    public $sender = '';
+    /**
+     * The client connection id which issued the request.
+     */
+    public $client = '';
 
     /**
      * Request object provided to the Photon views.
@@ -213,6 +216,8 @@ class Request
         $this->mess = $mess;
         $this->path = $this->mess->path;
         $this->METHOD = $this->mess->headers->METHOD;
+        $this->sender = $this->mess->sender;
+        $this->client = $this->mess->conn_id;
 
         if (isset($this->mess->headers->QUERY)) {
             \mb_parse_str($this->mess->headers->QUERY, $this->GET);
@@ -231,30 +236,11 @@ class Request
             } else {
                 \mb_parse_str(stream_get_contents($mess->body), $this->POST);
             }
+        } else if ('JSON' === $this->mess->headers->METHOD) {
+            $this->BODY = $this->mess->body;
         }
         $this->COOKIE = CookieHandler::parse($this->mess->headers, 
                                              Conf::f('secret_key', ''));
-
-        /*
-        print_r(array($this->GET, $this->POST, $this->FILES));
-        printf("Current memory: %s\n", memory_get_usage());
-        printf("Max memory: %s\n", memory_get_peak_usage());
-        */
-        /*
-        $this->POST =& $_POST;
-        $this->GET =& $_GET;
-        $this->REQUEST =& $_REQUEST;
-        $this->COOKIE =& $_COOKIE;
-        $this->FILES =& $_FILES;
-        $this->query = $query;
-        $this->method = $_SERVER['REQUEST_METHOD'];
-        $this->uri = $_SERVER['REQUEST_URI'];
-        $this->remote_addr = $_SERVER['REMOTE_ADDR'];
-        $this->http_host = (isset($_SERVER['HTTP_HOST'])) ? $_SERVER['HTTP_HOST'] : '';
-        $this->SERVER =& $_SERVER;
-        $this->uid = $GLOBALS['_PX_uniqid']; 
-        $this->time = (isset($_SERVER['REQUEST_TIME'])) ? $_SERVER['REQUEST_TIME'] : time();
-        */
     }
 }
 

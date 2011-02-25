@@ -4,20 +4,20 @@
     http://pear.php.net/dtd/package-2.0
     http://pear.php.net/dtd/package-2.0.xsd">
  <name>photon</name>
- <uri>dist.photon-project.com</uri>
+ <channel>dist.photon-project.com</channel>
  <summary>Photon, The High Performance PHP Framework.</summary>
- <description>Photon is a high performance PHP framework specifically developed to serve as a Mongrel2 backend. It is usually 2 to 3 times faster than the best mod_php frameworks.</description>
+ <description>Photon is a high performance PHP framework to create ZeroMQ based Mongrel2 handlers. It is usually 2 to 3 times faster than the best mod_php frameworks.</description>
  <lead>
   <name>Loïc d&apos;Anterroches</name>
   <user>loic</user>
   <email>loic@ceondo.com</email>
   <active>yes</active>
  </lead>
- <date>2011-02-17</date>
- <time>09:00:49</time>
+ <date>2011-02-25</date>
+ <time>11:11:11</time>
  <version>
-  <release>0.0.1</release>
-  <api>0.0.1</api>
+  <release>0.0.3</release>
+  <api>0.0.3</api>
  </version>
  <stability>
   <release>alpha</release>
@@ -51,6 +51,7 @@ First release.
    <file name="photon/server.php" role="php" />
    <file name="photon/session.php" role="php" />
    <file name="photon/shortcuts.php" role="php" />
+   <file name="photon/task.php" role="php" />
    <file name="photon/template.php" role="php" />
    <file name="photon/test.php" role="php" />
    <file name="photon/testbootstrap.php" role="php" />

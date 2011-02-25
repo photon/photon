@@ -55,6 +55,14 @@ class NotFound extends Response
     }
 }
 
+class Json extends Response
+{
+    function render($output_body=true)
+    {
+        return json_encode($this->content);
+    }
+}
+
 /**
  * Display a server error page.
  *
