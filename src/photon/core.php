@@ -134,8 +134,18 @@ class Dispatcher
             // We catch only the not found errors at the moment.
         }
 
+        // We have a particular case, the request could have been a
+        // system message from Mongrel2 to disconnect, as the framework
+        // decided not to act on it, we need to handle it to not send
+        // back an answer to Mongrel2.
+        if ($req->mess->is_disconnect()) {
+
+            return false;
+        }
+
         $response = new \photon\http\response\NotFound($req);
         $response->dispatch_path = $checked;
+
         return $response;
     }
 

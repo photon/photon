@@ -166,7 +166,6 @@ class Server
                 }
             }
             pcntl_signal_dispatch();
-            clearstatcache();
         }
     }
 

@@ -73,6 +73,13 @@ class Message
         $this->body = $body;
     }
 
+    public function is_disconnect()
+    {
+        return (isset($this->headers->METHOD)
+                && 'JSON' === $this->headers->METHOD
+                && 'disconnect' === $this->body->type);
+    }
+
     /**
      * We close the stream when the message is discarded.
      *

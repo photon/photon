@@ -13,11 +13,11 @@
   <email>loic@ceondo.com</email>
   <active>yes</active>
  </lead>
- <date>2011-02-25</date>
- <time>11:11:11</time>
+ <date>2011-02-26</date>
+ <time>16:25:41</time>
  <version>
-  <release>0.0.3</release>
-  <api>0.0.3</api>
+  <release>0.0.5</release>
+  <api>0.0.5</api>
  </version>
  <stability>
   <release>alpha</release>
@@ -25,7 +25,7 @@
  </stability>
  <license uri="http://www.gnu.org/licenses/lgpl.html">LGPL</license>
  <notes>
-First release.
+Alpha release with regular changes and updates.
  </notes>
  <contents>
   <dir name="/" baseinstalldir="/">
