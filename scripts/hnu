@@ -16,7 +16,7 @@
 if test "x$PHP_PEAR_PHP_BIN" != "x"; then
   PHP="$PHP_PEAR_PHP_BIN"
 else
-  PHP="/usr/bin/php"
+  PHP=`pear config-get php_bin`
 fi
 
 # Then look at the photon.php
@@ -27,7 +27,7 @@ else
   if test "x$PHP_PEAR_INSTALL_DIR" != "x"; then
     INCDIR=$PHP_PEAR_INSTALL_DIR
   else
-    INCDIR="/usr/share/php"
+    INCDIR=`pear config-get php_dir`
   fi
   PHOTON="$INCDIR/photon.php"
 fi
