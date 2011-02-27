@@ -195,7 +195,7 @@ class Request
     public $POST = array();
     public $FILES = array();
     public $COOKIE = array();
-    public $METHOD = '';
+    public $method = '';
     public $BODY = null;
     /** 
      * Sender id set for the handler in the Mongrel2 conf.
@@ -215,7 +215,7 @@ class Request
     {
         $this->mess = $mess;
         $this->path = $this->mess->path;
-        $this->METHOD = $this->mess->headers->METHOD;
+        $this->method = $this->mess->headers->METHOD;
         $this->sender = $this->mess->sender;
         $this->client = $this->mess->conn_id;
 
@@ -234,7 +234,8 @@ class Request
                     }
                 }
             } else {
-                \mb_parse_str(stream_get_contents($mess->body), $this->POST);
+                \mb_parse_str(substr(stream_get_contents($mess->body), 0, -1), 
+                              $this->POST);
             }
         } else if ('JSON' === $this->mess->headers->METHOD) {
             $this->BODY = $this->mess->body;
