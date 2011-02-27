@@ -1090,12 +1090,14 @@ class RunTests extends Base
                 mkdir($this->params['directory']);
             }
             passthru('phpunit '.$inc_path.'--bootstrap '.realpath(__DIR__).'/autoload.php --coverage-html '.realpath($this->params['directory']).' --configuration '.$tmpfname, $rvar);
+            unlink($tmpfname);
             $this->info(sprintf('Code coverage report: %s/index.html.',
                                 realpath($this->params['directory'])));
         } else {
             $xmlout = tempnam(Conf::f('tmp_folder', sys_get_temp_dir()), 'phpunit').'.xml';
             $this->verbose('phpunit '.$inc_path.'--bootstrap '.realpath(__DIR__).'/autoload.php --coverage-clover '.$xmlout.' --configuration '.$tmpfname);
             passthru('phpunit '.$inc_path.'--bootstrap '.realpath(__DIR__).'/testbootstrap.php --coverage-clover '.$xmlout.' --configuration '.$tmpfname, $rvar);
+            unlink($tmpfname);
             if (!file_exists($xmlout)) {
 
                 return $rvar;
@@ -1113,7 +1115,6 @@ class RunTests extends Base
                                 $xml->project->metrics['statements'],
                                 round($perc * 100.0, 2)));
         }
-
         return $rvar;
     }
 }

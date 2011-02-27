@@ -69,7 +69,7 @@ class baseTest extends \PHPUnit_Framework_TestCase
     public function testSimplePost()
     {
         $fp = fopen('php://temp/maxmemory:5242880', 'r+');
-        fputs($fp, 'a=b&c=d');
+        fputs($fp, 'a=b&c=d,');
         rewind($fp);
         
         $mess = (object) array('headers' => (object) array('QUERY' => 'a=b&c=d',
@@ -97,7 +97,8 @@ class baseTest extends \PHPUnit_Framework_TestCase
                                'body' => $datafile);
         $req = new Request($mess);
         $this->assertEquals($req->path, '/home');
-        $this->assertEquals(array('title' => ''), $req->POST);
+        $this->assertEquals(2, count($req->POST));
+        $this->assertEquals(2, count($req->POST['upload']));
         fclose($datafile);
     }
 

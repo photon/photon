@@ -122,25 +122,25 @@ class Compiler
                                  'date' => '\\photon\\template\\Modifier::dateFormat',
 
                                  /*
-                                 'nl2br' => '\\Pluf_Template_nl2br',
-                                 'dump' => '\\Pluf_Template_varExport', 
-                                 'escape' => '\\Pluf_Template_htmlspecialchars',
-                                 'unsafe' => '\\Pluf_Template_unsafe',
+                                 'nl2br' => '\\todo',
+                                 'dump' => '\\todo_Template_varExport', 
+                                 'escape' => '\\Photon_Template_htmlspecialchars',
+                                 'unsafe' => '\\Photon_Template_unsafe',
 
 
-                                 'time' => '\\Pluf_Template_timeFormat',
-                                 'dateago' => '\\Pluf_Template_dateAgo',
-                                 'timeago' => '\\Pluf_Template_timeAgo',
-                                 'email' => '\\Pluf_Template_safeEmail',
-                                 'first' => '\\Pluf_Template_first',
-                                 'last' => '\\Pluf_Template_last',
+                                 'time' => '\\Photon_Template_timeFormat',
+                                 'dateago' => '\\Photon_Template_dateAgo',
+                                 'timeago' => '\\Photon_Template_timeAgo',
+                                 'email' => '\\Photon_Template_safeEmail',
+                                 'first' => '\\Photon_Template_first',
+                                 'last' => '\\Photon_Template_last',
                                  */
                                  );
 
     /**
      * After the compilation is completed, this contains the list of
      * modifiers used in the template. The GetCompiledTemplate method
-     * will add a series of Pluf::loadFunction at the top to preload
+     * will add a series of photonLoadFunction at the top to preload
      * these modifiers.
      */
     public $_usedModifiers = array();
@@ -154,11 +154,11 @@ class Compiler
     protected $_allowedTags = array(
                                     'url' => '\\photon\\template\\tag\\Url',
                                     /*
-                                    'aurl' => '\\Pluf_Template_Tag_Rurl',
-                                    'media' => '\\Pluf_Template_Tag_MediaUrl',
-                                    'amedia' => '\\Pluf_Template_Tag_RmediaUrl',
-                                    'aperm' => '\\Pluf_Template_Tag_APerm',
-                                    'getmsgs' => '\\Pluf_Template_Tag_Messages',
+                                    'aurl' => '\\Photon_Template_Tag_Rurl',
+                                    'media' => '\\Photon_Template_Tag_MediaUrl',
+                                    'amedia' => '\\Photon_Template_Tag_RmediaUrl',
+                                    'aperm' => '\\Photon_Template_Tag_APerm',
+                                    'getmsgs' => '\\Photon_Template_Tag_Messages',
                                     */
                                     );
     /**

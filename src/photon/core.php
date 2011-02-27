@@ -94,12 +94,10 @@ class Dispatcher
     }
 
     /**
-     * Match a query against the actions controllers.
+     * Match a query against the URL map.
      *
-     * @see Pluf_HTTP_URL_reverse
-     *
-     * @param Pluf_HTTP_Request Request object
-     * @return Pluf_HTTP_Response Response object
+     * @param $req \photon\http\Request
+     * @return mixed Response object or false
      */
     public static function match($req)
     {

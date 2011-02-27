@@ -25,7 +25,7 @@
  *
  * This namespace provides utilities to load and cache translation
  * strings. The functions using the values are directly available when
- * loading Pluf. They are __ and _n for simple translations and for
+ * loading Photon. They are __ and _n for simple translations and for
  * plural dependent translations respectively.
  *
  * Why reimplementing a gettext system when one is already available?
@@ -361,9 +361,6 @@ class Translation
 //     /**
 //      * Process the response of a view.
 //      *
-//      * @param Pluf_HTTP_Request The request
-//      * @param Pluf_HTTP_Response The response
-//      * @return Pluf_HTTP_Response The response
 //      */
 //     function process_response($request, $response)
 //     {

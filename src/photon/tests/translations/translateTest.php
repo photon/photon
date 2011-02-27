@@ -70,38 +70,38 @@ class TranslateTest extends \PHPUnit_Framework_TestCase
     public function testParseErrorPo()
     {
         $po = '
-# French translations of Pluf.
+# French translations of Photon.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Pluf\n"
+"Project-Id-Version: Photon\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Poedit-Basepath: ../../../\n"
 
 msgid "search stats"
 foobar "stats de l\'index"
 
-#: Pluf/Search/Stats.php:34
+#: Photon/Search/Stats.php:34
 msgid "search stats"
 msgstr "stats de l\'index"';
         $this->assertEquals(false, Translation::parsePoContent($po));
 
         $po = '
-# French translations of Pluf.
+# French translations of Photon.
 #
 
 bingo
 
 msgid ""
 msgstr ""
-"Project-Id-Version: Pluf\n"
+"Project-Id-Version: Photon\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Poedit-Basepath: ../../../\n"
 
 msgid "search stats"
 msgstr "stats de l\'index\n"
 
-#: Pluf/Search/Stats.php:34
+#: Photon/Search/Stats.php:34
 msgid "search stats 32"
 msgstr "stats de l\'index"';
         $this->assertEquals(false, Translation::parsePoContent($po));

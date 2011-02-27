@@ -201,9 +201,10 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
                                       'name' => 'home',
                                       ),
                                 ));
-        $headers = (object) array('METHOD' => 'GET');
+        $headers = (object) array('METHOD' => 'GET', 'PATH' => '/home/');
         $msg = new Message('dummy', 'dummy', '/home/', $headers, '');
-        list($req, $resp) = Dispatcher::dispatch($msg);
+        $req = new \photon\http\Request($msg);
+        list($req, $resp) = Dispatcher::dispatch($req);
         $this->assertNotEquals(false, strpos($resp->content, 'not found'));
     }
 

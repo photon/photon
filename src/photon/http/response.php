@@ -126,11 +126,11 @@ function pretty_server_error($e, $req)
                return explode("<br />", $src);');
     $clean = create_function('$line',
                'return html_entity_decode(str_replace("&nbsp;", " ", $line));');
-    $desc = get_class($e)." making ".$req->METHOD." request to ".$req->PATH;
+    $desc = get_class($e)." making ".$req->method." request to ".$req->path;
     $out = $desc."\n";
     $out .= $e->getMessage()."\n\n";
     $out .= 'PHP: '.$e->getFile().', line '.$e->getLine()."\n";
-    $out .= 'URI: '.$req->METHOD.' '.$req->PATH."\n\n";
+    $out .= 'URI: '.$req->method.' '.$req->path."\n\n";
     $out .= '** Stacktrace **'."\n\n";
     $frames = $e->getTrace(); 
     foreach ($frames as $frame_id=>$frame) { 
@@ -260,7 +260,7 @@ function html_pretty_server_error($e, $req)
         return trim(strip_tags($line)); 
     };
 
-    $desc = get_class($e)." making ".$req->METHOD." request to ".$req->PATH;
+    $desc = get_class($e)." making ".$req->method." request to ".$req->path;
     $out = '
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
   "http://www.w3.org/TR/html4/loose.dtd">
@@ -389,7 +389,7 @@ function html_pretty_server_error($e, $req)
     </tr>
     <tr>
       <th>URI</th>
-      <td>' . $o($req->METHOD . ' ' . $req->path) . '</td>
+      <td>' . $o($req->method . ' ' . $req->path) . '</td>
     </tr>
   </table>
 </div>
