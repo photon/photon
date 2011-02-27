@@ -143,6 +143,8 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('photon\form\field\Varchar', get_class($foo));
         $foo = $form->field('login');
         $this->assertEquals('photon\form\BoundField', get_class($foo));
+        $foo = $form->f->login;
+        $this->assertEquals('photon\form\BoundField', get_class($foo));
         $this->assertEquals(false, isset($form['badone']));
         $this->assertEquals(true, isset($form['login']));
         unset($form['login']);
@@ -151,6 +153,36 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(true, isset($form['login']));
         $this->setExpectedException('\photon\form\Exception');        
         $foo = $form['badone'];
+    }
+
+    public function testBoundField()
+    {
+        $form = new HiddenAnd();
+        $bf = new \photon\form\BoundField($form, $form['login'], 'login');
+        $this->assertEquals('<label for="id_login" class="test">Login</label>',
+                            (string) $bf->labelTag(null, array('class' => 'test')));
+
+        $form = new HiddenAnd();
+        $form->id_fields = 'dummy_';
+        $bf = new \photon\form\BoundField($form, $form['login'], 'login');
+        $this->assertEquals('<label for="login" class="test">Login</label>',
+                            (string) $bf->labelTag(null, array('class' => 'test')));
+
+        $form = new HiddenAnd();
+        $form->id_fields = '';
+        $bf = new \photon\form\BoundField($form, $form['login'], 'login');
+        $this->assertEquals('<label for="" class="test">Login</label>',
+                            (string) $bf->labelTag(null, array('class' => 'test')));
+
+        $form = new HiddenAnd();
+        $bf = new \photon\form\BoundField($form, $form['login'], 'login');
+        $this->assertEquals('<input maxlength="15" size="10" name="login" type="text" id="id_login" />',
+                            (string) $bf);
+        $this->assertEquals('<input maxlength="15" size="10" name="login" type="text" id="id_login" />',
+                            (string) $bf->render_w);
+        // forced empty list
+        $this->assertEquals('<ul class="errorlist"></ul>', 
+                            (string) $bf->fieldErrors());
     }
 
     public function testMinimalErrorRender()
