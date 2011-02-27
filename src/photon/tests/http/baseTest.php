@@ -27,7 +27,9 @@ use \photon\config\Container as Conf;
 use \photon\http\Response as Response;
 use \photon\http\Request as Request;
 
+include_once __DIR__ . '/../../http.php';
 include_once __DIR__ . '/../../http/response.php';
+
 
 class baseTest extends \PHPUnit_Framework_TestCase
 {
@@ -145,4 +147,39 @@ class baseTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Server Error!'."\n", $res->content);
     }
 
+    public function testAddToPost()
+    {
+        $post = array();
+        $data = array(array('foo', 'bar'),
+                      array('foo', 'bar'),
+                      array('foo', 'bar'),
+                      array('bing', 'bong'),
+                      array('bing', 'ding'),
+                      array('bar', 'bong'));
+        $res = array('foo' => array('bar', 'bar', 'bar'),
+                     'bing' => array('bong', 'ding'),
+                     'bar' => 'bong');
+        foreach ($data as $field) {
+            \photon\http\add_to_post($post, $field[0], $field[1]);
+        }
+        $this->assertEquals($res, $post);
+    }
+
+    public function testAddFileToPost()
+    {
+        $post = array();
+        $data = array(array('foo', array('data' => 'bar')),
+                      array('foo', array('data' => 'bar')),
+                      array('foo', array('data' => 'bar')),
+                      array('bing', array('data' => 'bong')),
+                      array('bing', array('data' => 'ding')),
+                      array('bar', array('data' => 'bong')));
+        $res = array('foo' => array(array('data'=>'bar'), array('data'=>'bar'), array('data'=>'bar')),
+                     'bing' => array(array('data'=>'bong'), array('data'=>'ding')),
+                     'bar' => array('data'=>'bong'));
+        foreach ($data as $field) {
+            \photon\http\add_file_to_post($post, $field[0], $field[1]);
+        }
+        $this->assertEquals($res, $post);
+    }
 }

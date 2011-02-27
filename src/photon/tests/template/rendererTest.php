@@ -79,16 +79,16 @@ class rendererTest extends \PHPUnit_Framework_TestCase
 
     public function testWriteFailure()
     {
-        $uid = getmyuid();
+        $uid = posix_getuid();
         if (0 === $uid) {
             $this->markTestSkipped('The root user will have write access.');
         }
-        
         $renderer = new template\Renderer('data-template-tag-url.html', 
                                           array(__dir__));
         $renderer->template_content = '';
         $this->setExpectedException('\photon\template\Exception');
         $renderer->write('/no.write.access.here');
+        $this->assertEquals(true, false);
     }
 
     public function testRenderFailure()

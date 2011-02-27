@@ -227,7 +227,18 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
 
         $headers = (object) array('METHOD' => 'GET');
         $msg = new Message('dummy', 'dummy', '/hello/home/foo/', $headers, '');
-        list($req, $resp) = Dispatcher::dispatch($msg);
+        $req = new \photon\http\Request($msg);
+        list($req, $resp) = Dispatcher::dispatch($req);
+        $this->assertEquals(false, $resp);
+    }
+
+    public function testMongrelDisconnect()
+    {
+        $headers = (object) array('METHOD' => 'JSON');
+        $body = (object) array('type' => 'disconnect');
+        $msg = new Message('dummy', 'dummy', '@*', $headers, $body);
+        $req = new \photon\http\Request($msg);
+        list($req, $resp) = Dispatcher::dispatch($req);
         $this->assertEquals(false, $resp);
     }
 

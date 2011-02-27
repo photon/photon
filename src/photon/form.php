@@ -138,12 +138,10 @@ class Form implements \Iterator, \ArrayAccess
             $value = $field->widget->valueFromFormData($this->addPrefix($name),
                                                        $this->data); 
             try {
-                $value = $field->clean($value);
-                $this->cleaned_data[$name] = $value;
+                $this->cleaned_data[$name] = $field->clean($value);
                 if (in_array('clean_' . $name, $form_methods)) {
                     $m = 'clean_' . $name;
-                    $value = $this->$m();
-                    $this->cleaned_data[$name] = $value;
+                    $this->cleaned_data[$name] = $this->$m();
                 }                        
             } catch (Invalid $e) {
                 if (!isset($this->errors[$name])) {
@@ -274,19 +272,15 @@ class Form implements \Iterator, \ArrayAccess
                 if ($errors_on_separate_row && count($bf_errors)) {
                     $output[] = sprintf($error_row, render_errors_as_html($bf_errors));
                 }
-                if (strlen($bf->label) > 0) {
-                    $label = htmlspecialchars($bf->label, ENT_COMPAT, 'UTF-8');
-                    if ($this->label_suffix) {
-                        if (!in_array(mb_substr($label, -1, 1), 
-                                      array(':','?','.','!'))) {
-                            $label .= $this->label_suffix;
-                        }
+                $label = htmlspecialchars($bf->label, ENT_COMPAT, 'UTF-8');
+                if ($this->label_suffix) {
+                    if (!in_array(mb_substr($label, -1, 1), 
+                                  array(':','?','.','!'))) {
+                        $label .= $this->label_suffix;
                     }
-                    $label = $bf->labelTag($label);
-                } else {
-                    $label = '';
                 }
-                if ($bf->help_text) {
+                $label = $bf->labelTag($label);
+                if (strlen($bf->help_text)) {
                     // $bf->help_text can contains HTML and is not
                     // escaped.
                     $help_text = sprintf($help_text_html, $bf->help_text);
@@ -311,7 +305,7 @@ class Form implements \Iterator, \ArrayAccess
             foreach ($hidden_fields as $hd) {
                 $_tmp .= $hd->render_w();
             }
-            if (count($output)) {
+            if (count($output) > count($hidden_fields)) {
                 $last_row = array_pop($output);
                 $last_row = substr($last_row, 0, -strlen($row_ender)) 
                     . $_tmp . $row_ender;
@@ -361,11 +355,6 @@ class Form implements \Iterator, \ArrayAccess
      */
     function __get($prop)
     {
-        if (!in_array($prop, array('render_p', 'render_ul', 'render_table', 'render_top_errors', 'get_top_errors'))) {
-
-            return $this->$prop;
-        }
-
         return $this->$prop();
     }
 

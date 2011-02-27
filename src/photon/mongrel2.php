@@ -251,9 +251,11 @@ class Connection
         }
         // We need to send multiple times the data. We are going to
         // send the data in series of 128 to the clients.
+        $a = 1;
         foreach (array_chunk($idents, 128) as $chunk) {
-            return $this->send($uuid, \join(' ', $chunk),  $data);
+            $a = $a & (int) $this->send($uuid, \join(' ', $chunk),  $data);
         }
+        return (bool) $a;
     }
 
     public function close()

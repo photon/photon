@@ -29,6 +29,7 @@ use \photon\mongrel2;
 class DummyZMQSocket
 {
     public $payload = false;
+    public $maxsend = null;
 
     public function setNextRecv($payload)
     {
@@ -44,7 +45,14 @@ class DummyZMQSocket
 
     public function send($payload)
     {
-        return true;
+        if ($this->maxsend === null) {
+            return true;
+        }
+        if ($this->maxsend > 0) {
+            $this->maxsend--;
+            return true;
+        }
+        return false;
     }
 }
 
@@ -181,6 +189,24 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
                               'conn_id' => '6');
         $this->assertEquals(true, $conn->reply($req, 'Hello !'));
         $this->assertEquals(true, $conn->deliver('34f9ceee-cd52-4b7f-b197-88bf2f0ec378', array('1', '2', '3'), 'Hello !'));
+    }
+
+    public function testConnectionDeliver()
+    {
+        $sender_id = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378';
+        $sub_addr = 'ipc://sub-addr';
+        $pub_addr = 'ipc://pub-addr';
+        $conn = new mongrel2\Connection($sender_id, $sub_addr, $pub_addr);
+        $conn->close();
+        $conn->reqs = new DummyZMQSocket();
+        $conn->resp = new DummyZMQSocket();
+        $req = (object) array('sender' => '34f9ceee-cd52-4b7f-b197-88bf2f0ec378',
+                              'conn_id' => '6');
+        $this->assertEquals(true, $conn->reply($req, 'Hello !'));
+        $connection_ids = range(1, 300);
+        $this->assertEquals(true, $conn->deliver('34f9ceee-cd52-4b7f-b197-88bf2f0ec378', $connection_ids, 'Hello !'));
+        $conn->resp->maxsend = 2;
+        $this->assertEquals(false, $conn->deliver('34f9ceee-cd52-4b7f-b197-88bf2f0ec378', $connection_ids, 'Hello !'));
     }
 
 }
