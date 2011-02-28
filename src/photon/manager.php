@@ -106,64 +106,63 @@ class Init extends Base
     /**
      * Generate the default files for the project.
      * recursively copies the data/project_template directory
-		 * renames __APPNAME__ along the way
+     * renames __APPNAME__ along the way
      * @param string $app_name the directory name for the app, like 'helloworld'
      * @return void
      */
     public function generateFiles($app_name)
     {
-			// make the initial project directory
-			if (!mkdir($this->project_dir)) {
-        throw new Exception(sprintf("Failed to make directory {$this->project_dir}"));
-			}
-	
-			// recursively copy the project_template directory
-			$src_directory = '/Users/dweller/Development/Freelance/current/photon/photon/src/photon/data/project_template'; // __DIR__ . '/data/'.$app_template_dir;
-			$src_directory_length = strlen($src_directory) + 1;
-			$dir_iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($src_directory), \RecursiveIteratorIterator::SELF_FIRST);
-			foreach($dir_iterator as $src_filepath) {
-				if (substr(basename($src_filepath),0,1) == '.') continue; // ignore . .. .DS_Store
+        // make the initial project directory
+        if (!mkdir($this->project_dir)) {
+            throw new Exception(sprintf("Failed to make directory {$this->project_dir}"));
+        }
 
-				// build the destination filepath and replace __APPNAME__
-				$dest_directory_rel_path = substr($src_filepath, $src_directory_length);
-				$dest_directory_rel_path = str_replace('__APPNAME__', $app_name, $dest_directory_rel_path);
-				$dest_filepath = $this->project_dir . '/' . $dest_directory_rel_path;
-				
+        // recursively copy the project_template directory
+        $src_directory =  __DIR__ . '/data/project_template';
+        $src_directory_length = strlen($src_directory) + 1;
+        $dir_iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($src_directory), \RecursiveIteratorIterator::SELF_FIRST);
+        foreach($dir_iterator as $src_filepath) {
+            if (substr(basename($src_filepath),0,1) == '.') continue; // ignore . .. .DS_Store
 
-				// make the directory or copy the file
-				if (is_dir($src_filepath)) {
-					// make sure the dest directory exists
-					if (!file_exists($dest_filepath)) {
-						if (!mkdir($dest_filepath)) {
-		          throw new Exception(sprintf("Failed to make directory {$dest_filepath}"));
-						}
-					}
-				} else {
-					// copy the file
-		      if (!copy($src_filepath, $dest_filepath)) {
-		          throw new Exception(sprintf('Failed to copy: %s to %s.', $src_filepath, $dest_filepath));
-		      }
-				}
-			}
-			
-     // TODO: Generate the unique private key
+            // build the destination filepath
+            $dest_directory_rel_path = substr($src_filepath, $src_directory_length);
+            $dest_filepath = $this->project_dir . '/' . $dest_directory_rel_path;
+
+
+            // make the directory or copy the file
+            if (is_dir($src_filepath)) {
+                // make sure the dest directory exists
+                if (!file_exists($dest_filepath)) {
+                    if (!mkdir($dest_filepath)) {
+                        throw new Exception(sprintf("Failed to make directory {$dest_filepath}"));
+                    }
+                }
+            } else {
+                // copy the file
+                if (!copy($src_filepath, $dest_filepath)) {
+                    throw new Exception(sprintf('Failed to copy: %s to %s.', $src_filepath, $dest_filepath));
+                }
+            }
+        }
+
+        // TODO: Generate the unique private key
 
     }
 
     /**
      * Run the command.
      */
-    public function run()
-    {
-			// make sure project directory doesn't already exist
-      if (is_dir($this->project_dir)) {
-          throw new Exception(sprintf('Project folder already exists: %s.',
-                                      $this->project_dir));
-      }
+     public function run()
+     {
+         // make sure project directory doesn't already exist
+         if (is_dir($this->project_dir)) {
+             throw new Exception(sprintf('Project folder already exists: %s.',
+                 $this->project_dir));
+         }
 
-			// copy the application template
-      $this->generateFiles('helloworld');
-    }
+         // copy the application template
+         $this->generateFiles('helloworld');
+     }
 }
 
 /**
