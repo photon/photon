@@ -12,10 +12,11 @@ return array(
              // mode, but also the handling of errors.
              'debug' => true,
 
-             
+             'urls' => include __DIR__.'/urls.php',
+
              'secret_key' => '',
              'admins' => array(array('1st Admin Name', 'admin1@example.com')),
-             
+
              // Only one simple application is installed in project,
              // the 'helloworld' application.
              'installed_apps' => array('helloworld'),
