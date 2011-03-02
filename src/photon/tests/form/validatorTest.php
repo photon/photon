@@ -32,7 +32,7 @@ class ValidatorTest extends \PHPUnit_Framework_TestCase
     {
         $goods = array('me@you.com', 'foo@internet.toto.tetet.com',
                        'me+123@mail.com');
-        $bads = array('me @youec.com', 'me@localhost');
+        $bads = array('me @youec.com', 'me@localhost', 'me@com.123');
         foreach ($goods as $good) {
             try {
                 $email = validator\Net::email($good);
@@ -48,6 +48,30 @@ class ValidatorTest extends \PHPUnit_Framework_TestCase
                 continue;
             }
             $this->fail(sprintf('This value should be bad: %s.', $bad));
+        }
+    }
+
+    public function testEmails()
+    {
+        $xml = simplexml_load_file(__DIR__ . '/emails.xml', 'SimpleXMLElement', 
+                                   LIBXML_NONET);
+        foreach ($xml->t as $test) {
+            $email = (string) $test->a;
+            $res = ((string) $test->r == 't');
+            try {
+                $w = validator\Net::email($email,  array(
+                                                         'allow_comments' => true,
+                                                         'public_internet' => false));
+
+            } catch (Invalid $e) {
+                if (!$res) {
+                    continue;
+                } 
+                $this->fail(sprintf('This value should be good: %s.', $email));
+            }
+            if (!$res) {
+                $this->fail(sprintf('This value should be bad: %s.', $email));
+            }
         }
     }
 }

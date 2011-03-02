@@ -198,9 +198,12 @@ class Net
         if (strlen($bits['local']) > 64) {
             throw new Invalid('invalid email', 'invalid');
         }
+        /*
+        // cannot be as address max 254 chars
         if (strlen($bits['domain']) > 255) {
             throw new Invalid('invalid email', 'invalid');
         }
+        */
         if (strlen($bits['domain-literal'])) {
             $Snum = "(\d{1,3})";
             $IPv4_address_literal = "$Snum\.$Snum\.$Snum\.$Snum";
@@ -258,9 +261,12 @@ class Net
                         $b = substr($b, 0, -1); # remove the trailing colon before the IPv4 address
                         $folded = (strlen($a) && strlen($b)) ? "$a:$b" : "$a$b";
                         $groups = explode(':', $folded);
+                        /*
+                        // never reached
                         if (count($groups) > 5) {
                             throw new Invalid('invalid email', 'invalid');
                         }
+                        */
                         break;
                     }
 
