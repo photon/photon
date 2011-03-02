@@ -26,9 +26,68 @@
  * The classes are grouping together corresponding "themes". A
  * validator is a static method with this signature:
  *
- * bool Validator::whatever($to_be_validated, $options=array());
+ * true Validator::whatever($to_be_validated, $options=array());
+ *
+ * The validator must throw a photon\form\Invalid exception with a
+ * good error message if the validation fails.
+ *
+ * If you have no particular message, just put a dummy (not
+ * translated) message and set the error code to 'invalid'.
  */
 namespace photon\form\validator;
+
+use photon\form\Invalid;
+
+
+/**
+ * Validate lenght of text and other text related stuff.
+ */
+class Text
+{
+    public static function minLength($string, $min)
+    {
+        $len = mb_strlen($string);
+        if ($len < $min) {
+            throw new Invalid(sprintf(__('Ensure this value has at least %1$d characters (it has %2$d).'), $min, $len), 'min_length');
+        }
+
+        return true;
+    }
+
+    public static function maxLength($string, $max)
+    {
+        $len = mb_strlen($string);
+        if ($len > $max) {
+            throw new Invalid(sprintf(__('Ensure this value has at most %1$d characters (it has %2$d).'), $max, $len), 'max_length');
+        }
+        
+        return true;
+    }
+}
+
+/**
+ * Validates numerical values.
+ */
+class Numeric
+{
+    public static function minValue($num, $min)
+    {
+        if ($num < $min) {
+            throw new Invalid(sprintf(__('Ensure this value is greater than or equal to %s.'), $min), 'min_value');
+        }
+
+        return true;
+    }
+
+    public static function maxValue($num, $max)
+    {
+        if ($num > $max) {
+            throw new Invalid(sprintf(__('Ensure this value is less than or equal to %s.'), $max), 'max_value');
+        }
+        
+        return true;
+    }
+}
 
 /**
  * Internet related validation.
@@ -41,7 +100,9 @@ class Net
      * Validation of an email address.
      *
      * Comments stripped, check the source for the full discussion,
-     * tests, etc.
+     * tests, etc. I have updated it to provide to throw an exception
+     * in case of error with a better error message. Changed to
+     * prevent spaces in emails.
      *
      * @author Cal Henderson <cal@iamcal.com>
      * @license CC Attribution-ShareAlike 2.5
@@ -98,7 +159,6 @@ class Net
         $local_part = "(($dot_atom)|($quoted_string)|($obs_local_part))";
         $domain = "(($dot_atom)|($domain_literal)|($obs_domain))";
         $addr_spec = "$local_part\\x40$domain";
-
         $email_strip_comments = function($comment, $email, $replace='') {
             while (1) {
                 $new = preg_replace("!$comment!", $replace, $email);
@@ -108,16 +168,19 @@ class Net
                 $email = $new;
             }
         };
-
-        if (strlen($email) > 254) return false;
-
+        if (strlen($email) > 254) {
+            throw new Invalid(sprintf(__('Ensure the email has at most %1$d characters (it has %2$d).'), 254, strlen($email)), 'max_length');
+        }
         if ($options['allow_comments']) {
             $email = $email_strip_comments($outer_comment, $email, "(x)");
+        } else {
+            if (false !== strpos($email, ' ')) {
+                throw new Invalid('invalid email', 'invalid');
+            }
         }
         if (!preg_match("!^$addr_spec$!", $email, $m)) {
-            return false;
+            throw new Invalid('invalid email', 'invalid');
         }
-
         $bits = array(
                       'local' => isset($m[1]) ? $m[1] : '',
                       'local-atom' => isset($m[2]) ? $m[2] : '',
@@ -128,102 +191,106 @@ class Net
                       'domain-literal' => isset($m[7]) ? $m[7] : '',
                       'domain-obs' => isset($m[8]) ? $m[8] : '',
                       );
-
         if ($options['allow_comments']) {
             $bits['local'] = $email_strip_comments($comment, $bits['local']);
             $bits['domain'] = $email_strip_comments($comment, $bits['domain']);
         }
-
-        if (strlen($bits['local']) > 64) return false;
-        if (strlen($bits['domain']) > 255) return false;
-
+        if (strlen($bits['local']) > 64) {
+            throw new Invalid('invalid email', 'invalid');
+        }
+        if (strlen($bits['domain']) > 255) {
+            throw new Invalid('invalid email', 'invalid');
+        }
         if (strlen($bits['domain-literal'])) {
-
             $Snum = "(\d{1,3})";
             $IPv4_address_literal = "$Snum\.$Snum\.$Snum\.$Snum";
-
             $IPv6_hex = "(?:[0-9a-fA-F]{1,4})";
-
             $IPv6_full = "IPv6\:$IPv6_hex(?:\:$IPv6_hex){7}";
-
             $IPv6_comp_part = "(?:$IPv6_hex(?:\:$IPv6_hex){0,7})?";
             $IPv6_comp = "IPv6\:($IPv6_comp_part\:\:$IPv6_comp_part)";
-
             $IPv6v4_full = "IPv6\:$IPv6_hex(?:\:$IPv6_hex){5}\:$IPv4_address_literal";
-
             $IPv6v4_comp_part = "$IPv6_hex(?:\:$IPv6_hex){0,5}";
             $IPv6v4_comp = "IPv6\:((?:$IPv6v4_comp_part)?\:\:(?:$IPv6v4_comp_part\:)?)$IPv4_address_literal";
-
             if (preg_match("!^\[$IPv4_address_literal\]$!", $bits['domain'], $m)) {
-
-                if (intval($m[1]) > 255) return false;
-                if (intval($m[2]) > 255) return false;
-                if (intval($m[3]) > 255) return false;
-                if (intval($m[4]) > 255) return false;
-
+                if (intval($m[1]) > 255) {
+                    throw new Invalid('invalid email', 'invalid');
+                }
+                if (intval($m[2]) > 255) {
+                    throw new Invalid('invalid email', 'invalid');
+                }
+                if (intval($m[3]) > 255) {
+                    throw new Invalid('invalid email', 'invalid');
+                }
+                if (intval($m[4]) > 255) {
+                    throw new Invalid('invalid email', 'invalid');
+                }
             } else {
                 while (1) {
-
                     if (preg_match("!^\[$IPv6_full\]$!", $bits['domain'])) {
                         break;
                     }
-
                     if (preg_match("!^\[$IPv6_comp\]$!", $bits['domain'], $m)) {
                         list($a, $b) = explode('::', $m[1]);
                         $folded = (strlen($a) && strlen($b)) ? "$a:$b" : "$a$b";
                         $groups = explode(':', $folded);
-                        if (count($groups) > 7) return false;
+                        if (count($groups) > 7) {
+                            throw new Invalid('invalid email', 'invalid');
+                        }
                         break;
                     }
-
                     if (preg_match("!^\[$IPv6v4_full\]$!", $bits['domain'], $m)) {
-
-                        if (intval($m[1]) > 255) return false;
-                        if (intval($m[2]) > 255) return false;
-                        if (intval($m[3]) > 255) return false;
-                        if (intval($m[4]) > 255) return false;
+                        if (intval($m[1]) > 255) {
+                            throw new Invalid('invalid email', 'invalid');
+                        }
+                        if (intval($m[2]) > 255) {
+                            throw new Invalid('invalid email', 'invalid');
+                        }
+                        if (intval($m[3]) > 255) {
+                            throw new Invalid('invalid email', 'invalid');
+                        }
+                        if (intval($m[4]) > 255) {
+                            throw new Invalid('invalid email', 'invalid');
+                        }
                         break;
                     }
-
                     if (preg_match("!^\[$IPv6v4_comp\]$!", $bits['domain'], $m)) {
                         list($a, $b) = explode('::', $m[1]);
                         $b = substr($b, 0, -1); # remove the trailing colon before the IPv4 address
                         $folded = (strlen($a) && strlen($b)) ? "$a:$b" : "$a$b";
                         $groups = explode(':', $folded);
-                        if (count($groups) > 5) return false;
+                        if (count($groups) > 5) {
+                            throw new Invalid('invalid email', 'invalid');
+                        }
                         break;
                     }
 
-                    return false;
+                    throw new Invalid('invalid email', 'invalid');
                 }
             }
         } else {
-
-
             $labels = explode('.', $bits['domain']);
-
-
             if ($options['public_internet']) {
-                if (count($labels) == 1) return false;
+                if (count($labels) == 1) {
+                    throw new Invalid('invalid email', 'invalid');
+                }
             }
-
-
-
-
             foreach ($labels as $label) {
-
-                if (strlen($label) > 63) return false;
-                if (substr($label, 0, 1) == '-') return false;
-                if (substr($label, -1) == '-') return false;
+                if (strlen($label) > 63) {
+                    throw new Invalid('invalid email', 'invalid');
+                }
+                if (substr($label, 0, 1) == '-') {
+                    throw new Invalid('invalid email', 'invalid');
+                }
+                if (substr($label, -1) == '-') {
+                    throw new Invalid('invalid email', 'invalid');
+                }
             }
-
-
-
             if ($options['public_internet']) {
-                if (preg_match('!^[0-9]+$!', array_pop($labels))) return false;
+                if (preg_match('!^[0-9]+$!', array_pop($labels))) {
+                    throw new Invalid('invalid email', 'invalid');
+                }
             }
         }
-
 
         return true;
     }

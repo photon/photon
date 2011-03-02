@@ -28,8 +28,10 @@
  */
 namespace photon\form\field;
 
-use photon\form\validator;
+include_once __DIR__ . '/../locale/en/formats.php';
 
+use photon\locale\en\formats as en_formats;
+use photon\form\validator;
 use photon\form\Invalid;
 
 /**
@@ -173,8 +175,8 @@ class Field
      */
     public function validate($value)
     {
-        if ($this->required && in_array($value, $this->empty_values)) {
-            throw new Invalid($this->error_messages['required']);
+        if ($this->required && in_array($value, $this->empty_values, true)) {
+            throw new Invalid($this->error_messages['required'], 'required');
         }
     }
 
@@ -186,7 +188,7 @@ class Field
     public function runValidators($value)
     {
         // if the value is empty, there is nothing to validate
-        if (in_array($value, $this->empty_values)) {
+        if (in_array($value, $this->empty_values, true)) {
             return;
         }
         $errors = array();
@@ -215,10 +217,10 @@ class Field
      */
     function setDefaultEmpty($value) 
     {
-        if (in_array($value, $this->empty_values) && !$this->multiple) {
+        if (in_array($value, $this->empty_values, true) && !$this->multiple) {
             $value = '';
         }
-        if (in_array($value, $this->empty_values) && $this->multiple) {
+        if (in_array($value, $this->empty_values, true) && $this->multiple) {
             $value = array();
         }
 
@@ -274,23 +276,33 @@ class Varchar extends Field
     public $max_length = null;
     public $min_length = null;
 
-    public function toPhp($value)
+    public function __construct($params=array())
     {
-        return rtrim($value);
+        parent::__construct($params);
+        // we add the min/max length validators
+        if (null !== $this->min_length) {
+            $min = $this->min_length;
+            $this->validators[] = function ($value) use ($min) {
+                return validator\Text::minLength($value, $min);
+            };
+        }
+        if (null !== $this->max_length) {
+            $max = $this->max_length;
+            $this->validators[] = function ($value) use ($max) {
+                return validator\Text::maxLength($value, $max);
+            };
+        }
     }
 
-    public function clean($value)
+    public function toPhp($value)
     {
-        parent::clean($value);
-        if (in_array($value, $this->empty_values)) {
-            $value = '';
-        }
-        $value_length = mb_strlen($value);
-        if ($this->max_length !== null and $value_length > $this->max_length) {
-            throw new Invalid(sprintf(__('Ensure this value has at most %1$d characters (it has %2$d).'), $this->max_length, $value_length));
-        }
-        if ($this->min_length !== null and $value_length < $this->min_length) {
-            throw new Invalid(sprintf(__('Ensure this value has at least %1$d characters (it has %2$d).'), $this->min_length, $value_length));
+        // The spaces at the end in a form is always an issue when
+        // evaluating if a value is required or not. So, we take the
+        // step to trim them. We trim only space, tabs, nul byte and
+        // vertical tab, not the carriage return and new lines.
+        $value = rtrim($value, " \t\x0B\0");
+        if (in_array($value, $this->empty_values, true)) {
+            return '';
         }
         return $value;
     }
@@ -299,8 +311,8 @@ class Varchar extends Field
     {
         if ($this->max_length !== null and 
             in_array(get_class($widget), 
-                     array('\photon\form\widget\TextInput', 
-                           '\photon\form\widget\PasswordInput'))) {
+                     array('photon\form\widget\TextInput', 
+                           'photon\form\widget\PasswordInput'))) {
             return array('maxlength'=>$this->max_length);
         }
         return array();
@@ -314,98 +326,173 @@ class Boolean extends Field
 {
     public $widget = '\photon\form\widget\CheckboxInput';
 
-    public function clean($value)
+    public function toPhp($value)
     {
-        return (in_array($value, array('true', 'on', 'y', '1', 1, true)));
+        $value = (in_array($value, array('off', 'n', 'false', 'False', '0'), true))
+            ? false : (bool) $value;
+        if (!$value and $this->required) {
+            // This is because false is not in the empty value list.
+            throw new Invalid($this->error_messages['required'], 'required');
+        }
+        return $value;
     }
 }
 
-
+/**
+ * Date input field.
+ *
+ * The format of the date and thus the format in which we can expect
+ * the user to input the date varies depending of the user locale. The
+ * input formats for the given locale are loaded from the
+ * photon\locale\LC_lc\formats namespace.
+ */
 class Date extends Varchar
 {
-    public $widget = '\photon\form\widget\TextInput';
-    public $input_formats = array(
-       '%Y-%m-%d', '%m/%d/%Y', '%m/%d/%y', // 2006-10-25, 10/25/2006, 10/25/06
-       '%b %d %Y', '%b %d, %Y',      // 'Oct 25 2006', 'Oct 25, 2006'
-       '%d %b %Y', '%d %b, %Y',      // '25 Oct 2006', '25 Oct, 2006'
-       '%B %d %Y', '%B %d, %Y',      // 'October 25 2006', 'October 25, 2006'
-       '%d %B %Y', '%d %B, %Y',      // '25 October 2006', '25 October, 2006'
-                                  );
+    public $input_formats = array();
 
-    public function clean($value)
+    public function __construct($params=array())
     {
-        parent::clean($value);
-        foreach ($this->input_formats as $format) {
-            if (false !== ($date = strptime($value, $format))) {
-                $day = str_pad($date['tm_mday'], 2, '0', STR_PAD_LEFT);
-                $month = str_pad($date['tm_mon']+1, 2, '0', STR_PAD_LEFT);
-                $year = str_pad($date['tm_year']+1900, 4, '0', STR_PAD_LEFT);
-                return $year . '-' . $month . '-' . $day;
+        $this->input_formats = en_formats\DATE_INPUT_FORMATS;
+        $this->error_messages['invalid'] = __('Enter a valid date.');
+        parent::__construct($params);
+    }
+
+    public function toPhp($value)
+    {
+        if (in_array($value, $this->empty_values, true)) {
+            return '';
+        }
+        if (is_object($value) 
+            && 'photon\datetime\Date' === get_class($value)) {
+            return $value;
+        }
+        foreach (explode('||', $this->input_formats) as $format) {
+            if (false !== ($date = \photon\datetime\Date::fromFormat($format, $value))) {
+                return $date;
             }
         }
-        throw new Invalid(__('Enter a valid date.'));
+        throw new Invalid($this->error_messages['invalid']);
     }
 }
-
 
 class Datetime extends Varchar
 {
-    public $widget = '\photon\form\widget\DatetimeInput';
-    public $input_formats = array(
-             '%Y-%m-%d %H:%M:%S',     // '2006-10-25 14:30:59'
-             '%Y-%m-%d %H:%M',        // '2006-10-25 14:30'
-             '%Y-%m-%d',              // '2006-10-25'
-             '%m/%d/%Y %H:%M:%S',     // '10/25/2006 14:30:59'
-             '%m/%d/%Y %H:%M',        // '10/25/2006 14:30'
-             '%m/%d/%Y',              // '10/25/2006'
-             '%m/%d/%y %H:%M:%S',     // '10/25/06 14:30:59'
-             '%m/%d/%y %H:%M',        // '10/25/06 14:30'
-             '%m/%d/%y',              // '10/25/06'
-                                  );
+    public $input_formats = array();
+
+    public function __construct($params=array())
+    {
+        $this->input_formats = en_formats\DATETIME_INPUT_FORMATS;
+        $this->error_messages['invalid'] = __('Enter a valid date and time.');
+        parent::__construct($params);
+    }
+
+    public function toPhp($value)
+    {
+        if (in_array($value, $this->empty_values, true)) {
+            return '';
+        }
+        if (is_object($value) 
+            && 'photon\datetime\DateTime' === get_class($value)) {
+            return $value;
+        }
+        foreach (explode('||', $this->input_formats) as $format) {
+            $date = \photon\datetime\DateTime::fromFormat($format, $value);
+            if (false !== $date) {
+                return $date;
+            }
+        }
+        throw new Invalid($this->error_messages['invalid']);
+    }
+}
+
+class Email extends Varchar
+{
+    public function __construct($params=array())
+    {
+        parent::__construct($params);
+        $this->validators[] = function ($value) {
+            return validator\Net::email($value);
+        };
+    }
 
     public function clean($value)
     {
-        parent::clean($value);
-        $out = null;
-        foreach ($this->input_formats as $format) {
-            if (false !== ($date = strptime($value, $format))) {
-                $day = str_pad($date['tm_mday'], 2, '0', STR_PAD_LEFT);
-                $month = str_pad($date['tm_mon']+1, 2, '0', STR_PAD_LEFT);
-                $year = str_pad($date['tm_year']+1900, 4, '0', STR_PAD_LEFT);
-                $h = str_pad($date['tm_hour'], 2, '0', STR_PAD_LEFT);
-                $m = str_pad($date['tm_min'], 2, '0', STR_PAD_LEFT);
-                $s = $date['tm_sec'];
-                if ($s > 59) $s=59;
-                $s = str_pad($s, 2, '0', STR_PAD_LEFT);
-                $out = $year.'-'.$month.'-'.$day.' '.$h.':'.$m.':'.$s;
-                break;
-            }
+        $value = trim($this->toPhp($value));        
+        return parent::clean($value);
+    }
+}
+
+class Integer extends Varchar
+{
+    public $max_value = null;
+    public $min_value = null;
+
+    public function __construct($params=array())
+    {
+        $this->error_messages['invalid'] = __('Enter a whole number.');
+        parent::__construct($params);
+        // We add the min/max value validators
+        if (null !== $this->min_value) {
+            $min = $this->min_value;
+            $this->validators[] = function ($value) use ($min) {
+                return validator\Numeric::minValue($value, $min);
+            };
         }
-        if ($out !== null) {
-            // We internally use GMT, so we convert it to a GMT date.
-            return gmdate('Y-m-d H:i:s', strtotime($out));
+        if (null !== $this->max_value) {
+            $max = $this->max_value;
+            $this->validators[] = function ($value) use ($max) {
+                return validator\Numeric::maxValue($value, $max);
+            };
         }
-        throw new Invalid(__('Enter a valid date/time.'));
+    }
+
+    public function toPhp($value)
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+        if (in_array($value, $this->empty_values, true)) {
+            return null;
+        }
+        if (!preg_match('/^([+\-]{0,1}\d+)$/', $value)) {
+            throw new Invalid($this->error_messages['invalid']);
+        }
+        return (int) $value;
     }
 }
 
 
-class Email extends Varchar
+class Float extends Integer
 {
-    public $widget = '\photon\form\widget\TextInput';
+    public $max_value = null;
+    public $min_value = null;
 
-    public function clean($value)
+    public function __construct($params=array())
     {
+        $this->error_messages['invalid'] = __('Enter a number.');
+        parent::__construct($params);
+        $this->validators[] = function ($value) {
+            return validator\Net::email($value);
+        };
+    }
+
+
+    public function toPhp($value)
+    {
+
         parent::clean($value);
-        if (in_array($value, $this->empty_values)) {
+        if (in_array($value, $this->empty_values, true)) {
             $value = '';
         }
-        if ($value == '') {
-
-            return $value;
+        if (!is_numeric($value)) {
+            throw new Invalid($this->error_messages['invalid']);
         }
-        if (!validator\Net::email($value)) {
-            throw new Invalid(__('Enter a valid email address.'));
+        $value = (float) $value;
+        if ($this->max_value !== null and $this->max_value < $value) {
+            throw new Invalid(sprintf(__('Ensure this value is less than or equal to %s.'), $this->max_value));
+        }
+        if ($this->min_value !== null and $this->min_value > $value) {
+            throw new Invalid(sprintf(__('Ensure this value is greater than or equal to %s.'), $this->min_value));
         }
         return $value;
     }
@@ -542,65 +629,7 @@ function Pluf_Form_Field_File_moveToUploadFolder($value, $params=array())
 }
 
 
-class Float extends Varchar
-{
-    public $widget = '\photon\form\widget\TextInput';
-    public $max_value = null;
-    public $min_value = null;
 
-    public function clean($value)
-    {
-        parent::clean($value);
-        if (in_array($value, $this->empty_values)) {
-            $value = '';
-        }
-        if (!is_numeric($value)) {
-            throw new Invalid(__('Enter a number.'));
-        }
-        $value = (float) $value;
-        if ($this->max_value !== null and $this->max_value < $value) {
-            throw new Invalid(sprintf(__('Ensure this value is less than or equal to %s.'), $this->max_value));
-        }
-        if ($this->min_value !== null and $this->min_value > $value) {
-            throw new Invalid(sprintf(__('Ensure this value is greater than or equal to %s.'), $this->min_value));
-        }
-        return $value;
-    }
-}
-
-
-class Integer extends Varchar
-{
-    public $widget = '\photon\form\widget\TextInput';
-    public $max = null;
-    public $min = null;
-
-    public function clean($value)
-    {
-        parent::clean($value);
-        $value = $this->setDefaultEmpty($value);
-        if ($this->multiple) {
-            return $this->multiClean($value);
-        } else {
-            if ($value == '') return $value;
-            if (!preg_match('/^[\+\-]?[0-9]+$/', $value)) {
-                throw new Invalid(__('The value must be an integer.'));
-            }
-            $this->checkMinMax($value);
-        }
-        return (int) $value;
-    }
-
-    protected function checkMinMax($value)
-    {
-        if ($this->max !== null and $value > $this->max) {
-            throw new Invalid(sprintf(__('Ensure that this value is not greater than %1$d.'), $this->max));
-        }
-        if ($this->min !== null and $value < $this->min) {
-            throw new Invalid(sprintf(__('Ensure that this value is not lower than %1$d.'), $this->min));
-        }
-    }
-}
 
 
 
@@ -784,7 +813,7 @@ class Slug extends Varchar
 
     public function __construct($params=array())
     {
-        if (in_array($this->help_text, $this->empty_values)) {
+        if (in_array($this->help_text, $this->empty_values, true)) {
             $this->help_text = __('The &#8220;slug&#8221; is the URL-friendly'.
                                   ' version of the name, consisting of '.
                                   'letters, numbers, underscores or hyphens.');
@@ -850,7 +879,7 @@ class Url extends Varchar
     public function clean($value)
     {
         parent::clean($value);
-        if (in_array($value, $this->empty_values)) {
+        if (in_array($value, $this->empty_values, true)) {
             return '';
         }
         if (!Pluf_Utils::isValidUrl($value)) {
