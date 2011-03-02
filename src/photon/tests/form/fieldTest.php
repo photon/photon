@@ -35,6 +35,9 @@ class FieldTest extends \PHPUnit_Framework_TestCase
 {
     public function testVarcharField()
     {
+        $field = new field\Field();
+        $this->assertEquals('abc', $field->clean('abc'));
+
         $params = array('required' => true,
                         'max_length' => 15,
                         'min_length' => 3,
@@ -244,5 +247,100 @@ class FieldTest extends \PHPUnit_Framework_TestCase
             $this->fail(sprintf('This value should be bad: %s.', $bad));
         }
 
+    }
+
+    public function testFloatField()
+    {
+        $field = new field\Float();
+        $goods = array('1', '', '2', 234.234, '123789.987');
+        $bads = array('++123', 'me@localhost');
+        foreach ($goods as $good) {
+            try {
+                $pgood = $field->clean($good);
+            } catch (Invalid $e) {
+                $this->fail(sprintf('This value should be good: %s.', $good));
+            }
+            $this->assertEquals($good, $pgood);
+        }
+        foreach ($bads as $bad) {
+            try {
+                $bad = $field->clean($bad);
+            } catch (Invalid $e) {
+                continue;
+            }
+            $this->fail(sprintf('This value should be bad: %s.', $bad));
+        }
+
+        $minmax = new field\Float(array('min_value' => -123.0,
+                                        'max_value' => 12.0));
+        $bads = array(-124.0, 123.0);
+        $goods = array(-123.0, 12.0, 0.0);
+        foreach ($goods as $good) {
+            try {
+                $pgood = $minmax->clean($good);
+            } catch (Invalid $e) {
+                $this->fail(sprintf('This value should be good: %s.', $good));
+            }
+            $this->assertEquals($good, $pgood);
+        }
+        foreach ($bads as $bad) {
+            try {
+                $bad = $minmax->clean($bad);
+            } catch (Invalid $e) {
+                continue;
+            }
+            $this->fail(sprintf('This value should be bad: %s.', $bad));
+        }
+    }
+
+    public function testFileField()
+    {
+        $p_small = array('size' => 123,
+                         'data' => (object) array('dummy' => true),
+                         'name' => 'uploadfield',
+                         'filename' => 'small_file.txt',
+                         'of_type' => 'FILE',
+                         'type' => 'text/plain');
+        $p_big = array('size' => 123123123,
+                       'data' => (object) array('dummy' => true),
+                       'filename' => 'big_file.mpg',
+                       'name' => 'uploadfile',
+                       'of_type' => 'FILE',
+                       'type' => 'video/mp4');
+        $no_size = $p_small;
+        unset($no_size['size']);
+        $no_filename = $p_small;
+        unset($no_filename['filename']);
+        $filename_empty = $p_small;
+        $filename_empty['filename'] = '';
+        $size_empty = $p_small;
+        $size_empty['size'] = 0;
+
+
+        $field = new field\File();
+        $data = $field->clean($p_small);
+        $this->assertEquals($p_small, $data);
+        $data = $field->clean($p_big);
+        $this->assertEquals($p_big, $data);
+        $this->assertEquals(null, $field->clean(''));
+        $bads = array($no_size, $no_filename, $filename_empty, $size_empty);
+        foreach ($bads as $bad) {
+            try {
+                $bad = $field->clean($bad);
+            } catch (Invalid $e) {
+                continue;
+            }
+            $this->fail(sprintf('This value should be bad: %s.', $bad));
+        }
+        $field = new field\File(array('max_length' => 12));
+        $catched = false;
+        try {
+            $bad = $field->clean($p_small);
+        } catch (Invalid $e) {
+            $catched = true;
+        }
+        if (!$catched) {
+            $this->fail('The name is too long.');
+        }
     }
 }

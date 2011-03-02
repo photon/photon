@@ -84,8 +84,10 @@ class MultiPartParser
                 $params = http_parse_params($val);
                 if ($key === 'Content-Disposition') {
                     // Here we get if we have a POST or a FILE
-                    if (null !== self::getHeaderOption('filename', $params)) {
+                    $filename = self::getHeaderOption('filename', $params);
+                    if (null !== $filename) {
                         $type = 'FILE';
+                        $field['filename'] = $filename;
                         $field['size'] = $end - $start;
                         $field['data'] = new FileStreamWrapper($this->body,
                                                                $start, $end);
