@@ -50,7 +50,11 @@ class Invalid extends \Exception
         } else {
             $this->messages = array($message);
         }
-        parent::__construct($message, $code, $previous);
+        // Even so the code can officially be other than an
+        // integer/long, someone is enforcing this as integer/long
+        // below in the stack :/
+        parent::__construct($message, 0, $previous);
+        $this->code = $code;
     }
 }
 

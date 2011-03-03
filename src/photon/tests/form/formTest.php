@@ -233,7 +233,7 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $this->assertSame(false, $form->isValid());
         $form = new Hidden(array('hidden' => 'abc'));
         $this->assertSame(false, $form->isValid());
-        $this->assertEquals('<ul class="errorlist"><li>(Hidden field hidden) The value must be an integer.</li></ul>
+        $this->assertEquals('<ul class="errorlist"><li>(Hidden field hidden) Enter a whole number.</li></ul>
 <input name="hidden" type="hidden" id="id_hidden" value="abc" />', (string) $form->render_p());
     }
 
@@ -243,7 +243,7 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $this->assertSame(false, $form->isValid());
         $form = new HiddenAnd(array('hidden' => 'abc'));
         $this->assertSame(false, $form->isValid());
-        $this->assertEquals('<ul class="errorlist"><li>(Hidden field hidden) The value must be an integer.</li></ul>
+        $this->assertEquals('<ul class="errorlist"><li>(Hidden field hidden) Enter a whole number.</li></ul>
 <ul class="errorlist"><li>This field is required.</li></ul>
 <p><label for="id_login">Login:</label> <input maxlength="15" size="10" name="login" type="text" id="id_login" /><input name="hidden" type="hidden" id="id_hidden" value="abc" /></p>', (string) $form->render_p());
     }
