@@ -93,6 +93,11 @@ class Date
         $date = new \DateTime($this->y . '-' . $this->m . '-' . $this->d, $tz);
         return $date->format($format);
     }
+
+    public function __toString()
+    {
+        return $this->format('Y-m-d');
+    }
 }
 
 
@@ -159,20 +164,10 @@ class DateTime extends \DateTime
         return self::createFromFormat('Y-m-d H:i:s', $date);
     }
 
-    /**
-     * Format a date.
-     *
-     * @param $format 
-     * @return string Formatted date
-     */
-    /*
-    public function format($format)
+    public function __toString()
     {
-        $tz = new \DateTimeZone('UTC');
-        $date = new \DateTime($this->y . '-' . $this->m . '-' . $this->d, $tz);
-        return $date->format($format);
+        return $this->format('Y-m-d H:i:s');
     }
-    */
 }
 
 /**
