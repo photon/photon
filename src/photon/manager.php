@@ -1203,3 +1203,44 @@ class SelfTest extends Base
  */
 class InitApp
 {}
+
+/**
+ * Generate a unique key to set the <code>secret_key</code> key of your project configuration.
+ *
+ * Your unique to the project secret key to hmac validation of the cookies and more.
+ * This is critical to have a unique key per project installation.
+ */
+class SecretKeyGenenator extends Base
+{
+    /**
+    * Excludes the following ascii characters: ', " and \
+    * @var array
+    */
+    protected static $to_excludes = array(34, 39, 92);
+
+    public function run()
+    {
+        $length = $this->params['length'] ?: 65;
+        $this->info(self::generateSecretKey($length));
+    }
+
+    protected static function getAsciiCode()
+    {
+        $ascii = mt_rand(32, 126);
+        if (in_array($ascii, self::$to_excludes)) {
+          $ascii = self::getAsciiCode();
+        }
+
+        return $ascii;
+    }
+
+    protected static function generateSecretKey($lenght)
+    {
+        $secret_key = '';
+        for ($i = 0; $lenght > $i; ++$i) {
+            $secret_key .= chr(self::getAsciiCode());
+        }
+
+        return $secret_key;
+    }
+}

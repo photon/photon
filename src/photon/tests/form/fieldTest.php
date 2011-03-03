@@ -1,7 +1,7 @@
 <?php
-  /* -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
-  /*
-   # ***** BEGIN LICENSE BLOCK *****
+/* -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/*
+# ***** BEGIN LICENSE BLOCK *****
 # This file is part of Photon, The High Speed PHP Framework.
 # Copyright (C) 2010, 2011 Loic d'Anterroches and contributors.
 #

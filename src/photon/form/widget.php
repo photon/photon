@@ -131,7 +131,6 @@ class Input extends Widget
                                                'type' => $this->input_type),
                                          $extra_attrs);
         if ($value !== '') {
-            $value = htmlspecialchars($value, ENT_COMPAT, 'UTF-8');
             $final_attrs['value'] = $value;
         }
         return new SafeString('<input'.widget_attrs($final_attrs).' />', true);
@@ -149,10 +148,8 @@ class TextInput extends Input
 /**
  * Simple checkbox.
  */
-class CheckboxInput extends Input
+class CheckboxInput extends Widget
 {
-    public $input_type = 'checkbox';
-
     /**
      * Renders the HTML of the input.
      *
@@ -163,30 +160,40 @@ class CheckboxInput extends Input
      */
     public function render($name, $value, $extra_attrs=array())
     {
+        $final_attrs = $this->buildAttrs(array('name' => $name, 
+                                               'type' => 'checkbox'),
+                                         $extra_attrs);
         if ((bool)$value) {
             // We consider that if a value can be boolean casted to
             // true, then we check the box.
-            $extra_attrs['checked'] = 'checked';
+            $final_attrs['checked'] = 'checked';
         }
-        // Value of a checkbox is always "1" but when not checked, the
-        // corresponding key in the form associative array is not set.
-        return parent::render($name, '1', $extra_attrs);
+        if (!in_array($value, array('', true, false, null), true)) {
+            // Strict comparison, maybe a checkbox is providing a list
+            // of elements like the computers you have.
+            $final_attrs['value'] = $value;
+        }
+        return new SafeString('<input'.widget_attrs($final_attrs).' />', true);
     }
 
     /**
      * A non checked checkbox is simply not returned in the form array.
      *
-     * @param string Name of the form.
-     * @param array Submitted form data.
-     * @return mixed Value or null if not defined.
+     * @param string Name of the form field
+     * @param array Submitted form data
+     * @return mixed Value or null if not defined
      */
     public function valueFromFormData($name, $data)
     {
-        if (!isset($data[$name]) or false === $data[$name] 
-            or (string)$data[$name] === '0' or $data[$name] == '') {
+        if (!array_key_exists($name, $data)) {
+            // Not submitted, false
             return false;
         }
-        return true;
+        $value = $data[$name];
+        if (in_array($value, array('on', 'off'))) {
+            return (strlen($value) === 2);
+        }
+        return $value;
     }
 }
 
@@ -504,10 +511,11 @@ class TextareaInput extends Widget
         if ($value === null) $value = '';
         $final_attrs = $this->buildAttrs(array('name' => $name),
                                          $extra_attrs);
+
         return new SafeString(
                        sprintf('<textarea%s>%s</textarea>',
                                widget_attrs($final_attrs),
-                               htmlspecialchars($value, ENT_COMPAT, 'UTF-8')),
+                               \photon\template\Renderer::sreturn($value)),
                        true);
     }
 }
@@ -523,6 +531,7 @@ function widget_attrs($attrs)
 {
     $_tmp = array();
     foreach ($attrs as $attr=>$val) {
+        $val = \photon\template\Renderer::sreturn($val);
         $_tmp[] = $attr.'="'.$val.'"';
     }
 

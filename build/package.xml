@@ -13,11 +13,11 @@
   <email>loic@ceondo.com</email>
   <active>yes</active>
  </lead>
- <date>2011-02-26</date>
- <time>16:25:41</time>
+ <date>2011-03-03</date>
+ <time>11:22:33</time>
  <version>
-  <release>0.0.5</release>
-  <api>0.0.5</api>
+  <release>0.0.6</release>
+  <api>0.0.6</api>
  </version>
  <stability>
   <release>alpha</release>
@@ -103,6 +103,20 @@ Alpha release with regular changes and updates.
    <file name="photon/tests/template/rendererTest.php" role="php" />
    <file name="photon/tests/template/templateTest.php" role="php" />
    <file name="photon/tests/translations/translateTest.php" role="php" />
+   <file name="photon/datetime.php" role="php" />
+   <file name="photon/form.php" role="php" />
+   <file name="photon/form/field.php" role="php" />
+   <file name="photon/form/validator.php" role="php" />
+   <file name="photon/form/widget.php" role="php" />
+   <file name="photon/locale/en/formats.php" role="php" />
+   <file name="photon/locale/fr/formats.php" role="php" />
+   <file name="photon/tests/form/emails.xml" role="php" />
+   <file name="photon/tests/form/fieldTest.php" role="php" />
+   <file name="photon/tests/form/formTest.php" role="php" />
+   <file name="photon/tests/form/validatorTest.php" role="php" />
+   <file name="photon/tests/form/widgetTest.php" role="php" />
+   <file name="photon/tests/small/autoloadTest.php" role="php" />
+   <file name="photon/tests/small/simple.php" role="php" />
   </dir>
  </contents>
  <dependencies>
