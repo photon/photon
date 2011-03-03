@@ -78,6 +78,7 @@ Alpha release with regular changes and updates.
    <file name="photon/tests/data/dummyapp/locale/fr/dummyapp.po" role="php" />
    <file name="photon/tests/http/500.html" role="php" />
    <file name="photon/tests/http/baseTest.php" role="php" />
+   <file name="photon/tests/http/responseTest.php" role="php" />
    <file name="photon/tests/http/cookiesTest.php" role="php" />
    <file name="photon/tests/http/multipartparserTest.php" role="php" />
    <file name="photon/tests/mongrel2/mongrel2Test.php" role="php" />

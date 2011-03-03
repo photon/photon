@@ -208,26 +208,15 @@ class DatetimeInput extends Input
     public $format = 'Y-m-d H:i'; // '2006-10-25 14:30' by default do
                                   // not show the seconds.
 
-    /**
-     * Renders the HTML of the input.
-     *
-     * @param string Name of the field.
-     * @param mixed Value for the field, can be a non valid value.
-     * @param array Extra attributes to add to the input form (array())
-     * @return string The HTML string of the input.
-     */
     public function render($name, $value, $extra_attrs=array())
     {
-        // Internally we use GMT, so we convert back to the current
-        // timezone.
-        if (strlen($value) > 0) {
-            $value = date($this->format, strtotime($value.' GMT'));
+        if (is_object($value) 
+            && 'photon\datetime\DateTime' === get_class($value)) {
+            $value = $value->format($this->format);
         }
         return parent::render($name, $value, $extra_attrs);
     }
 }
-
-
 
 /**
  * Simple input of type file.
@@ -242,10 +231,7 @@ class FileInput extends Input
         $value = '';
         return parent::render($name, $value, $extra_attrs);
     }
-
 }
-
-
 
 /**
  * Simple input of type text.
@@ -255,11 +241,6 @@ class HiddenInput extends Input
     public $input_type = 'hidden';
     public $is_hidden = true;
 }
-
-
-
-
-
 
 /**
  * Simple input of type text.
@@ -282,92 +263,6 @@ class PasswordInput extends Input
             $value = '';
         }
         return parent::render($name, $value, $extra_attrs);
-    }
-}
-
-
-
-/**
- * reCAPTCHA input for your forms.
- *
- * Based on http://recaptcha.googlecode.com/files/recaptcha-php-1.10.zip
- *
- * Copyright (c) 2007 reCAPTCHA -- http://recaptcha.net
- * AUTHORS:
- *   Mike Crawford
- *   Ben Maurer
- *
- * @see Pluf_Form_Field_ReCaptcha 
- *
- */
-class ReCaptcha extends Input
-{
-    public $input_type = 'text';
-    public $ssl = false;
-    public $pubkey = '';
-
-
-    /**
-     * Renders the HTML of the input.
-     *
-     * @param string Name of the field.
-     * @param mixed Value for the field, can be a non valid value.
-     * @param array Extra attributes to add to the input form (array())
-     * @return string The HTML string of the input.
-     */
-    public function render($name, $value, $extra_attrs=array())
-    {
-        return Pluf_Template::markSafe(self::getHtml($this->attrs['pubkey']));
-    }
-
-    /**
-     * Gets the challenge HTML (javascript and non-javascript
-     * version).  This is called from the browser, and the resulting
-     * reCAPTCHA HTML widget is embedded within the HTML form it was
-     * called from.
-     *
-     * @param string A public key for reCAPTCHA
-     * @param string The error given by reCAPTCHA (null)
-     * @param boolean Should the request be made over ssl? (false)
-     * @return string The HTML to be embedded in the user's form.
-     */
-    public static function getHtml($pubkey, $error=null, $use_ssl=false)
-    {
-        $server = ($use_ssl) ? 'https://api-secure.recaptcha.net' 
-                             : 'http://api.recaptcha.net';
-        $errorpart = ($error) ? '&amp;error='.$error : '';
-
-        return '<script type="text/javascript" src="'.$server.'/challenge?k='
-            .$pubkey.$errorpart.'"></script>
-             <noscript>
-             <iframe src="'.$server.'/noscript?k='.$pubkey.$errorpart
-            .'" height="300" width="500" frameborder="0"></iframe><br/>
-             <textarea name="recaptcha_challenge_field" rows="3" cols="40"></textarea>
-             <input type="hidden" name="recaptcha_response_field" value="manual_challenge"/>
-             </noscript>';
-    }
-
-    /**
-     * Get the form data from the reCaptcha fields.
-     *
-     * We need to get back two fields from the POST request
-     * 'recaptcha_challenge_field' and 'recaptcha_response_field'.
-     *
-     * They are hardcoded, so we do not even bother checking something
-     * else. 
-     *
-     * @param string Name of the form
-     * @param array Submitted form data
-     * @return array Challenge and answer
-     */
-    public function valueFromFormData($name, $data)
-    {
-        $res = array('', '');
-        $res[0] = isset($data['recaptcha_challenge_field']) 
-            ? $data['recaptcha_challenge_field'] : '';
-        $res[1] = isset($data['recaptcha_response_field']) 
-            ? $data['recaptcha_response_field'] : '';
-        return $res;
     }
 }
 

@@ -31,6 +31,18 @@ use \photon\form\Invalid;
 
 class WidgetTest extends \PHPUnit_Framework_TestCase
 {
+    protected $timezone;
+    public function setUp()
+    {
+        $this->timezone = date_default_timezone_get();
+        date_default_timezone_set('UTC');
+    }
+
+    public function tearDown()
+    {
+        date_default_timezone_set($this->timezone);
+    }
+
     public function testWidget()
     {
         $widget = new widget\Widget();
@@ -59,7 +71,30 @@ class WidgetTest extends \PHPUnit_Framework_TestCase
         }
         $this->assertSame(false, $widget->valueFromFormData('bar', $in_data));
         $this->assertEquals('<input name="on" type="checkbox" checked="checked" value="on" />', (string) $widget->render('on', 'on'));
-
     }
 
+    public function testDatetimeInput()
+    {
+        $widget = new widget\DatetimeInput();
+        $datetime = new \photon\datetime\DateTime('2000-01-01');
+        $this->assertEquals('<input name="datetime" type="text" value="2000-01-01 00:00" />', (string) $widget->render('datetime', $datetime));
+        $this->assertEquals('<input name="datetime" type="text" />', (string) $widget->render('datetime', null));
+    }
+
+    public function testPasswordInput()
+    {
+        $widget = new widget\PasswordInput();
+        $this->assertEquals('<input name="password1" type="password" />', (string) $widget->render('password1', null));
+        $this->assertEquals('<input name="password1" type="password" value="foo" />', (string) $widget->render('password1', 'foo'));
+        $widget = new widget\PasswordInput(array('render_value'=>false));
+        $this->assertEquals('<input name="password1" type="password" />', (string) $widget->render('password1', 'foo'));
+    }
+
+    public function testFileInput()
+    {
+        $widget = new widget\FileInput();
+        $this->assertEquals('<input name="file1" type="file" />', (string) $widget->render('file1', null));
+        $this->assertEquals('<input name="file1" type="file" />', (string) $widget->render('file1', 'foo'));
+
+    }
 }
