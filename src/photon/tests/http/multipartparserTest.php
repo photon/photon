@@ -105,8 +105,8 @@ class ParserTest extends \PHPUnit_Framework_TestCase
                                                                    $datafile);
         $fields = $parser->parse();
         $this->assertEquals(3, count($fields));
-        $this->assertEquals(1454296, strlen($fields[1]['data']));
-        $this->assertEquals(498988, strlen($fields[2]['data']));
+        $this->assertEquals(1032, strlen($fields[1]['data']));
+        $this->assertEquals(11784, strlen($fields[2]['data']));
         fclose($datafile);
     }
 
