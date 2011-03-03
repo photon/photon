@@ -57,7 +57,10 @@
 namespace 
 {
     include_once __DIR__ . '/autoload.php';
-    $config = array('tmp_folder' => sys_get_temp_dir(),
+    $tmp =  (is_dir(__DIR__ . '/../../tmp')) 
+        ? realpath(__DIR__ . '/../../tmp')
+        : sys_get_temp_dir();
+    $config = array('tmp_folder' => $tmp,
                     'debug' => true,
                     'secret_key' => 'SECRET_KEY');
     $init = ini_get('photon.config');
