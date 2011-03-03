@@ -118,7 +118,6 @@ namespace photon
                                  'description' => 'run the subcommand for the given server id. If you start a process, it will receive this server id. The default subcommand is "start".'
                                  ));
 
-
         $sscd = $rserver_cmd->addCommand('start',
                                          array('description' => 'start a Photon server'));
         $sscd->addOption('children',
@@ -154,7 +153,12 @@ namespace photon
         $tcd->addArgument('task',
                           array('description' => 'the name of the task'));
 
-
+        $sk = $parser->addCommand('secretkey',
+                                  array('description' => 'prints out a randomly generated secret key to put in your configuration.'));
+        $sk->addOption('length',
+                       array('long_name'   => '--length',
+                             'action'      => 'StoreInt',
+                             'description' => 'length of the generate secret key. By default 65'));
 
         return $parser;
     }
@@ -240,6 +244,11 @@ namespace
                 $params['task'] = $result->command->args['task'];
                 $m = new \photon\manager\Task($params);
                 exit($m->run());
+                break;
+            case 'secretkey':
+                $params['length'] = $result->command->options['length'];
+                $m = new \photon\manager\SecretKeyGenenator($params);
+                $m->run();
                 break;
             default:
                 // no command entered
