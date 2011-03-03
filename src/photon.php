@@ -154,11 +154,11 @@ namespace photon
                           array('description' => 'the name of the task'));
 
         $sk = $parser->addCommand('secretkey',
-                                  array('description' => 'prints out a randomly generated secret key to put in your configuration.'));
+                                  array('description' => 'prints out a unique random secret key for your configuration.'));
         $sk->addOption('length',
                        array('long_name'   => '--length',
                              'action'      => 'StoreInt',
-                             'description' => 'length of the generate secret key. By default 65'));
+                             'description' => 'length of the generate secret key (65)'));
 
         return $parser;
     }
@@ -247,7 +247,7 @@ namespace
                 break;
             case 'secretkey':
                 $params['length'] = $result->command->options['length'];
-                $m = new \photon\manager\SecretKeyGenenator($params);
+                $m = new \photon\manager\SecretKeyGenerator($params);
                 $m->run();
                 break;
             default:

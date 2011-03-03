@@ -28,8 +28,7 @@ namespace photon\manager;
 use photon\config\Container as Conf;
 use photon\log\Log as Log;
 
-class Exception extends \Exception
-{}
+class Exception extends \Exception {}
 
 class Base
 {
@@ -90,6 +89,7 @@ class Base
 
         return include $config_file;
     }
+
 }
 
 /**
@@ -114,27 +114,28 @@ class Init extends Base
     {
         // make the initial project directory
         if (!mkdir($this->project_dir)) {
-            throw new Exception(sprintf("Failed to make directory {$this->project_dir}"));
+            throw new Exception(sprintf('Failed to make directory %s.', $this->project_dir));
         }
 
         // recursively copy the project_template directory
         $src_directory =  __DIR__ . '/data/project_template';
         $src_directory_length = strlen($src_directory) + 1;
-        $dir_iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($src_directory), \RecursiveIteratorIterator::SELF_FIRST);
+        $dir_iterator = new \RecursiveIteratorIterator(
+                          new \RecursiveDirectoryIterator($src_directory), 
+                          \RecursiveIteratorIterator::SELF_FIRST);
         foreach($dir_iterator as $src_filepath) {
-            if (substr(basename($src_filepath),0,1) == '.') continue; // ignore . .. .DS_Store
-
+            if (substr(basename($src_filepath), 0, 1) == '.') {
+                continue; // ignore '.', '..', '.DS_Store', '.*'
+            }
             // build the destination filepath
             $dest_directory_rel_path = substr($src_filepath, $src_directory_length);
             $dest_filepath = $this->project_dir . '/' . $dest_directory_rel_path;
-
-
             // make the directory or copy the file
             if (is_dir($src_filepath)) {
                 // make sure the dest directory exists
                 if (!file_exists($dest_filepath)) {
                     if (!mkdir($dest_filepath)) {
-                        throw new Exception(sprintf("Failed to make directory {$dest_filepath}"));
+                        throw new Exception(sprintf('Failed to make directory %s', $dest_filepath));
                     }
                 }
             } else {
@@ -144,9 +145,26 @@ class Init extends Base
                 }
             }
         }
-
-        // TODO: Generate the unique private key
-
+        // Make the run/logs/tmp folders of Mongrel2
+        foreach (array('run', 'logs', 'tmp') as $mdir) {
+            $dest_filepath = sprintf('%s/mongrel2/%s', $this->project_dir, $mdir);
+            if (!mkdir($dest_filepath)) {
+                throw new Exception(sprintf('Failed to make directory %s', $dest_filepath));
+            }
+        }        
+        // Set the uuid in the mongrel2 configuration file
+        $conf = file_get_contents($this->project_dir . '/mongrel2/conf/myproject-mongrel2.conf');
+        $conf = str_replace(array('%%UUID1%%', '%%UUID2%%'),
+                            array(SecretKeyGenerator::makeUuid(),
+                                  SecretKeyGenerator::makeUuid()),
+                            $conf);
+        file_put_contents($this->project_dir . '/mongrel2/conf/myproject-mongrel2.conf', $conf);
+        // Set the unique private key
+        $conf = file_get_contents($this->project_dir . '/config.php');
+        $conf = str_replace('%%SECRET_KEY%%',
+                            SecretKeyGenerator::generateSecretKey(125),
+                            $conf);
+        file_put_contents($this->project_dir . '/config.php', $conf);
     }
 
     /**
@@ -159,7 +177,6 @@ class Init extends Base
              throw new Exception(sprintf('Project folder already exists: %s.',
                  $this->project_dir));
          }
-
          // copy the application template
          $this->generateFiles('helloworld');
      }
@@ -1198,19 +1215,13 @@ class SelfTest extends Base
 }
 
 /**
- * Initialisation of a new app.
+ * Generate a unique <code>secret_key</code> for your project configuration.
  *
+ * Your unique to the project secret key to hmac validation of the
+ * cookies and more.  This is critical to have a unique key per
+ * project installation.
  */
-class InitApp
-{}
-
-/**
- * Generate a unique key to set the <code>secret_key</code> key of your project configuration.
- *
- * Your unique to the project secret key to hmac validation of the cookies and more.
- * This is critical to have a unique key per project installation.
- */
-class SecretKeyGenenator extends Base
+class SecretKeyGenerator extends Base
 {
     /**
     * Excludes the following ascii characters: ', " and \
@@ -1224,7 +1235,7 @@ class SecretKeyGenenator extends Base
         $this->info(self::generateSecretKey($length));
     }
 
-    protected static function getAsciiCode()
+    public static function getAsciiCode()
     {
         $ascii = mt_rand(32, 126);
         if (in_array($ascii, self::$to_excludes)) {
@@ -1234,13 +1245,24 @@ class SecretKeyGenenator extends Base
         return $ascii;
     }
 
-    protected static function generateSecretKey($lenght)
+    public static function generateSecretKey($length)
     {
         $secret_key = '';
-        for ($i = 0; $lenght > $i; ++$i) {
+        for ($i = 0; $length > $i; ++$i) {
             $secret_key .= chr(self::getAsciiCode());
         }
 
         return $secret_key;
+    }
+
+    public static function makeUuid()
+    {
+        $rnd = sha1(self::generateSecretKey(100));
+        return sprintf('%s-%s-4%s-b%s-%s',
+                       substr($rnd, 0, 8),
+                       substr($rnd, 8, 4),
+                       substr($rnd, 12, 3),
+                       substr($rnd, 15, 3),
+                       substr($rnd, 18, 12));
     }
 }

@@ -14,7 +14,7 @@ return array(
 
              'urls' => include __DIR__.'/urls.php',
 
-             'secret_key' => '',
+             'secret_key' => '%%SECRET_KEY%%',
              'admins' => array(array('1st Admin Name', 'admin1@example.com')),
 
              // Only one simple application is installed in project,
