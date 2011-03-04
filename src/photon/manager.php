@@ -165,6 +165,15 @@ class Init extends Base
                             SecretKeyGenerator::generateSecretKey(64),
                             $conf);
         file_put_contents($this->project_dir . '/config.php', $conf);
+        $this->info(sprintf('Default project created in: %s.',
+                            $this->project_dir));
+        $this->info('To start using this project run:');
+        $this->info(sprintf('  $ cd %s', $this->project_dir));
+        $this->info('  $ hnu server start');
+        $this->info('  $ m2sh load -config mongrel2/conf/myproject-mongrel2.conf');
+        $this->info('  $ m2sh start -host localhost');
+        $this->info('Then access http://localhost:6767/demo/ with your browser');
+        $this->info('Have fun! The Photon Project Team.');
     }
 
     /**
