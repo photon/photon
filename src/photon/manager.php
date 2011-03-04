@@ -162,7 +162,7 @@ class Init extends Base
         // Set the unique private key
         $conf = file_get_contents($this->project_dir . '/config.php');
         $conf = str_replace('%%SECRET_KEY%%',
-                            SecretKeyGenerator::generateSecretKey(125),
+                            SecretKeyGenerator::generateSecretKey(64),
                             $conf);
         file_put_contents($this->project_dir . '/config.php', $conf);
     }
@@ -1231,7 +1231,7 @@ class SecretKeyGenerator extends Base
 
     public function run()
     {
-        $length = $this->params['length'] ?: 65;
+        $length = $this->params['length'] ?: 64;
         $this->info(self::generateSecretKey($length));
     }
 
