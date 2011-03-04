@@ -232,9 +232,7 @@ class Connection
 
     public function send($uuid, $conn_id, $msg)
     {
-        $header = \sprintf('%s %d:%s,', $uuid, \strlen($conn_id), $conn_id);
-
-        return $this->resp->send($header . ' ' . $msg);
+        return send($this->resp, $uuid, $conn_id, $msg);
     }
 
     /**
@@ -246,16 +244,7 @@ class Connection
      */
     public function deliver($uuid, $idents, $data)
     {
-        if (129 > count($idents)) {
-            return $this->send($uuid, \join(' ', $idents),  $data);
-        }
-        // We need to send multiple times the data. We are going to
-        // send the data in series of 128 to the clients.
-        $a = 1;
-        foreach (array_chunk($idents, 128) as $chunk) {
-            $a = $a & (int) $this->send($uuid, \join(' ', $chunk),  $data);
-        }
-        return (bool) $a;
+        return deliver($this->resp, $uuid, $idents, $data);
     }
 
     public function close()
@@ -265,3 +254,31 @@ class Connection
     }
 }
 
+function send($socket, $uuid, $conn_id, $msg)
+{
+    $header = \sprintf('%s %d:%s,', $uuid, \strlen($conn_id), $conn_id);
+    
+    return $socket->send($header . ' ' . $msg);
+}
+
+/**
+ * Deliver a piece of data to a series of clients.
+ *
+ * @param $socket The delivery socket
+ * @param $uuid ID of the sender
+ * @param $idents Array of the client connection ids
+ * @param $data Payload
+ */
+function deliver($socket, $uuid, $idents, $data)
+{
+    if (129 > count($idents)) {
+        return send($socket, $uuid, \join(' ', $idents),  $data);
+    }
+    // We need to send multiple times the data. We are going to
+    // send the data in series of 128 to the clients.
+    $a = 1;
+    foreach (array_chunk($idents, 128) as $chunk) {
+        $a = $a & (int) send($socket, $uuid, \join(' ', $chunk),  $data);
+    }
+    return (bool) $a;
+}

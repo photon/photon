@@ -365,6 +365,7 @@ class BaseTask
         $ans = sprintf('%s %s %d:%s', $this->phid, 'STOP',
                        strlen($data), $data);
         $this->ctl_ans->send($ans);
+        self::preTerm();
         usleep(200000);
         die(0);
     }

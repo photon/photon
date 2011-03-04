@@ -60,7 +60,7 @@ state = new FSM({
 
     connecting: {
         CONNECT: function(fsm, event) {
-            addMessage('<em>Connected to Mongrel2.org chat demo.</em>');
+            addMessage('<em>Connected to Photon chat demo.</em>');
             Chat.socket.send({'type': 'join', 'user': Chat.user});
             fsm.trans('connected');
         },
@@ -91,7 +91,7 @@ state = new FSM({
         },
 
         CLOSE: function(fsm, event) {
-            addMessage('<em>Well, looks like Mongrel2 crashed or your internet did.</em>');
+            addMessage('<em>Well, looks like Photon crashed or your internet did.</em>');
             fsm.trans('connecting');
         },
 

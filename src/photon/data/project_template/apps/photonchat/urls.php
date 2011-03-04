@@ -1,12 +1,13 @@
 <?php
-/* -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
-/**
- * The app URLs file is included into the main project url files 
- * to be available at the right point in the URL space.
- */
 
-return array(array('regex' => '##',
-                   'view' => array('\photonchat\views\Chat', 'chatbox'),
-                   'name' => 'photonchat_chatbox',
+return array(
+             array('regex' => '#^/$#',
+                   'view' => array('\photonchat\views\Chat', 'home'),
+                   'name' => 'photonchat_home',
+                   ),
+             array('regex' => '#^/media/photonchat/(.*)$#',
+                   'view' => array('\photon\views\AssetDir', 'serve'),
+                   'name' => 'photonchat_assets',
+                   'params' => __DIR__ . '/www/media/photonchat',
                    ),
              );

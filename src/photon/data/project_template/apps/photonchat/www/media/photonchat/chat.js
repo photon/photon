@@ -5,7 +5,7 @@ var Chat = {
 		Chat.socket =  new jsSocket({
 			hostname: '127.0.0.1',
 			port: 	  6767,
-            path:     '@chat',
+            path:     '@photonchat',
 		    onOpen:   Chat.onOpen,
 	        onData:   Chat.onData,
 	        onClose:  Chat.onClose

@@ -19,7 +19,7 @@ function jsSocket(args) {
 }
 
 // default location of jsSocket.swf
-jsSocket.swf = "flash/jsSocket.swf";
+jsSocket.swf = "/static/flash/jsSocket.swf";
 
 // dict of sockets
 jsSocket.sockets = {};

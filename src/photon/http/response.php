@@ -55,6 +55,24 @@ class NotFound extends Response
     }
 }
 
+class Redirect extends Response
+{
+    /**
+     * Redirect response to a given URL.
+     *
+     * @param string URL
+     * @paran int Redirect code (302) or 301 for permanent
+     */
+    function __construct($url, $code=302)
+    {
+        $content = sprintf(__('<a href="%s">Please, click here to be redirected</a>.'), $url);
+        parent::__construct($content);
+        $this->headers['Location'] = $url;
+        $this->status_code = $code;
+    }
+}
+
+
 class Json extends Response
 {
     function render($output_body=true)

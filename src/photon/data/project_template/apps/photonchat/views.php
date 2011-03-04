@@ -5,6 +5,7 @@
  */
 
 namespace photonchat\views;
+
 use \photon\shortcuts;
 
 class Chat
@@ -13,10 +14,9 @@ class Chat
      * Just serving the main HTML of the chat window, it could done
      * directly by Mongrel2.
      */
-    public function index($request, $match)
+    public function home($request, $match)
     {
-        // note: this is not used
-        return shortcuts\Template::RenderToResponse('photonchat/index.html',
+        return shortcuts\Template::RenderToResponse('photonchat/home.html',
                                                     array(),
                                                     $request);
     }
@@ -24,42 +24,50 @@ class Chat
     /**
      * Here we serve the request coming from the chat socket.
      */
-   public function chatbox($request, $match)
-   {
-       static $user_list = array();
-       
-       // TODO: user_list needs to be a shared resource written to a flat file or in mongodb
-       
-       $data = $request->BODY;
-       if ('join' === $request->BODY->type) {
-           $request->conn->deliver($request->mess->sender,
-                                   array_keys($user_list),
-                                   json_encode($request->BODY));
-           $user_list[$request->mess->conn_id] = $request->BODY->user;
-           $res = array('type' => 'userList', 
-                        'users' => array_values($user_list));
-           print "JOIN ". $request->mess->conn_id . "\n";
-           return new \photon\http\response\Json($res);
-       } elseif ('disconnect' === $request->BODY->type) {
-           print "DISCONNECTED ". $request->mess->conn_id . "\n";
+    public function chatbox($request, $match)
+    {
+        // We are offloading the work to the chatserver task.
 
-           if (isset($user_list[$request->mess->conn_id])) {
-               $data->user = $user_list[$request->mess->conn_id];
-               unset($user_list[$request->mess->conn_id]);
-           }
-           $request->conn->deliver($request->mess->sender,
-                                   array_keys($user_list),
-                                   json_encode($data));
-       } elseif (!isset($user_list[$request->mess->conn_id])) {
-           $user_list[$data->user] = $request->mess->conn_id;
-           print "AUTO JOIN ". $request->mess->conn_id . "\n";
-       } elseif ('msg' === $data->type) {
-           $request->conn->deliver($request->mess->sender,
-                                   array_keys($user_list),
-                                   json_encode($data));
-           print "MESS FROM ". $request->mess->conn_id . "\n";
-       }
-       return false; // By default, say nothing
-   }
+        $runner = new \photon\task\Runner();
+        $payload = array($request->sender, $request->client, $request->BODY);
+        // The run call will return immediately!
+        $runner->run('photonchat_server', $payload);
+        return false;
+    }
+
+
+    /**
+     * Here we serve the request coming from the chat socket.
+     */
+    public function singlehandlerchatbox($request, $match)
+    {
+        // Laziness, for this chatbox to work, you need to have only
+        // one handler process running. Run two times $ hnu server
+        // less after you did a $ hnu server start to kill 2 of the
+        // default 3 handler processes.
+        static $user_list = array();
+
+        $data = $request->BODY;
+        if ('join' === $data->type) {
+            $request->conn->deliver($request->sender, array_keys($user_list),
+                                    json_encode($data));
+            $user_list[$request->client] = $data->user;
+            $res = array('type' => 'userList', 
+                         'users' => array_values($user_list));
+            return new \photon\http\response\Json($res);
+        } elseif ('disconnect' === $data->type) {
+            if (isset($user_list[$request->client])) {
+                $data->user = $user_list[$request->client];
+                unset($user_list[$request->client]);
+            }
+            $request->conn->deliver($request->sender, array_keys($user_list),
+                                    json_encode($data));
+        } elseif (!isset($user_list[$request->client])) {
+            $user_list[$data->user] = $request->client;
+        } elseif ('msg' === $data->type) {
+            $request->conn->deliver($request->sender, array_keys($user_list),
+                                    json_encode($data));
+        }
+        return false; // By default, say nothing
+    }
 }
-
