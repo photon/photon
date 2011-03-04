@@ -158,7 +158,7 @@ namespace photon
         $sk->addOption('length',
                        array('long_name'   => '--length',
                              'action'      => 'StoreInt',
-                             'description' => 'length of the generate secret key (65)'));
+                             'description' => 'length of the generate secret key (64)'));
 
         return $parser;
     }
