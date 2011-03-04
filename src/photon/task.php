@@ -25,6 +25,7 @@
  */
 namespace photon\task;
 use photon\config\Container as Conf;
+use photon\log\Log as Log;
 
 /**
  * Default subscribe address as used many times in this module.
