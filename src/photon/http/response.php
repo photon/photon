@@ -55,23 +55,30 @@ class NotFound extends Response
     }
 }
 
+/**
+ * An HTTP response doing a redirect.
+ */
 class Redirect extends Response
 {
     /**
      * Redirect response to a given URL.
      *
-     * @param string URL
-     * @paran int Redirect code (302) or 301 for permanent
+     * @param string  $url  URL
+     * @param integer $code A valid redirect code among 301, (302), 303 and 307.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3
      */
     function __construct($url, $code=302)
     {
-        $content = sprintf(__('<a href="%s">Please, click here to be redirected</a>.'), $url);
-        parent::__construct($content);
+        parent::__construct(sprintf('<html><head><meta http-equiv="refresh" content="1;url=%s"/></head></html>',
+                                    htmlspecialchars($url, ENT_QUOTES)));
+        $code = (int) $code;
+        if (!in_array($code, array(301, 302, 303, 307))) {
+            throw new \InvalidArgumentException(sprintf('The HTTP status code `%s` is not a redirect.', $code));
+        }
         $this->headers['Location'] = $url;
         $this->status_code = $code;
     }
 }
-
 
 class Json extends Response
 {
