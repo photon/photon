@@ -866,8 +866,12 @@ class CommandServer extends Base
         // We send the order to all the servers. Servers must
         // subscribe to ALL and to their own id.
         $this->sendCommand('LIST');
-        $this->info('Waiting for the answers...');
         $answers = $this->parseAnswers($this->readAns());
+        if ($this->params['json']) {
+            print json_encode($answers) . "\n";
+
+            return 0;
+        }
         $idlen = 0;
         foreach (array_keys($answers) as $id) {
             if (strlen($id) > $idlen) {

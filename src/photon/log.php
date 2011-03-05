@@ -37,7 +37,7 @@
  * The usage is has one would expect:
  *
  * <pre>
- * \photon\log\Log::log('Whatever you want to log.'); // Log::ALL level
+ * \photon\log\Log::plog('Whatever you want to log.'); // Log::ALL level
  * \photon\log\Log::info('Whatever you want to log.');
  * \photon\log\Log::debug('Debug information.');
  * \photon\log\Log::fatal('Runtime situation which may crash the app.');
@@ -123,10 +123,18 @@ class Log
      * push the info back in the log. You can for example store the
      * total time doing SQL or other things like that.
      *
-     * See self::stime() and self::etime().
+     * See Timer::start() and Timer::stop().
      */
     public static $store = array();
 
+    /**
+     * Set the log level.
+     */
+    public static function setLevel($level)
+    {
+        $levels = array_flip(self::$reverse);
+        self::$level = $levels[$level];
+    }
 
     /**
      * Log the information in the stack.
@@ -152,7 +160,7 @@ class Log
      *
      * @param $message Message to log
      */
-    public static function log($message)
+    public static function plog($message)
     {
         return self::_log(self::ALL, $message);
     }
@@ -255,15 +263,38 @@ class Log
         return (isset(self::$store[$key])) 
             ? self::$store[$key] : $value;
     }
+}
+
+/**
+ * Used to easily track the time between two events.
+ *
+ * <code>
+ * Timer::start('event');
+ * run_long_process();
+ * $time = Timer::stop('event');
+ * </code>
+ *
+ */
+class Timer
+{
+    /**
+     * A simple storage to track stats.
+     *
+     * A good example is to store stats and at the end of the request,
+     * push the info back in the log. You can for example store the
+     * total time doing SQL or other things like that.
+     *
+     */
+    public static $store = array();
 
    /**
     * Start the time to track.
     *
-    * @param $key Tracker
+    * @param $key Tracker ('default')
     */
-    public static function stime($key)
+    public static function start($key='default')
     {
-        self::$store['time_tracker_' . $key] = microtime(true);
+        self::$store[$key] = microtime(true);
     }
 
    /**
@@ -273,13 +304,15 @@ class Log
     * @param $total Tracker to store the total (null)
     * @return float Time for this track
     */
-    public static function etime($key, $total=null)
+    public static function stop($key='default', $total=null)
     {
-        $t = microtime(true) - self::$store['time_tracker_' . $key];
-        if ($total) {
-            self::inc('time_tracker_' . $total, $t);
+        $t = microtime(true) - self::$store[$key];
+        unset(self::$store[$key]);
+        if (null !== $total) {
+            self::$store['total_' . $total] = (isset(self::$store['total_' . $total])) 
+                ? self::$store['total_' . $total] + $t
+                : $t;
         }
-
         return $t;
     }
 }
@@ -301,21 +334,29 @@ class FileBackend
     public static $chmoded = false;
 
     /**
+     * Log file.
+     */
+    public static $log_file = null;
+
+    /**
      * Flush the stack to the disk.
      *
      * @param $stack Array
      */
     public static function write($stack)
     {
-        $file = Conf::f('photon_log_file', 
-                        Conf::f('tmp_folder', '/tmp').'/photon.log');
+        if (null === self::$log_file) {
+            self::$log_file = Conf::f('photon_log_file', 
+                   Conf::f('tmp_folder', sys_get_temp_dir()) . '/photon.log');
+        }
         $out = array();
         foreach ($stack as $elt) {
-            $out[] = date(DATE_ISO8601, (int) $elt[0]).' '.
-                Log::$reverse[$elt[1]].': '.
-                json_encode($elt[2]);
+            $out[] = date(DATE_ISO8601, (int) $elt[0]) . ' [' .
+                Log::$reverse[$elt[1]] . '] ' . json_encode($elt[2]);
         }
-        file_put_contents($file, implode(PHP_EOL, $out).PHP_EOL, FILE_APPEND);
+        file_put_contents(self::$log_file, 
+                          implode(PHP_EOL, $out) . PHP_EOL, 
+                          FILE_APPEND | LOCK_EX);
         if (!self::$chmoded) {
             @chmod($file, 0666);
             self::$chmoded = true;

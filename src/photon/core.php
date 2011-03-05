@@ -28,6 +28,8 @@
 namespace photon\core;
 
 use photon\config\Container as Conf;
+use photon\log\Timer as Timer;
+use photon\log\Log as Log;
 
 class Exception extends \Exception {}
 
@@ -40,7 +42,7 @@ class Exception extends \Exception {}
 class Dispatcher
 {
     /**
-     * Dispatch a Mongrel2 request object and returns the request
+     * Dispatch a Photon request object and returns the request
      * object and the response object.
      *
      * @param $req Photon request object.
@@ -48,6 +50,7 @@ class Dispatcher
      */
     public static function dispatch($req)
     {
+        Timer::start('photon.dispatch');
         // FUTUREOPT: One can generate the lists at the initialisation
         // of the server to avoid the repetitive calls to
         // method_exists.
@@ -89,7 +92,9 @@ class Dispatcher
                 $response->setContent($e, $req);
             }
         }
-
+        Log::perf(array('photon.dispatch', $req->uuid, 
+                        Timer::stop('photon.dispatch'),
+                        array($req->method, $req->path)));
         return array($req, $response);
     }
 

@@ -28,7 +28,25 @@
  */
 namespace photon\server;
 
+use photon\log\Timer as Timer;
 use photon\log\Log as Log;
+
+/**
+ * Generate a uuid for each incoming request.
+ *
+ * You should use the Photon id for the unique string.
+ *
+ * @param $unique Required string to make more unique the uuid 
+ * @return string Type 4 UUID
+ */
+function request_uuid($unique)
+{
+    $rnd = sha1(uniqid($unique));
+    return sprintf('%s-%s-4%s-b%s-%s',
+                   substr($rnd, 0, 8), substr($rnd, 8, 4),
+                   substr($rnd, 12, 3), substr($rnd, 15, 3),
+                   substr($rnd, 18, 12));
+}
 
 /**
  * Production server.
@@ -81,7 +99,13 @@ class Server
     public $stats = array('start_time' => 0,
                           'requests' => 0,
                           'memory_current' => 0,
+                          'poll_avg' => array(),
                           'memory_peak' => 0);
+
+    /**
+     * Store the necessary information to update the poll_avg stats.
+     */
+    public $poll_stats = array('avg' => 0.0, 'total' => 0, 'count' => 0);
 
     public function __construct($conf=array())
     {
@@ -140,7 +164,9 @@ class Server
             $events = 0;
             try {
                 // We poll and wait a maximum of 200ms. 
+                Timer::start('photon.main_poll_time');
                 $events = $this->poll->poll($to_read, $to_write, 200000);
+                $poll_time = Timer::stop('photon.main_poll_time');
                 $errors = $this->poll->getLastErrors();
                 if (count($errors) > 0) {
                     foreach ($errors as $error) {
@@ -165,17 +191,58 @@ class Server
                     }
                 }
             }
+            $this->updatePollStats($poll_time);
             pcntl_signal_dispatch();
+        }
+    }
+
+    /**
+     * Poll stats are good to know if your handlers are saturated.
+     *
+     * If the poll time starts to reach 0 for a long time, you know
+     * that as soon as your handler finished answering a request,
+     * another was still waiting in the pipe. This means that you are
+     * near saturation. You can use this information to start more
+     * children or kill the old ones.
+     *
+     * Poll time is sampled over one minute and the latest 15 minutes
+     * are available. On an idle system it should be basically 200ms
+     * (the timeout on the poll).
+     *
+     * @param $poll_time Latest poll time
+     */
+    public function updatePollStats($poll_time)
+    {
+        $time = time();
+        $time = $time - ($time % 60);
+        if (isset($this->stats['poll_avg'][$time])) {
+            $this->poll_stats['count']++;
+            $this->poll_stats['total'] += $poll_time;            
+            $this->poll_stats['avg'] = $this->poll_stats['total'] / $this->poll_stats['count'];
+            $this->stats['poll_avg'][$time] = $this->poll_stats['avg'];
+        } else {
+            // Entering a new sample minute
+            $this->poll_stats['count'] = 1;
+            $this->poll_stats['total'] = $poll_time;            
+            $this->poll_stats['avg'] = $poll_time;
+            $this->stats['poll_avg'][$time] = $poll_time;
+            if (count($this->stats['poll_avg']) > 15) {
+                array_shift($this->stats['poll_avg']);
+            }
         }
     }
 
     public function processRequest($conn)
     {
+        $uuid = request_uuid($this->phid);
+        Timer::start('photon.process_request');
         $fp = fopen('php://temp/maxmemory:5242880', 'r+');
         fputs($fp, $conn->reqs->recv());
+        $stats = fstat($fp);
         rewind($fp);
         $mess = $conn->parse($fp);
         $req = new \photon\http\Request($mess);
+        $req->uuid = $uuid;
         $req->conn = $conn;
         list($req, $response) = \photon\core\Dispatcher::dispatch($req);
         // If the response is false, the view is simply not
@@ -186,6 +253,9 @@ class Server
             $conn->reply($mess, $response->render());
         }
         unset($mess); // Cleans the memory with the __destruct call.
+        Log::perf(array('photon.process_request', $uuid, 
+                        Timer::stop('photon.process_request'),
+                        $stats['size']));
     }
 
     /**
@@ -332,7 +402,6 @@ class TestServer
             if (false !== $response) {
                 $this->conn->reply($mess, $response->render());
             }
-            //clearstatcache();
             unset($mess); // Cleans the memory with the __destruct call.
         }
     }

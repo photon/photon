@@ -137,6 +137,13 @@ namespace photon
 
         $lcd = $rserver_cmd->addCommand('list',
                                         array('description' => 'list the running Photon servers'));
+
+        $lcd->addOption('json',
+                        array('long_name'   => '--json',
+                              'action'      => 'StoreTrue',
+                              'description' => 'output the information as json'
+                                 ));
+
         $rserver_cmd->addCommand('childstart',
                                  array('description' => 'internal use to fork worker children'));
 
