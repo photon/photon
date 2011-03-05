@@ -96,6 +96,60 @@ class WidgetTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('<input name="file1" type="file" />', (string) $widget->render('file1', null));
         $this->assertEquals('<input name="file1" type="file" />', (string) $widget->render('file1', 'foo'));
     }
+    
+    public function testSelectInput()
+    {
+        $widget = new widget\SelectInput(array('choices'=>array('foo'=>1, 'bar'=>2, 'group'=> array('toto'=> 3, 'titi'=>4))));
+        $expected = '<select name="select1">'."\n";
+        $expected .= '<option value="1">foo</option>'."\n";
+        $expected .= '<option value="2">bar</option>'."\n";
+        $expected .= '<optgroup label="group">'."\n";
+        $expected .= '<option value="3" selected="selected">toto</option>'."\n";
+        $expected .= '<option value="4">titi</option>'."\n";
+        $expected .= '</optgroup>'."\n";
+        $expected .= '</select>';
+        $result = (string) $widget->render('select1', 3);
+        $this->assertEquals($expected, $result);
+        $expected = '<select name="select1">'."\n";
+        $expected .= '<option value="1">foo</option>'."\n";
+        $expected .= '<option value="2">bar</option>'."\n";
+        $expected .= '<optgroup label="group">'."\n";
+        $expected .= '<option value="3">toto</option>'."\n";
+        $expected .= '<option value="4">titi</option>'."\n";
+        $expected .= '</optgroup>'."\n";
+        $expected .= '</select>';
+        $result = (string) $widget->render('select1',null);
+        $this->assertEquals($expected, $result);
+    }
+    
+    public function testSelectMultipleInput()
+    {
+        $widget = new widget\SelectMultipleInput(array('choices'=>array('foo'=>1, 'bar'=>2, 'group'=> array('toto'=> 3, 'titi'=>4))));
+        $expected = '<select multiple="multiple" name="select1[]">'."\n";
+        $expected .= '<option value="1">foo</option>'."\n";
+        $expected .= '<option value="2">bar</option>'."\n";
+        $expected .= '<optgroup label="group">'."\n";
+        $expected .= '<option value="3" selected="selected">toto</option>'."\n";
+        $expected .= '<option value="4">titi</option>'."\n";
+        $expected .= '</optgroup>'."\n";
+        $expected .= '</select>';
+        $result = (string) $widget->render('select1', 3);
+        $this->assertEquals($expected, $result);
+        $expected = '<select multiple="multiple" name="select1[]">'."\n";
+        $expected .= '<option value="1">foo</option>'."\n";
+        $expected .= '<option value="2">bar</option>'."\n";
+        $expected .= '<optgroup label="group">'."\n";
+        $expected .= '<option value="3">toto</option>'."\n";
+        $expected .= '<option value="4">titi</option>'."\n";
+        $expected .= '</optgroup>'."\n";
+        $expected .= '</select>';
+        $result = (string) $widget->render('select1',null);
+        $this->assertEquals($expected, $result);
+        $data = array('bar'=> array('3'), 'toto'=> array('1'), 'titi'=> 5);
+        $this->assertEquals(null, $widget->valueFromFormData('foo', $data));
+        $this->assertEquals(null, $widget->valueFromFormData('titi', $data));
+        $this->assertEquals(array('3'), $widget->valueFromFormData('bar', $data));
+    }
 
     public function testTextareaInput()
     {

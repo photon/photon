@@ -358,14 +358,24 @@ class SelectMultipleInput extends Widget
                                          $extra_attrs);
         $output[] = '<select multiple="multiple"'
             .widget_attrs($final_attrs).'>';
-        $choices = array_merge($this->choices, $choices);
-        foreach ($choices as $option_label=>$option_value) {
-            $selected = (in_array($option_value, $value)) ? ' selected="selected"':'';
-            $output[] = sprintf('<option value="%s"%s>%s</option>',
-                                htmlspecialchars($option_value, ENT_COMPAT, 'UTF-8'),
-                                $selected, 
-                                htmlspecialchars($option_label, ENT_COMPAT, 'UTF-8'));
-
+        $groups = $this->choices + $choices;
+        foreach($groups as $option_group => $c) {
+            if (!is_array($c)) {
+                $subchoices = array($option_group => $c);
+            } else {
+                $output[] = '<optgroup label="'.htmlspecialchars($option_group, ENT_COMPAT, 'UTF-8').'">';
+                $subchoices = $c;
+            }
+            foreach ($subchoices as $option_label=>$option_value) {
+                $selected = ($option_value == $value) ? ' selected="selected"':'';
+                $output[] = sprintf('<option value="%s"%s>%s</option>',
+                                    htmlspecialchars($option_value, ENT_COMPAT, 'UTF-8'),
+                                    $selected, 
+                                    htmlspecialchars($option_label, ENT_COMPAT, 'UTF-8'));
+            }
+            if (is_array($c)) {
+                $output[] = '</optgroup>';
+            }
         }
         $output[] = '</select>';
         return new SafeString(implode("\n", $output), true);
