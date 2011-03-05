@@ -148,7 +148,7 @@ class Log
     {
 
         if (10 !== self::$level && self::$level <= $level) {
-            self::$stack[] = array(microtime(true), $level, $message);
+            self::$stack[] = array(time(), $level, $message);
             if (!Conf::f('log_delayed', false)) {
                 self::flush();
             }
@@ -225,44 +225,6 @@ class Log
         self::$stack = array();
     }
 
-    /**
-     * Increment a key in the store.
-     *
-     * It automatically creates the key as needed.
-     *
-     * @param $key Key to increment
-     * @param $amount Amount to increase (1)
-     */
-    public static function inc($key, $amount=1)
-    {
-        if (!isset(self::$store[$key])) {
-            self::$store[$key] = 0;
-        }
-        self::$store[$key] += $amount;
-    }
-
-   /**
-    * Set a key in the store.
-    *
-    * @param $key Key to set
-    * @param $value Value to set
-    */
-    public static function set($key, $value)
-    {
-        self::$store[$key] = $value;
-    }
-
-   /**
-    * Get a key from the store.
-    *
-    * @param $key Key to set
-    * @param $value Default value (null)
-    */
-    public static function get($key, $value=null)
-    {
-        return (isset(self::$store[$key])) 
-            ? self::$store[$key] : $value;
-    }
 }
 
 /**
@@ -315,6 +277,34 @@ class Timer
         }
         return $t;
     }
+
+    /**
+     * Increment a key in the store.
+     *
+     * It automatically creates the key as needed.
+     *
+     * @param $key Key to increment
+     * @param $amount Amount to increase (1)
+     */
+    public static function inc($key, $amount=1)
+    {
+        if (!isset(self::$store[$key])) {
+            self::$store[$key] = 0;
+        }
+        self::$store[$key] += $amount;
+    }
+
+   /**
+    * Get a key from the store.
+    *
+    * @param $key Key to set
+    * @param $value Default value (null)
+    */
+    public static function get($key, $value=null)
+    {
+        return (isset(self::$store[$key])) 
+            ? self::$store[$key] : $value;
+    }
 }
 
 /**
@@ -322,6 +312,22 @@ class Timer
  */
 class FileBackend
 {
+    /**
+     * Default return code.
+     *
+     * A logger can "break" the chain or not. For example, if you have
+     * a logger to a remote daemon and something is not working as
+     * expected you can default to file logging. The usage is simple,
+     * set your remote logger first in the list and return true
+     * normally, this will stop the logger chain, if something is not
+     * working ok, return false, the next logger, maybe a simple local
+     * file logger will take care of the logging.
+     *
+     * The ability to change the return code here is for unit testing
+     * purpose.
+     */
+    public static $return = false;
+
     /**
      * Track if the log file has been chmoded.
      *
@@ -351,7 +357,7 @@ class FileBackend
         }
         $out = array();
         foreach ($stack as $elt) {
-            $out[] = date(DATE_ISO8601, (int) $elt[0]) . ' [' .
+            $out[] = date(DATE_ISO8601, $elt[0]) . ' [' .
                 Log::$reverse[$elt[1]] . '] ' . json_encode($elt[2]);
         }
         file_put_contents(self::$log_file, 
@@ -361,6 +367,8 @@ class FileBackend
             @chmod($file, 0666);
             self::$chmoded = true;
         }
+
+        return self::$return;
     }
 }
 

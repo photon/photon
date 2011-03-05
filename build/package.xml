@@ -139,6 +139,7 @@ Alpha release with regular changes and updates.
    <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/site.css" role="php" />
    <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/text.css" role="php" />
    <file name="photon/data/project_template/mongrel2/conf/myproject-mongrel2.conf" role="php" />
+   <file name="photon/tests/logTest.php" role="php" />
   </dir>
  </contents>
  <dependencies>
