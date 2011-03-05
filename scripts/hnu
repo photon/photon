@@ -35,12 +35,17 @@ fi
 # not, hnu may have been called directly from the source
 # tree, so we try to find photon.php
 if [ ! -f $PHOTON ]; then
-    HNU=`readlink -f $0`
-    HNUDIR=`dirname $HNU`
-    PHOTON=`readlink -f "$HNUDIR/../src/photon.php"`
+    HNU=`readlink -f $0 2>/dev/null`
+    if [[ $? == 0 ]]; then
+        HNUDIR=`dirname $HNU`
+        PHOTON="$HNUDIR/../src/photon.php"
+    else
+        HNUDIR=`dirname $0`
+        PHOTON="$HNUDIR/../src/photon.php"
+    fi
     if test "x$PHOTON" = "x"; then
-	echo "[ERROR] Unable to find photon.php. Check your installation."
-	exit 1
+        echo "[ERROR] Unable to find photon.php. Check your installation."
+        exit 1
     fi
     echo "[INFO] Running with photon.php from the source installation."
 fi
