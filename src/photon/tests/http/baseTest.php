@@ -111,6 +111,18 @@ class baseTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0, strpos($out, 'HTTP/1.1 403 FORBIDDEN'));
     }
 
+    public function testRedirect()
+    {
+        $url  = 'http://photon-project.com';
+        $resp = new \photon\http\response\Redirect($url);
+        $out  = $resp->render();
+        $this->assertStringStartsWith("HTTP/1.1 302 FOUND\r\n", $out);
+        $this->assertContains("Location: http://photon-project.com\r\n", $out);
+        $resp = new \photon\http\response\Redirect($url, 301);
+        $out  = $resp->render();
+        $this->assertStringStartsWith("HTTP/1.1 301 MOVED PERMANENTLY\r\n", $out);
+    }
+
     public function testServerError()
     {
         $mess = (object) array('headers' => (object) array('QUERY' => 'a=b&c=d',
