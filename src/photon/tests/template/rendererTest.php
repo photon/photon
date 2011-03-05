@@ -79,16 +79,21 @@ class rendererTest extends \PHPUnit_Framework_TestCase
 
     public function testWriteFailure()
     {
-        $uid = posix_getuid();
-        if (0 === $uid) {
-            $this->markTestSkipped('The root user will have write access.');
-        }
         $renderer = new template\Renderer('data-template-tag-url.html', 
                                           array(__dir__));
         $renderer->template_content = '';
-        $this->setExpectedException('\photon\template\Exception');
-        $renderer->write('/no.write.access.here');
-        $this->assertEquals(true, false);
+        $locked_file = Conf::f('tmp_folder') . '/no.write.access.here';
+        touch($locked_file);
+        chmod($locked_file, 0000);
+        try {
+            $renderer->write($locked_file);
+        } catch (\photon\template\Exception $e) {
+            chmod($locked_file, 0666);            
+            unlink($locked_file);
+            $this->setExpectedException('\photon\template\Exception');
+            throw $e;
+        }
+        $this->fail(sprintf('Was able to write to %s', $locked_file));
     }
 
     public function testRenderFailure()
