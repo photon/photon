@@ -197,6 +197,8 @@ class Request
     public $COOKIE = array();
     public $method = '';
     public $BODY = null;
+    public $uuid = '';
+
     /** 
      * Sender id set for the handler in the Mongrel2 conf.
      */
