@@ -56,7 +56,7 @@ class NotFound extends Response
 }
 
 /**
- * An HTTP response doing a redirect.
+ * A HTTP response doing a redirect.
  */
 class Redirect extends Response
 {
@@ -69,12 +69,7 @@ class Redirect extends Response
      */
     function __construct($url, $code=302)
     {
-        parent::__construct(sprintf('<html><head><meta http-equiv="refresh" content="1;url=%s"/></head></html>',
-                                    htmlspecialchars($url, ENT_QUOTES)));
-        $code = (int) $code;
-        if (!in_array($code, array(301, 302, 303, 307))) {
-            throw new \InvalidArgumentException(sprintf('The HTTP status code `%s` is not a redirect.', $code));
-        }
+        parent::__construct();
         $this->headers['Location'] = $url;
         $this->status_code = $code;
     }
