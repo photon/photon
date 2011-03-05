@@ -95,6 +95,13 @@ class WidgetTest extends \PHPUnit_Framework_TestCase
         $widget = new widget\FileInput();
         $this->assertEquals('<input name="file1" type="file" />', (string) $widget->render('file1', null));
         $this->assertEquals('<input name="file1" type="file" />', (string) $widget->render('file1', 'foo'));
+    }
 
+    public function testTextareaInput()
+    {
+        $widget = new widget\TextareaInput();
+        $this->assertEquals('<textarea cols="40" rows="10" name="content">my &lt;content&gt; is escaped</textarea>', (string) $widget->render('content', 'my <content> is escaped'));
+        $widget = new widget\TextareaInput(array('cols' => '32'));
+        $this->assertEquals('<textarea cols="32" rows="10" name="content">my &lt;content&gt; is escaped</textarea>', (string) $widget->render('content', 'my <content> is escaped'));
     }
 }
