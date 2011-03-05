@@ -28,6 +28,22 @@
  */
 namespace photon\views;
 
+use \photon\shortcuts;
+
+/**
+ * Render a template.
+ */
+class Template
+{
+    /**
+     * The simplest possible rendering.
+     */
+    public function simple($request, $match, $template)
+    {
+        return shortcuts\Template::RenderToResponse($template, array(), $request);
+    }
+}
+
 class AssetDir
 {
     /**
