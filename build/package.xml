@@ -13,11 +13,11 @@
   <email>loic@ceondo.com</email>
   <active>yes</active>
  </lead>
- <date>2011-03-03</date>
- <time>11:22:33</time>
+ <date>2011-03-04</date>
+ <time>13:55:08</time>
  <version>
-  <release>0.0.6</release>
-  <api>0.0.6</api>
+  <release>0.0.7</release>
+  <api>0.0.7</api>
  </version>
  <stability>
   <release>alpha</release>
@@ -57,8 +57,6 @@ Alpha release with regular changes and updates.
    <file name="photon/testbootstrap.php" role="php" />
    <file name="photon/translation.php" role="php" />
    <file name="photon/views.php" role="php" />
-   <file name="photon/data/app_template/urls.php" role="php" />
-   <file name="photon/data/app_template/views.php" role="php" />
    <file name="photon/data/project_template/config.php" role="php" />
    <file name="photon/data/project_template/config.test.php" role="php" />
    <file name="photon/data/project_template/urls.php" role="php" />
@@ -118,6 +116,29 @@ Alpha release with regular changes and updates.
    <file name="photon/tests/form/widgetTest.php" role="php" />
    <file name="photon/tests/small/autoloadTest.php" role="php" />
    <file name="photon/tests/small/simple.php" role="php" />
+   <file name="photon/data/project_template/apps/helloworld/urls.php" role="php" />
+   <file name="photon/data/project_template/apps/helloworld/views.php" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/README" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/task.php" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/templates/photonchat/home.html" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/urls.php" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/urls_jssocket.php" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/views.php" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/960.css" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/app.js" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/chat.js" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/flash/JsSocket.hx" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/flash/Makefile" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/flash/jsSocket.as" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/flash/jsSocket.swf" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/flash/jsSocket2.swf" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/fsm.js" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/js/jsSocket.js" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/js/jsonStringify.js" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/reset.css" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/site.css" role="php" />
+   <file name="photon/data/project_template/apps/photonchat/www/media/photonchat/text.css" role="php" />
+   <file name="photon/data/project_template/mongrel2/conf/myproject-mongrel2.conf" role="php" />
   </dir>
  </contents>
  <dependencies>
