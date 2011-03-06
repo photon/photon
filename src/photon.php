@@ -238,7 +238,6 @@ namespace
                     exit($m->run(false)); 
                     break;
                 case 'start':
-                default:
                     // Will go daemon and will fork children with childstart
                     $params += $result->command->command->options;
                     $params['argv'] = $argv;
@@ -246,6 +245,10 @@ namespace
                     exit($m->run()); 
                     break;
                 }
+                // no command entered
+                print "No command entered, nothing to do.\n";
+                $parser->commands["server"]->displayUsage();
+                exit(5);
                 break;
             case 'taskstart':
                 $params['task'] = $result->command->args['task'];
