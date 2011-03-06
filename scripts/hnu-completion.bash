@@ -63,7 +63,7 @@ _hnu()
         secretkey)
             case "$cur" in
                 --*)
-                    COMPREPLY=( $(compgen -W "--length=" -- $cur) )
+                    COMPREPLY=( $(compgen -W "--length= --help" -- $cur) )
                     ;;
             esac
             ;;
@@ -76,7 +76,7 @@ _hnu()
                     COMPREPLY=( $(compgen -d) )
                     ;;
                 --*)
-                    COMPREPLY=( $(compgen -W "--coverage-html= --bootstrap=" -- $cur) )
+                    COMPREPLY=( $(compgen -W "--coverage-html= --bootstrap= --help" -- $cur) )
                     ;;
             esac
             ;;
@@ -86,22 +86,22 @@ _hnu()
                     COMPREPLY=( $(compgen -d) )
                     ;;
                 --*)
-                    COMPREPLY=( $(compgen -W "--coverage-html=" -- $cur) )
+                    COMPREPLY=( $(compgen -W "--coverage-html= --help" -- $cur) )
                     ;;
             esac
             ;;
         server)
             if [[ "$cur" == --* ]]; then
-                COMPREPLY=( $(compgen -W "--all --server-id= --wait=" -- $cur) )
+                COMPREPLY=( $(compgen -W "--all --server-id= --wait= --help" -- $cur) )
             else
                 COMPREPLY=( $(compgen -W "$server_commands" -- $cur) )
             fi
             ;;
         list) # a server subcommand
-            [[ "$cur" == --* ]] && COMPREPLY=( $(compgen -W "--json" -- $cur) )
+            [[ "$cur" == --* ]] && COMPREPLY=( $(compgen -W "--json --help" $cur) )
             ;;
         start) # a server subcommand
-            [[ "$cur" == --* ]] && COMPREPLY=( $(compgen -W "--children=" -- $cur) )
+            [[ "$cur" == --* ]] && COMPREPLY=( $(compgen -W "--children= --help" -- $cur) )
             ;;
     esac
 }
