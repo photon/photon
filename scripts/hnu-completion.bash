@@ -22,15 +22,16 @@
 # 
 #       ~~~
 #       export USER_BASH_COMPLETION_DIR=~/bash_completion.d
-#       if [ -f /usr/local/etc/bash-completion.d ]; then
-#         . /usr/local/etc/bash-completion.d
+#       if [ -f /etc/bash_completion ]; then
+#         . /etc/bash_completion
 #       fi
 #       ~~~
 # 
 #       Note: the bash_completion script can be at a different location depending on your system, like:
 # 
-#         * `/usr/local/etc/bash-completion.d`
-#         * `/opt/local/etc/bash-completion.d` (with macports)
+#         * `/etc/bash_completion` (debian like)
+#         * `/usr/local/etc/bash_completion` (BSD like)
+#         * `/opt/local/etc/bash_completion` (macports)
 # 
 #    3. Put in the ~/.bash-completion file the following code:
 # 
