@@ -37,30 +37,6 @@ namespace photon\session;
 
 use photon\config\Container as Conf;
 
-/**
- * Generate a unique session id.
- *
- * There are no guarantees that the provided id is really new and
- * unique, put it should be relatively safe. You must check against
- * your storage to be sure and generate a new one if already in use.
- *
- * For pure cookie based session, you should inject in the extra
- * random string as much information about the client as possible like
- * IP address, user agent, etc. to help prevent 2 clients to have the
- * same session id as you cannot check if the session id was already
- * issued. This is important if you want to reuse the session id
- * somewhere else in your system as a unique key, if not, you do not
- * really care because you will directly use the data from the cookies
- * for the session data and they will be unique to the given client
- * anyway.
- *
- * @param string Optional extra random data to help getting random id ('')
- * @return string Session id (40 hexacharacters)
- */
-function generate_session_id($entropy='')
-{
-    return sha1(microtime() . mt_rand() . mt_rand() . $entropy);
-}
 
 /**
  * The class storing the session data in the request object.
@@ -74,7 +50,9 @@ function generate_session_id($entropy='')
 class Session implements \ArrayAccess
 {
     public $store; /**< Storage */
-    public $id; /**< Session id */
+    public $key; /**< Session id */
+    public $accessed = false; /**< Was the session data used */
+    public $modified = false; /**< Was the session data modified */
 
     /**
      * Construct the session object.
@@ -94,11 +72,11 @@ class Session implements \ArrayAccess
      * This step is very important. Basically, it will provide the
      * request to the storage and let the storage initialize
      * itself. Once the storage has initialized itself, it must return
-     * the corresponding id of the session.
+     * the corresponding id of the session if available.
      */
-    public function init($request)
+    public function init($key, $request)
     {
-        $this->id = $this->store->init($request);
+        $this->store->init($key, $request);
     }
 
     /**
@@ -115,7 +93,7 @@ class Session implements \ArrayAccess
      */
     public function commit($response)
     {
-        $this->store->commit($response);
+        $this->key = $this->store->commit($response);
     }
 
     /**
@@ -127,172 +105,83 @@ class Session implements \ArrayAccess
         if (null === $offset) {
             throw new \Exception('You need to set the session key by value.');
         }
-        $this->store->save($offset, $value);
+        $this->modified = true;
+        $this->store->store($offset, $value);
     }
 
     public function offsetExists($offset) 
     {
+        $this->accessed = true;
         return $this->store->exists($offset);
     }
 
     public function offsetUnset($offset) 
     {
+        $this->modified = true;
         $this->store->delete($offset);
     }
 
     public function offsetGet($offset) 
     {
+        $this->accessed = true;
         return $this->store->get($offset);
     }    
 }
 
+
 /**
- * Full cookie based session storage.
+ * Session middleware.
  *
- * Basically, kind of smart cookies which are updated/deleted based on
- * what you do about them. 
+ * It is important to have a smart session middleware, that is, it
+ * should do nothing if not really needed. If the user has no session
+ * information and no need to store session information, we should not
+ * touch the storage.
  *
- * The session object is initialized before we know about the
- * response, this means that only the request object is available.
- *
- * If you want to implement your own storage, you need to implement
- * all the methods marked @required. The storage is a key, value
- * store.
+ * Fully inspired by the Django session middleware.
  */
-class CookieStorage
+class Middleware
 {
-    /**
-     * Reference to the $request->COOKIE 
-     *
-     * This where we get the value from if not in the "cache".
-     */
-    public $cookie;
-
-    /**
-     * Cache of the value, if in the cache, the value has been set
-     * (new or modified) during this request and must be saved at the
-     * end of the request.
-     */
-    public $cache = array(); 
-
-    /**
-     * Deleted values. At the end of the request, the corresponding
-     * cookie must be removed.
-     */
-    public $deleted = array();
-
-    /**
-     * Session id.
-     */
-    protected $sid = '';
-
-    /**
-     * Given a the request object, init itself.
-     *
-     * The request object allows the storage to find the session id
-     * from the cookies or request details (headers), it can also be
-     * used to generate a new id.
-     *
-     * @required public function init($request) 
-     *
-     * @param $request Request object
-     * @return Session id
-     */
-    public function init($request) 
+    public function process_request($request)
     {
-        $this->cookie &= $request->COOKIE;
-        $sid = $this->cookie[Conf::f('session_cookie_id', 'sessionid')];
-        if (null === $sid) {
-            $sid = generate_session_id(json_encode($request->mess->headers));
-        }
-        $this->sid = $sid;
-
-        return $sid;
+        // By not defining a default session store, the system will
+        // crash directly if not well configured. This is better.
+        $store = Conf::f('session_storage'); 
+        $key = (isset($request->COOKIE[Conf::f('session_cookie_name', 'sid')]))
+            ? $request->COOKIE[Conf::f('session_cookie_name', 'sid')]
+            : null;
+        $request->session = new Session(new $store());
+        $request->session->init($key, $request);
+        
+        return false;
     }
 
-    /**
-     * Given the response object, save the data.
-     *
-     * Even if your storage is not cookie based, if you are using a
-     * cookie to store the session id, you must imperatively set the
-     * cookie to keep track of the session id. 
-     *
-     * @required public function commit($response) 
-     */
-    public function commit($response)
+    public function process_response($request, $response)
     {
-        $timeout = time() + Conf::f('session_cookie_timeout', 31536000);
-        foreach ($this->cache as $name => $val) {
-            $response->COOKIE->setCookie('scs-' . $name, $val, $timeout);
+        $accessed = $request->session->accessed;
+        $modified = $request->session->modified;
+        if ($request->session->accessed) {
+            // This view used session data to render, this means it
+            // varies on the cookie information.
+            \photon\http\HeaderTool::updateVary($response, array('Cookie'));
         }
-        foreach ($this->deleted as $name => $val) {
-            $response->COOKIE->delCookie('scs-' . $name);
-        }
-        // We always reset the session id cookie. Yes, this means that
-        // the session id cookie may last longer than the data
-        // cookies, but this means less network traffic and never
-        // forget that session data is transient data. If you need to
-        // store your data for more than a year, you need to find a
-        // more durable way.
-        $response->COOKIE->setCookie(Conf::f('session_cookie_id', 'sessionid'),
-                                     $this->sid, $timeout);
-    }
-
-    /**
-     * Store a given value at a given offset in the storage.
-     *
-     * The offset is an alphanumeric string, the value is any kind of
-     * PHP object which can be serialized.
-     *
-     * @required public function store($offset, $value)
-     */
-    public function store($offset, $value)
-    {
-        unset($this->deleted[$offset]);
-        $this->cache[$offset] = $value;
-    }
-
-    /**
-     * Informs if a value is available in the storage for this offset.
-     *
-     * @required public function exists($offset)
-     */
-    public function exists($offset)
-    {
-        return (null !== $this->get($offset));
-    }
-
-    /**
-     * Delete a value from the storage.
-     *
-     * @required public function delete($offset)
-     */
-    public function delete($offset)
-    {
-        unset($this->cache[$offset]);
-        $this->delete[$offset] = true;
-    }
-
-    /**
-     * Get a value from the storage.
-     *
-     * @required public function get($offset)
-     */
-    public function get($offset)
-    {
-        if (isset($this->deleted[$offset])) {
-
-            return null;
-        }
-        if (isset($this->cache[$offset])) {
-
-            return $this->cache[$offset];
-        }
-        if (isset($this->cookie['scs-' . $offset])) {
-
-            return $this->cookie['scs-' . $offset];
+        if ($request->session->modified 
+            || Conf::f('session_save_every_request', false)) {
+            // Time to store
+            $request->session->commit($response);
+            $expire = Conf::f('session_cookie_expire', 1209600);
+            if ($expire) {
+                $expire += time();
+            }
+            $response->COOKIE->setCookie(Conf::f('session_cookie_name', 'sid'),
+                                         $request->session->key, $expire,
+                                         Conf::f('session_cookie_path', ''),
+                                         Conf::f('session_cookie_domain', ''),
+                                         Conf::f('session_cookie_secure', false),
+                                         Conf::f('session_cookie_httponly', false));
         }
 
-        return null;
+        return $response;
     }
 }
+
+

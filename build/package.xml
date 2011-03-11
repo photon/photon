@@ -13,15 +13,15 @@
   <email>loic@ceondo.com</email>
   <active>yes</active>
  </lead>
- <date>2011-03-05</date>
- <time>22:41:03</time>
+ <date>2011-03-11</date>
+ <time>17:22:39</time>
  <version>
-  <release>0.0.9</release>
-  <api>0.0.9</api>
+  <release>0.1</release>
+  <api>0.1</api>
  </version>
  <stability>
-  <release>alpha</release>
-  <api>alpha</api>
+  <release>beta</release>
+  <api>beta</api>
  </stability>
  <license uri="http://www.gnu.org/licenses/lgpl.html">LGPL</license>
  <notes>
@@ -141,6 +141,10 @@ Alpha release with regular changes and updates.
    <file name="photon/data/project_template/mongrel2/conf/myproject-mongrel2.conf" role="php" />
    <file name="photon/tests/logTest.php" role="php" />
    <file name="photon/tests/datetimeTest.php" role="php" />
+   <file name="photon/session/storage.php" role="php" />
+   <file name="photon/tests/authTest.php" role="php" />
+   <file name="photon/tests/sessionTest.php" role="php" />
+   <file name="photon/tests/testTest.php" role="php" />
   </dir>
  </contents>
  <dependencies>

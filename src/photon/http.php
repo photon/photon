@@ -499,6 +499,34 @@ class CookieHandler
     }
 }
 
+/**
+ * Tools to manipulate the headers.
+ *
+ * Lot of code lifted from Django:
+ * http://code.djangoproject.com/browser/django/trunk/django/utils/cache.py
+ */
+class HeaderTool
+{
+    /**
+     * Update the Vary header.
+     *
+     * @param $response Response object
+     * @param $newheaders List of headers to add to the Vary header
+     */
+    public static function updateVary($response, $newheaders)
+    {
+        $vary = (isset($response->headers['Vary']))
+            ? explode(',', $response->headers['Vary'])
+            : array();
+        foreach ($newheaders as $new) {
+            if (!in_array($new, $vary)) {
+                $vary[] = $new;
+            }
+        }
+        $response->headers['Vary'] = implode(',', $vary);
+    }
+}
+
 
 /**
  * Add the current value to the corresponding POST key.

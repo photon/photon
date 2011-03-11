@@ -25,6 +25,7 @@ namespace photon\tests\small\cryptoTest;
 
 use \photon\config\Container as Conf;
 use \photon\crypto\Sign as Sign;
+use \photon\crypto\Crypt as Crypt;
 
 class cryptoTest extends \PHPUnit_Framework_TestCase
 {
@@ -75,6 +76,18 @@ class cryptoTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($string, Sign::unsigns($signed, 'my-key'));
         $this->setExpectedException('\photon\crypto\Exception');
         Sign::unsigns($string, 'my-key');
+    }
+
+    public function testEncryptDecrypt()
+    {
+        $key = 'foobar';
+        $data = 'very secret';
+        $encrypted = Crypt::encrypt($data, $key);
+        $this->assertNotEquals($data, $encrypted);
+        $decrypted = Crypt::decrypt($encrypted, $key);
+        $this->assertEquals($data, $decrypted);
+
+
     }
 
 }
