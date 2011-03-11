@@ -32,6 +32,7 @@ use photon\log\Timer as Timer;
 use photon\log\Log as Log;
 
 class Exception extends \Exception {}
+class NotImplemented extends \Exception {}
 
 /**
  * Dispatch a request to the correct handler.
