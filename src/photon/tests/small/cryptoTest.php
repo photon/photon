@@ -82,9 +82,10 @@ class cryptoTest extends \PHPUnit_Framework_TestCase
     {
         $key = 'foobar';
         $data = 'very secret';
-        $encrypted = Crypt::encrypt($data, $key);
+        $iv = Crypt::getiv();
+        $encrypted = Crypt::encrypt($data, $key, $iv);
         $this->assertNotEquals($data, $encrypted);
-        $decrypted = Crypt::decrypt($encrypted, $key);
+        $decrypted = Crypt::decrypt($encrypted, $key, $iv);
         $this->assertEquals($data, $decrypted);
 
 

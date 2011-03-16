@@ -145,13 +145,14 @@ class SessionTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(true, isset($res->COOKIE['sid']));
         $this->assertEquals(true, isset($res->COOKIE['scs-foo']));
         $this->assertEquals(true, isset($res->COOKIE['scs-todelete']));
-        
-        // We now get the encrypted form of 'bar'
-        $enc = \photon\crypto\Sign::loads('czoxNjoip5WLehs208349J9RvHTiXiI7.lXki6DbGOOZt3dwC5uM_Co5jWPY', 'dummy');
-        $req->session->store->cookie['scs-foobar'] = $enc;
-        $this->assertEquals('bar', $req->session['foobar']);
+        $iv = $res->COOKIE['scsiv'];
+        // Now we generate a new request with an iv to test the retrieval
+        $req = \photon\test\HTTP::baseRequest();
+        $req->COOKIE['scsiv'] = $iv;
+        $req->COOKIE['scs-foo'] = \photon\crypto\Crypt::encrypt('bar', Conf::f('secret_key'), $iv);
+        $this->assertEquals(false, $mid->process_request($req));
+        $this->assertEquals('bar', $req->session['foo']);
     }
-
 
     public function testStorageFile()
     {

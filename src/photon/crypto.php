@@ -33,22 +33,23 @@ class Exception extends \Exception {}
  * Small wrapper on top of mcrypt.
  *
  * Per the mcrypt documentation, the algorithm used by default is
- * twofish and the mode is ecb. The ecb mode is needed as does not
- * require an IV (Initialisation Vector).
- *
- * In ecb mode, one does not require an IV, but the
- * mcrypt_generic_init function will complain if given an empty IV
- * (even if it is not using it), so we create noe, but we know it will
- * not be used.
+ * twofish and the mode is cfb. Beware, cfb mode requires an
+ * initialisation vector. You can generate a random one with getiv().
  */
 class Crypt
 {
-    public static function encrypt($data, $key, $cipher='twofish', $mode='ecb', $iv=null)
+    public static function getiv($cipher='twofish', $mode='cfb')
     {
         $td = mcrypt_module_open($cipher, '', $mode, '');
-        $iv = (null === $iv)
-            ? mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_RAND)
-            : $iv;
+        $iv = mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
+        mcrypt_module_close($td);
+
+        return $iv;
+    }
+
+    public static function encrypt($data, $key, $iv, $cipher='twofish', $mode='cfb')
+    {
+        $td = mcrypt_module_open($cipher, '', $mode, '');
         $key = substr($key, 0, mcrypt_enc_get_key_size($td));
         mcrypt_generic_init($td, $key, $iv);
         $crypted = mcrypt_generic($td, $data);
@@ -58,12 +59,9 @@ class Crypt
         return $crypted;
     }
 
-    public static function decrypt($data, $key, $cipher='twofish', $mode='ecb', $iv=null)
+    public static function decrypt($data, $key, $iv, $cipher='twofish', $mode='cfb')
     {
         $td = mcrypt_module_open($cipher, '', $mode, '');
-        $iv = (null === $iv)
-            ? mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_RAND)
-            : $iv;
         $key = substr($key, 0, mcrypt_enc_get_key_size($td));
         mcrypt_generic_init($td, $key, $iv);
         $decrypted = rtrim(mdecrypt_generic($td, $data), "\0");
