@@ -198,7 +198,6 @@ class TestServer extends Base
 {
     public function run()
     {
-        Conf::load($this->getConfig());
         // If the ./apps subfolder is found, it is automatically added
         // to the include_path.
         if (file_exists($this->params['cwd'].'/apps')) {
@@ -207,6 +206,7 @@ class TestServer extends Base
             $this->verbose(sprintf('Include path is now: %s',
                                    get_include_path()));
         }
+        Conf::load($this->getConfig());
         $this->info('Starting the development server.');
         $this->info('Press ^C to exit.');
         $server = new \photon\server\TestServer(Conf::f('server_conf', array()));
@@ -706,7 +706,6 @@ class ChildServer extends Base
      */
     public function run()
     {
-        Conf::load($this->getConfig());
         // If the ./apps subfolder is found, it is automatically added
         // to the include_path.
         if (file_exists($this->params['cwd'].'/apps')) {
@@ -716,6 +715,7 @@ class ChildServer extends Base
                                    get_include_path()));
         }
 
+        Conf::load($this->getConfig());
         $server = new \photon\server\Server(Conf::f('server_conf', array()));
 
         return $server->start();
@@ -754,7 +754,6 @@ class Task extends Base
      */
     public function run()
     {
-        Conf::load($this->getConfig());
         // If the ./apps subfolder is found, it is automatically added
         // to the include_path.
         if (file_exists($this->params['cwd'].'/apps')) {
@@ -763,8 +762,11 @@ class Task extends Base
             $this->verbose(sprintf('Include path is now: %s',
                                    get_include_path()));
         }
+
+        Conf::load($this->getConfig());
         $tasks = Conf::f('installed_tasks');
         $task = new $tasks[$this->params['task']];
+
         return $task->run();
     }
 }
@@ -1061,7 +1063,6 @@ class RunTests extends Base
 
     public function run()
     {
-        Conf::load($this->getConfig());
         $this->verbose('Run the project tests...');
         $inc_path = ''; // for phpunit
         if (file_exists($this->params['cwd'].'/apps')) {
@@ -1071,6 +1072,7 @@ class RunTests extends Base
                                    get_include_path()));
             $inc_path = '--include-path '.$this->params['cwd'].'/apps ';
         }
+        Conf::load($this->getConfig());
         $apps = Conf::f('installed_apps', array());
         // Now, we have a collection of apps, but each app is not
         // necessarily in the 'apps' subfolder of the project, some
