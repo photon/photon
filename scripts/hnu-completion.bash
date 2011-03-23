@@ -70,9 +70,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-have hnu &&
-{
-
 # The following function is based on code from:
 # 
 # bash completion support for core Git.
@@ -166,5 +163,3 @@ _hnu ()
     esac
 } # _hnu ()
 complete -o bashdefault -o default -o nospace -F _hnu hnu
-
-}
