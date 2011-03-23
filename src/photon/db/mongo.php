@@ -26,9 +26,20 @@
  */
 namespace photon\db\mongo;
 
-/**
- * Each 
-class DB
-{
+use photon\config\Container as Conf;
 
+class DB extends \photon\db\DB
+{
+    public static function get_handle($handle='default')
+    {
+        if (isset(self::$handles[$handle])) {
+            return self::$handles[$handle];
+        }
+
+        $default = array('server' => 'mongodb://localhost:27017',
+                         'options' => array('connect' => true));
+        $cfg = array_merge($default, Conf::f('mongo', array()));
+
+        self::$handles[$handle] = new \Mongo($cfg['server'], $cfg['options']);
+    }
 }
