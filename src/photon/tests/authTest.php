@@ -24,6 +24,10 @@
 namespace photon\tests\authTest;
 
 use \photon\config\Container as Conf;
+use \photon\auth\ConfigBackend;
+use \photon\auth\Middleware;
+use \photon\auth\AnonymousUser;
+use \photon\crypto\Hash;
 
 class SessionTest extends \PHPUnit_Framework_TestCase
 {
@@ -39,10 +43,59 @@ class SessionTest extends \PHPUnit_Framework_TestCase
         Conf::load($this->conf);
     }
 
-    public function testRetrieveId()
+    public function testConfigBackend()
     {
-        
+        Conf::set('auth_config_users', 
+                  array('foo' => 'hashed',
+                        'foobar' => Hash::hashPass('secret')));;
+        $user = ConfigBackend::loadUser('foo');
+        $this->assertEquals('foo', $user->login);
+        $user = ConfigBackend::loadUser('dummy');
+        $this->assertEquals(false, $user);
     }
 
+    public function testConfigBackendAuthenticate()
+    {
+        Conf::set('auth_config_users', 
+                  array('foo' => 'hashed',
+                        'foobar' => Hash::hashPass('secret')));;
 
+        $auth = array('login' => 'foobar',
+                      'password' => 'secret');
+        $user = ConfigBackend::authenticate($auth);
+        $this->assertEquals('foobar', $user->login);
+
+        $badauth = array('login' => 'baduser',
+                         'password' => 'badsecret');
+        $user = ConfigBackend::authenticate($badauth);
+        $this->assertEquals(false, $user);
+
+        $badauth = array('login' => 'foobar',
+                         'password' => 'badsecret123');
+        $user = ConfigBackend::authenticate($badauth);
+        $this->assertEquals(false, $user);
+    }
+
+    public function testMiddlewareConfigBackend()
+    {
+        Conf::set('auth_config_users', 
+                  array('foo' => 'hashed',
+                        'foobar' => Hash::hashPass('secret')));;
+        $req = \photon\test\HTTP::baseRequest();
+        $mid = new Middleware();
+        $this->assertEquals(false, $mid->process_request($req));
+        $this->assertEquals('photon\auth\AnonymousUser',
+                            get_class($req->user));
+
+        $req->session = array('_auth_user_id' => 'foobar');
+        $this->assertEquals(false, $mid->process_request($req));
+        $this->assertEquals('stdClass',
+                            get_class($req->user));
+
+        $req->session = array('_auth_user_id' => 'foobarbong');
+        $this->assertEquals(false, $mid->process_request($req));
+        $this->assertEquals('photon\auth\AnonymousUser',
+                            get_class($req->user));
+
+    }
 }

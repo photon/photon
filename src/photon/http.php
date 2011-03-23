@@ -198,6 +198,7 @@ class Request
     public $method = '';
     public $BODY = null;
     public $uuid = '';
+    public $headers = null;
 
     /** 
      * Sender id set for the handler in the Mongrel2 conf.
@@ -220,6 +221,7 @@ class Request
         $this->method = $this->mess->headers->METHOD;
         $this->sender = $this->mess->sender;
         $this->client = $this->mess->conn_id;
+        $this->headers = $this->mess->headers;
 
         if (isset($this->mess->headers->QUERY)) {
             \mb_parse_str($this->mess->headers->QUERY, $this->GET);
