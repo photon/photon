@@ -61,7 +61,6 @@ Alpha release with regular changes and updates.
    <file name="photon/data/project_template/config.test.php" role="php" />
    <file name="photon/data/project_template/urls.php" role="php" />
    <file name="photon/db/mongo.php" role="php" />
-   <file name="photon/db/mongodb.php" role="php" />
    <file name="photon/http/error.php" role="php" />
    <file name="photon/http/multipartparser.php" role="php" />
    <file name="photon/http/response.php" role="php" />
@@ -145,6 +144,7 @@ Alpha release with regular changes and updates.
    <file name="photon/tests/authTest.php" role="php" />
    <file name="photon/tests/sessionTest.php" role="php" />
    <file name="photon/tests/testTest.php" role="php" />
+   <file name="photon/auth.php" role="php" />
   </dir>
  </contents>
  <dependencies>
