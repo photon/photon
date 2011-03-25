@@ -42,6 +42,37 @@ namespace photon\auth;
 use \photon\config\Container as Conf;
 
 /**
+ * Provides authentication and login wrapper.
+ */
+class Auth
+{
+    /**
+     * Authenticate the user against the current authentication backend.
+     */
+    public static function authenticate($auth_data)
+    {
+        $backend = Conf::f('auth_backend', '\photon\auth\ConfigBackend');
+        return $backend::authenticate($auth_data);
+    }
+
+    /**
+     * Login a user in the current session.
+     */
+    public static function login($request, $user)
+    {
+        if (false === $user || $user->is_anonymous) {
+
+            return false;
+        }
+        $key = Conf::f('auth_session_key', '_auth_user_id');
+        $request->session[$key] = $user->login;
+
+        return true;
+    }
+}
+
+
+/**
  * Authentication Middleware.
  *
  * It requires the session middleware as the user id is extracted from
@@ -73,7 +104,7 @@ class Middleware
 
 class AnonymousUser
 {
-    public $username = '';
+    public $login = '';
     public $password = '';
     public $is_anonymous = true;
 }

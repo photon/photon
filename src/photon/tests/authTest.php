@@ -80,7 +80,7 @@ class SessionTest extends \PHPUnit_Framework_TestCase
     {
         Conf::set('auth_config_users', 
                   array('foo' => 'hashed',
-                        'foobar' => Hash::hashPass('secret')));;
+                        'foobar' => Hash::hashPass('secret')));
         $req = \photon\test\HTTP::baseRequest();
         $mid = new Middleware();
         $this->assertEquals(false, $mid->process_request($req));
@@ -96,6 +96,25 @@ class SessionTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(false, $mid->process_request($req));
         $this->assertEquals('photon\auth\AnonymousUser',
                             get_class($req->user));
+
+    }
+
+    public function testAuth()
+    {
+        Conf::set('auth_config_users', 
+                  array('foo' => 'hashed',
+                        'foobar' => Hash::hashPass('secret')));
+        $user = \photon\auth\Auth::authenticate(array('login' => 'foobar', 
+                                                      'password' => 'secret'));
+        $this->assertEquals('foobar', $user->login);
+        $req = \photon\test\HTTP::baseRequest();
+        $req->session = array();
+        $this->assertEquals(true, \photon\auth\Auth::login($req, $user));
+        $this->assertEquals(false, \photon\auth\Auth::login($req, false));
+        $user->is_anonymous = true;
+        $this->assertEquals(false, \photon\auth\Auth::login($req, $user));
+
+        
 
     }
 }
