@@ -1297,13 +1297,26 @@ class Packager extends Base
         @unlink($phar_name);
         $phar = new \Phar($phar_name, 0, $phar_name);
         $phar->startBuffering();
-        foreach ($this->getProjectFiles() as $file => $path) {
-            $phar->addFile($path, $file);
-        }
         $this->addPhotonFiles($phar);
+        $this->addProjectFiles($phar);
         $stub = file_get_contents(__DIR__ . '/data/pharstub.php');
         $phar->setStub(sprintf($stub, $phar_name, $phar_name, $phar_name));
         $phar->stopBuffering();
+    }
+
+    /**
+     * Add the project files.
+     *
+     * We compress only the .php files.
+     */
+    public function addProjectFiles(&$phar)
+    {
+        foreach ($this->getProjectFiles() as $file => $path) {
+            $phar->addFile($path, $file);
+            if (substr($file, -4) == '.php') {
+                $phar[$file]->compress(\Phar::GZ);
+            }
+        }
     }
 
     /**
