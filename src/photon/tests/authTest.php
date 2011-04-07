@@ -113,8 +113,5 @@ class SessionTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(false, \photon\auth\Auth::login($req, false));
         $user->is_anonymous = true;
         $this->assertEquals(false, \photon\auth\Auth::login($req, $user));
-
-        
-
     }
 }

@@ -1281,3 +1281,117 @@ class SecretKeyGenerator extends Base
                        substr($rnd, 18, 12));
     }
 }
+
+/**
+ * Packager - Package a project as a .phar
+ *
+ */
+class Packager extends Base
+{
+
+
+    public function run()
+    {
+        // Package all the photon code without the tests folder
+        $phar_name = sprintf('%s.phar', $this->params['project']);
+        @unlink($phar_name);
+        $phar = new \Phar($phar_name, 0, $phar_name);
+        $phar->startBuffering();
+        $files = array_merge($this->getPhotonFiles(), $this->getProjectFiles());
+        foreach ($files as $file => $path) {
+            $phar->addFile($path, $file);
+        }
+        $photon = file(__DIR__ . '/../photon.php');
+        foreach ($photon as &$line) {
+            if (trim($line) == 'include_once __DIR__ . \'/photon/autoload.php\';') {
+                $line = '    include_once \'photon/autoload.php\';'."\n";
+            }
+        }
+        array_shift($photon); // Remove shebang
+        $phar->addFromString('photon.php', implode('', $photon));
+        $auto = file(__DIR__ . '/../photon/autoload.php');
+        foreach ($photon as &$line) {
+            if (0 === strpos(trim($line), 'set_include_path')) {
+                $line = '';
+            }
+        }
+        $phar->addFromString('photon/autoload.php', implode('', $auto));
+        $stub = file_get_contents(__DIR__ . '/data/pharstub.php');
+        $phar->setStub(sprintf($stub, $phar_name, $phar_name, $phar_name));
+        $phar->stopBuffering();
+    }
+
+
+    /**
+     * Get the project files.
+     *
+     * This is an array with the key being the path to use in the phar
+     * and the value the path on disk. Everything in the current
+     * folder at the exception of the config.php, config.*.php is
+     * included.
+     *
+     * @return array files
+     */
+    public function getProjectFiles()
+    {
+        $cwd = $this->params['cwd'];
+        $out = array();
+        $files = new \RecursiveIteratorIterator(
+                     new \RecursiveDirectoryIterator($cwd),
+                     \RecursiveIteratorIterator::SELF_FIRST);
+        foreach ($files as $disk_path => $file) {
+            if (!$files->isFile()) {
+                continue;
+            }
+            if (substr($disk_path, -5) == '.phar') {
+                continue;
+            }
+            $phar_path = substr($disk_path, strlen($cwd) + 1);
+            if (preg_match('/^config\.(\w+\.)*php/', $phar_path)) {
+                continue;
+            }
+            $out[$phar_path] = $disk_path;
+        }        
+
+        return $out;
+
+    }
+
+    /**
+     * Returns the list of files for Photon.
+     *
+     * This is an array with the key being the path to use in the phar
+     * and the value the path on disk. photon.php and
+     * photon/autoload.php are not included.
+     *
+     * @return array files
+     */
+    public function getPhotonFiles()
+    {
+        $photon_dir = __DIR__;
+        $out = array();
+        $files = new \RecursiveIteratorIterator(
+                     new \RecursiveDirectoryIterator($photon_dir),
+                     \RecursiveIteratorIterator::SELF_FIRST);
+        foreach ($files as $disk_path => $file) {
+            if (!$files->isFile()) {
+                continue;
+            }
+            $phar_path = substr($disk_path, strlen($photon_dir) - 6);
+            if (false !== strpos($phar_path, 'photon/tests/')) {
+                continue;
+            }
+            if (false !== strpos($phar_path, 'photon/data/project_template')) {
+                continue;
+            }
+            if ($phar_path == 'photon/autoload.php') {
+                continue;
+            }
+            $out[$phar_path] = $disk_path;
+        }        
+
+        return $out;
+    }
+}
+
+

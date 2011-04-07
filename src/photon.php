@@ -160,6 +160,13 @@ namespace photon
         $tcd->addArgument('task',
                           array('description' => 'the name of the task'));
 
+
+        $tcd = $parser->addCommand('package',
+                                    array('description' => 'package a project as a standalone .phar file'));
+
+        $tcd->addArgument('project',
+                          array('description' => 'the name of the project'));
+
         $sk = $parser->addCommand('secretkey',
                                   array('description' => 'prints out a unique random secret key for your configuration.'));
         $sk->addOption('length',
@@ -258,6 +265,11 @@ namespace
             case 'secretkey':
                 $params['length'] = $result->command->options['length'];
                 $m = new \photon\manager\SecretKeyGenerator($params);
+                $m->run();
+                break;
+            case 'package':
+                $params['project'] = $result->command->args['project'];
+                $m = new \photon\manager\Packager($params);
                 $m->run();
                 break;
             default:
