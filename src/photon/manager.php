@@ -1297,9 +1297,23 @@ class Packager extends Base
         @unlink($phar_name);
         $phar = new \Phar($phar_name, 0, $phar_name);
         $phar->startBuffering();
-        $files = array_merge($this->getPhotonFiles(), $this->getProjectFiles());
-        foreach ($files as $file => $path) {
+        foreach ($this->getProjectFiles() as $file => $path) {
             $phar->addFile($path, $file);
+        }
+        $this->addPhotonFiles($phar);
+        $stub = file_get_contents(__DIR__ . '/data/pharstub.php');
+        $phar->setStub(sprintf($stub, $phar_name, $phar_name, $phar_name));
+        $phar->stopBuffering();
+    }
+
+    /**
+     * Add the photon files to the phar.
+     */
+    public function addPhotonFiles(&$phar)
+    {
+        foreach ($this->getPhotonFiles() as $file => $path) {
+            $phar->addFile($path, $file);
+            $phar[$file]->compress(\Phar::GZ);
         }
         $photon = file(__DIR__ . '/../photon.php');
         foreach ($photon as &$line) {
@@ -1316,9 +1330,6 @@ class Packager extends Base
             }
         }
         $phar->addFromString('photon/autoload.php', implode('', $auto));
-        $stub = file_get_contents(__DIR__ . '/data/pharstub.php');
-        $phar->setStub(sprintf($stub, $phar_name, $phar_name, $phar_name));
-        $phar->stopBuffering();
     }
 
 
