@@ -83,6 +83,9 @@ class baseTest extends \PHPUnit_Framework_TestCase
                                'body' => $fp);
         $req = new Request($mess);
         $this->assertEquals($req->path, '/home');
+        $this->assertEquals($req->getHeader('content-type'), 
+                            'application/x-www-form-urlencoded');
+        $this->assertEquals('', $req->getHeader('foo-bar'));
         $this->assertEquals(array('a' => 'b', 'c' => 'd'), $req->POST);
         fclose($fp);
     }

@@ -76,20 +76,35 @@ class Base
     public function getConfig()
     {
         $this->params['photon_path'] = realpath(__DIR__ . '/../');
-        $config_file = $this->params['cwd'] . '/config.php';
-        if (null !== $this->params['conf']) {
-            $config_file = $this->params['conf'];
+        // Forced config file
+        $config_file = (null !== $this->params['conf']) 
+            ? $this->params['conf']
+            : '';
+        if (!$config_file && file_exists($this->params['cwd'] . '/config.php')) {
+            $config_file = $this->params['cwd'] . '/config.php';
         }
-        if (!file_exists($config_file)) {
+        if ($config_file && !file_exists($config_file)) {
             throw new Exception(sprintf('The configuration file is not available: %s.',
                                         $config_file));
+        } elseif ($config_file) {
+            $this->verbose(sprintf('Uses config file: %s.', 
+                                   realpath($config_file)));
+
+            return include $config_file;
         }
-        $this->verbose(sprintf('Uses config file: %s.', 
-                               realpath($config_file)));
+        // No forced config file and no config.php at the same level
+        // of the .phar, so we try to load from the phar if in a phar
+        if (\Phar::running()) {
+            $phar = new \Phar(\Phar::running(false));            
+            if (isset($phar['config.php'])) {
+                $this->verbose('Uses phar config file.');
 
-        return include $config_file;
+                return include \Phar::running() . '/config.php';
+            }
+        }
+
+        throw new Exception('No configuration files available.');
     }
-
 }
 
 /**
@@ -1288,8 +1303,6 @@ class SecretKeyGenerator extends Base
  */
 class Packager extends Base
 {
-
-
     public function run()
     {
         // Package all the photon code without the tests folder
@@ -1299,6 +1312,10 @@ class Packager extends Base
         $phar->startBuffering();
         $this->addPhotonFiles($phar);
         $this->addProjectFiles($phar);
+        if ($this->params['conf_file']) {
+            $phar->addFile($this->params['conf_file'], 'config.php');
+            $phar['config.php']->compress(\Phar::GZ);
+        }
         $stub = file_get_contents(__DIR__ . '/data/pharstub.php');
         $phar->setStub(sprintf($stub, $phar_name, $phar_name, $phar_name));
         $phar->stopBuffering();

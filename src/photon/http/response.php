@@ -55,6 +55,16 @@ class NotFound extends Response
     }
 }
 
+class NotModified extends Response
+{
+    public function __construct($content='', $mimetype='text/html; charset=utf-8')
+    {
+        parent::__construct('', $mimetype);
+        $this->status_code = 304;
+    }
+}
+
+
 /**
  * A HTTP response doing a redirect.
  */

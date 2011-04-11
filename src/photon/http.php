@@ -246,6 +246,16 @@ class Request
         $this->COOKIE = CookieHandler::parse($this->mess->headers, 
                                              Conf::f('secret_key', ''));
     }
+
+    /**
+     * Returns the given header or a default value.
+     */
+    public function getHeader($header, $default='')
+    {
+        return (isset($this->headers->$header))
+            ? $this->headers->$header
+            : $default;
+    }
 }
 
 /**

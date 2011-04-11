@@ -47,6 +47,72 @@ class Template
 class AssetDir
 {
     /**
+     * Serve a virtual directory from a phar archive.
+     *
+     * The directory must be defined as phar://path/in/the/phar 
+     *
+     * The url definition is loaded only once at the start of the
+     * Photon server, this means that you can be smart and depending
+     * of \Phar::running() in the urls.php either use serveFromPhar() or
+     * serve().
+     *
+     * @param $request Photon request
+     * @param $match first match the path. It must be relative - does not 
+     *               start with / and can contain only "A-Za-z0-9./-". 
+     *               if '..' is found in the match, it will not be accepted.
+     * @param $directory Directory to serve
+     */
+    public function serveFromPhar($request, $match, $directory)
+    {
+        print_r($match);
+        if (preg_match('/[^A-Za-z0-9\-\.\/]/', $match[1])
+            || false !== strpos($match[1], '..')
+            || in_array(substr($match[1], 0, 1), array('.', '/'))) {
+
+            return new \photon\http\response\Forbidden($request);
+        }
+        $phar = new \Phar(\Phar::running(false));
+        $path = sprintf('%s/%s', substr($directory, 7), $match[1]);
+        if (!isset($phar[$path])) {
+
+            throw new \photon\http\error\NotFound();
+        }
+        $file = $phar[$path];
+        $crc32 = abs($file->getCRC32());
+        $modified = $file->getMTime();
+        // Get the headers
+        $if_modified_since = 0;
+        if (isset($request->headers->{'if-modified-since'})) {
+            $date = \DateTime::createFromFormat(\DateTime::RFC2822, $request->headers->{'if-modified-since'});
+            $if_modified_since = ($date) ? $date->getTimestamp() : 0;
+        }
+        // If none match
+        $if_none_match = (isset($request->headers->{'if-none-match'}))
+            ? $request->headers->{'if-none-match'}
+            : '';
+        $comps = explode('.', $file);
+        $ext = array_pop($comps);
+        $mime = (isset(self::$mimes[$ext])) 
+            ? self::$mimes[$ext] : 'application/octet-stream';
+
+        if ($if_none_match == $crc32) {
+
+            return new \photon\http\response\NotModified('', $mime);
+        }
+        if ($modified <= $if_modified_since) {
+
+            return new \photon\http\response\NotModified('', $mime);
+        }
+        $res = new \photon\http\Response(file_get_contents($file),
+                                         $mime);
+        $res->headers['Date'] = date('r');
+        $res->headers['Last-Modified'] = date('r', $modified);
+        $res->headers['ETag'] = $crc32;
+        
+        return $res;
+    }
+
+    /**
      * Serve a directory.
      *
      * It is not efficient because no caching is done, but it is

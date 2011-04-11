@@ -36,4 +36,10 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(json_encode(array('foo', 'bar')),
                             $json->render());
     }
+
+    public function testNotModified()
+    {
+        $nm = new response\NotModified('discarded content');
+        $this->assertEquals('', $nm->content);
+    }
 }

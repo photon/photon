@@ -161,11 +161,16 @@ namespace photon
                           array('description' => 'the name of the task'));
 
 
-        $tcd = $parser->addCommand('package',
+        $pcd = $parser->addCommand('package',
                                     array('description' => 'package a project as a standalone .phar file'));
 
-        $tcd->addArgument('project',
+        $pcd->addArgument('project',
                           array('description' => 'the name of the project'));
+        $pcd->addOption('conf_file',
+                       array('long_name'   => '--include-conf',
+                             'action'      => 'StoreString',
+                             'help_name'   => 'path/config.prod.php',
+                             'description' => 'path to the configuration file used in production'));
 
         $sk = $parser->addCommand('secretkey',
                                   array('description' => 'prints out a unique random secret key for your configuration.'));
@@ -269,6 +274,7 @@ namespace
                 break;
             case 'package':
                 $params['project'] = $result->command->args['project'];
+                $params['conf_file'] = $result->command->options['conf_file'];
                 $m = new \photon\manager\Packager($params);
                 $m->run();
                 break;
