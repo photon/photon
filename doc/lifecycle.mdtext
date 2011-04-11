@@ -1,0 +1,46 @@
+# Life Cycle of the Photon Application Server
+
+Photon is not following the traditional PHP approach of providing a
+clean state for each new request. Photon is providing an application
+server in which your application is loaded. The application server
+runs all the time and follow this life cycle:
+
+1. Startup sequence to load the configuration and register itself
+   against Mongrel2. 
+2. Wait for a request from Mongrel2.
+3. Process the request and possibly send an answer.
+4. Post request clean up.
+5. Depending of external signals or internal state, shutdown.
+6. Go back to step 2 to wait for another request.
+
+# A Daemon Means
+
+Taking care of the resources. This is not something people in the PHP
+world are used to do as the traditional model is to trash everything
+after a request, but you can think of it as optimization. Just do the
+necessarily work and nothing more. At the end, clean after yourself.
+
+Here are examples of what to pay attention at:
+
+- The global objects, if you change something at request 1, it will be
+  available at request 2. For example, simply declare `global $counter`, 
+  increment it and display it in your view. You will see 1,
+  2, 3 etc. until you restart the server where it will go back to
+  1. State preservation between requests allows us to load the
+  configuration only once, create some database connections only once,
+  etc. This allows us to not do again and again the same things. You
+  spare CPU cycles and this is good™.
+
+- Long running queries. The server is a single process, single thread
+  daemon. That is, if your view requires 250ms to render, you are
+  blocking other concurrent connections while rendering for 1/4 of a
+  second. Note that this is the same for PHP as fastcgi, usually it is
+  starting 10 children processes to cope with the concurrency. You can
+  run hundreds of Photon servers behind Mongrel2 to serve your
+  application, but if you run just a couple of them on a small VPS,
+  you need to be aware of this in the case of a slashdotting of your
+  website. Note that this approach has the great advantage of
+  preventing your server to be overloaded, Mongrel2 will simply very
+  efficiently pool the requests for you.
+
+

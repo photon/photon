@@ -1,0 +1,140 @@
+title: Testing a Photon Component, Application or Project
+description:
+Automated testing improves the software quality by preventing regressions
+in the code. After and while implementing new features, you create and run
+the software unit tests to ensure that you do not break anything and that
+the software runs as expected. Photon provides an easy way to run your tests.
++++
+keywords: tests, unit testing, continuous integration
+content:
+
+# Introduction
+
+Software testing is a very large field but the goal is always the
+same, getting a software with the minimum number of bugs and doing
+what it is supposed to do.
+
+**Photon** provides you with some tools to help you perform some of
+the testing of your software, the tools covers:
+
+- Unit testing with [PHPUnit][phpunit];
+- Code coverage analysis with [PHPUnit][phpunit] and [X-Debug][xdebug];
+- Continuous integration (planned);
+- Performance analysis.
+
+You will need to manage yourself all the end user testing and in
+browser testing.
+
+# How to Run the Unit Tests
+
+The unit tests with **Photon** are conventional [PHPUnit][phpunit]
+tests. Go in project folder, where the `config.test.php` is available
+and simply run:
+
+    $ photon runtests
+    PHPUnit 3.5.5 by Sebastian Bergmann.
+    
+    ..
+    
+    Time: 1 second, Memory: 4.50Mb
+    
+    OK (2 tests, 5 assertions)
+    
+    Writing code coverage data to XML file, this may take a moment.
+    Code coverage 12/12 (100%)
+
+You see here that it automatically find the tests, run them and
+perform a code coverage analysis of your code.
+
+A couple of options are available if you want to run You 
+
+# How to Write the Unit Tests
+
+First you need to know a bit [PHPUnit][phpunit], because this is the
+framework used to write the tests. The choice of *PHPUnit* was
+influenced by the active development and ecosystem around this
+framework. Basically, this is the standard unit testing library for
+PHP and it had the nice idea to decrease its level of bloat for the
+programmers in the last release.
+
+The simplest test is a `tests.php` file in your application folder,
+for example: `yourproject\apps\helloworld\tests.php`. Just put:
+
+    <?php
+    namespace helloworld\tests;
+    class MySimpleTest extends \PHPUnit_Framework_TestCase
+    {
+        /**
+         * Simply test that foo returns true.
+         *
+         * It does not try to retrieve the data afterwards.
+         */
+        public function testHelloFoo()
+        {
+            $this->assertEquals(true, \helloworld\hello\Base::foo('yeah'));
+        }
+    
+        /**
+         * Simple failed test.
+         */
+        public function testHelloFailed()
+        {
+            $this->assertEquals(true, false);
+        }
+    }
+
+Then run:
+
+    $ photon runtests
+
+and enjoy the testing. What you need to notice is:
+
+- you extend `\PHPUnit_Framework_TestCase` and not
+  `PHPUnit_Framework_TestCase`. The backslash in front is important as
+  the class lives in the global namespace.
+
+- you can also have more test namespaces, as long as they are sub
+  namespaces of 'yourapplication\tests` and the files in the
+  `yourproject/apps/yourapplication/tests/` folder.
+
+At the end, you write your tests exactly as you would write them with
+[PHPUnit][phpunit]. You can even run *PHPUnit* yourself from the
+command line to test your application. This is very important to allow
+you to reuse code from other projects into your own **Photon**
+projects. That is, **Photon** will not force you to rewrite your tests
+just to go well with it. **Photon** is just bootstrapping *PHPUnit*
+for you.
+
+# Complex Unit Tests
+
+In the real world, unit tests need to interact with your database,
+other web services and maybe other ØMQ components. This means that you
+need to provide your unit tests with some special configuration. You may also want to run some complex operations at the start of the tests.
+
+By default, **Photon** uses:
+
+- `config.test.php` file in your project folder for your project configuration;
+- `photon/testbootstrap.php` to setup the auto loading of the classes and load your configuration.
+
+You can use different configuration files, to run your tests with
+different setup, by using the `--conf` option, for example:
+`--conf=other/config.test.php`. For a small level of security, if the
+configuration file is named `config.php` the tests will not run. This
+is just to avoid you the bad luck of running your tests with your
+production settings by mistake...
+
+You can use a different bootstrap file with the
+`--bootstrap=path/to/bootstrap.php` option. 
+
+# Self Testing of Photon
+
+To test your **Photon** installation, you can run the self test procedure:
+
+    $ photon selftest
+
+if you find a bug in **Photon**, please run the self test procedure
+and if you can write a test to showcase the bug, then, you are going
+to make the developers very happy!
+
+[phpunit]: 
+[xdebug]:

@@ -1,0 +1,8 @@
+This code is heavily lifted from the Mongrel2 chat example.
+
+It complicates a bit the Mongrel2 example to show how the system can
+scale to more than 128 users and to have a standalone chat server just
+serving the users.
+
+All the good things come from Zed, if it does not work, this is my
+fault.

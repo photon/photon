@@ -1,0 +1,58 @@
+title: Application Data Storage
+description:
+Photon does not inforce a given storage engine. We like MongoDB, but you can
+use any storage you like, from RAM to text files, through whatever RDBMS or 
+NoSQL system you want. Here are the principles you should follow in your
+application to follow the Photon storage principles.
++++
+keywords: database, storage
+content:
+
+# Accept That Not Everybody Like Your Storage System
+
+This is maybe the hardest one. When you are comfortable with a storage
+system, you tend to see all the nice things you can do with but not
+the issues related to it. You know how to write your code to take
+maximum benefits of your storage system and to avoid the pain
+points. But for other people, the pain points can be stoppers, for
+example, they may not have the hardware to simply run your system. So
+**do not write an application which requires a given storage**.
+
+It is very easy to have a single and efficient level of abstraction to
+allow anybody to write their own storage engine. 
+
+For example, suppose you want to store log information for your
+application, you can have a simple class with the methods:
+
+    class Storage
+    {
+         public function store($timestamp, $category, $data);
+         public function retrieve($criteria);
+    }
+
+Then, in your application, you just load your storage:
+
+    use photon\config\Container as Conf;
+    $class = Conf::f('myapp_storage', 'myapp\storage\Storage');
+    $store = new $class();
+
+by default, it is sane and use your class, which may use only
+[SQLite][sqlite] or [MongoDB][mongodb], but you give the opportunity
+for your users to write their own storage by exposing a simple API. It
+is also very practical for unit testing.
+
+# Photon Storages
+
+By default in **Photon**, this rules is always inforced and we try to
+always provide two storage implementations with *SQLite* and
+*MongoDB*. This way, you have examples following two different
+paradigms, RDBMS storage and document oriented.
+
+The default storage implementation is *MongoDB*, that is, the
+implementation if you but nothing in your configuration file. The
+configuration keys follow a standard approach:
+`photon_sessions_storage`, `photon_abtesting_storage`, etc.
+
+[sqlite]:
+[mongodb]:
+

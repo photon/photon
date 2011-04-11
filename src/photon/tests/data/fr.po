@@ -1,0 +1,669 @@
+# French translations of Photon.
+# Copyright (C) 2008 Loïc d'Anterroches and contributors
+# This file is distributed under the same license as the Photon package.
+# Loïc d'Anterroches <titoo@users.sourceforge.net>, 2008.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Photon\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-01-31 22:35+0100\n"
+"PO-Revision-Date: 2009-01-31 22:39+0100\n"
+"Last-Translator: Loïc d'Anterroches <titoo@users.sourceforge.net>\n"
+"Language-Team: French <pluf-users@googlegroups.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n>1;\n"
+"X-Poedit-Language: French\n"
+"X-Poedit-Country: France\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-Basepath: ../../../\n"
+
+#: Photon/Search/Stats.php:34
+msgid "search stats"
+msgstr "stats de l'index"
+
+#: Photon/Search/Stats.php:50
+#: Photon/Search/Occ.php:56
+#: Photon/Queue.php:67
+#: Photon/RowPermission.php:51
+msgid "model class"
+msgstr "class du modèle"
+
+#: Photon/Search/Stats.php:56
+#: Photon/Search/Occ.php:62
+#: Photon/Queue.php:73
+msgid "model id"
+msgstr "model id"
+
+#: Photon/Search/Stats.php:62
+msgid "number of indexations"
+msgstr "nombre d'indexations"
+
+#: Photon/Search/Stats.php:69
+#: Photon/Queue.php:98
+msgid "created at"
+msgstr "créé à"
+
+#: Photon/Search/Stats.php:75
+#: Photon/Queue.php:104
+msgid "modified at"
+msgstr "modifié à"
+
+#: Photon/Search/Word.php:33
+#: Photon/Search/Word.php:50
+#: Photon/Search/Occ.php:49
+msgid "word"
+msgstr "mot"
+
+#: Photon/Search/Occ.php:33
+msgid "occurence"
+msgstr "occurrence"
+
+#: Photon/Search/Occ.php:68
+msgid "occurences"
+msgstr "occurrences"
+
+#: Photon/Search/Occ.php:74
+msgid "ponderated occurence"
+msgstr "occurrence pondérée"
+
+#: Photon/Message.php:45
+#: Photon/User.php:44
+msgid "user"
+msgstr "utilisateur"
+
+#: Photon/HTTP/Response/RedirectToLogin.php:56
+#: Photon/HTTP/Response/Redirect.php:28
+#, php-format
+msgid "<a href=\"%s\">Please, click here to be redirected</a>."
+msgstr "<a href=\"%s\">S'il vous plaît, cliquez ici pour être redirigé</a>."
+
+#: Photon/Text/LaTeX/Equation.php:243
+msgid "Unable to generate the dvi file."
+msgstr "Impossible de générer le fichier dvi."
+
+#: Photon/Text/LaTeX/Equation.php:260
+msgid "Unable to generate the png file."
+msgstr "Impossible de générer le fichier png."
+
+#: Photon/Text/LaTeX/Equation.php:270
+msgid "Unable to move the png file."
+msgstr "Impossible de déplacer le fichier png."
+
+#: Photon/Text/LaTeX/Equation.php:308
+#, php-format
+msgid "The LaTeX tag \"%s\" is not acceptable."
+msgstr "Le marqueur LaTeX \"%s\" n'est pas autorisé."
+
+#: Photon/Translation/TemplateExtractor.php:267
+#: Photon/Template/Compiler.php:345
+#, php-format
+msgid "Template file contains invalid characters: %s"
+msgstr "Le chemin du gabarit contient des caractères invalides: %s"
+
+#: Photon/Translation/TemplateExtractor.php:276
+#: Photon/Template/Compiler.php:354
+#, php-format
+msgid "Template file not found: %s"
+msgstr "Fichier gabarit %s introuvable."
+
+#: Photon/Translation/TemplateExtractor.php:283
+#, php-format
+msgid "Invalid tag in translation extractor: %s"
+msgstr "Marqueur invalide dans l'extraction des traductions: %s"
+
+#: Photon/Translation/TemplateExtractor.php:288
+#: Photon/Template/Compiler.php:375
+#, php-format
+msgid "Invalid function syntax: %s"
+msgstr "Syntaxe de fonction invalide : %s"
+
+#: Photon/Translation/TemplateExtractor.php:305
+#: Photon/Template/Compiler.php:361
+#, php-format
+msgid "Invalid tag syntax: %s"
+msgstr "Syntaxe du marqueur invalide : %s"
+
+#: Photon/Translation/TemplateExtractor.php:390
+#: Photon/Template/Compiler.php:629
+#, php-format
+msgid "Invalid syntax: (%s) %s."
+msgstr "Syntaxe invalide : (%s) %s."
+
+#: Photon/Translation/TemplateExtractor.php:395
+#: Photon/Template/Compiler.php:634
+#, php-format
+msgid "Invalid character: (%s) %s."
+msgstr "Caractère invalide : (%s) %s."
+
+#: Photon/User.php:61
+msgid "login"
+msgstr "identifiant"
+
+#: Photon/User.php:68
+msgid "first name"
+msgstr "prénom"
+
+#: Photon/User.php:75
+msgid "last name"
+msgstr "nom de famille"
+
+#: Photon/User.php:81
+msgid "email"
+msgstr "email"
+
+#: Photon/User.php:87
+msgid "password"
+msgstr "mot de passe"
+
+#: Photon/User.php:89
+msgid "Format: [algo]:[salt]:[hash]"
+msgstr "Format : [algo]:[salt]:[hash]"
+
+#: Photon/User.php:108
+msgid "administrator"
+msgstr "administrateur"
+
+#: Photon/User.php:115
+msgid "staff"
+msgstr "staff"
+
+#: Photon/User.php:122
+msgid "active"
+msgstr "actif"
+
+#: Photon/User.php:130
+msgid "language"
+msgstr "langage"
+
+#: Photon/User.php:131
+msgid "Prefered language of the user for the interface. Use the 2 or 5 letter code like \"fr\", \"en\", \"fr_QC\" or \"en_US\"."
+msgstr "Langue de l'interface pour l'utilisateur. Utilisez le code à 2 ou 5 lettres comme \"fr\", \"en\", \"fr_QC\" ou \"en_US\"."
+
+#: Photon/User.php:139
+msgid "time zone"
+msgstr "Fuseau horaire"
+
+#: Photon/User.php:140
+msgid "Time zone of the user to display the time in local time."
+msgstr "Zone de l'utilisateur pour afficher l'heure correctement."
+
+#: Photon/User.php:146
+msgid "date joined"
+msgstr "date d'inscription"
+
+#: Photon/User.php:153
+msgid "last login"
+msgstr "dernière connexion"
+
+#: Photon/User.php:417
+msgid "\"user_profile_class\" setting not defined."
+msgstr "La variable de configuration \"user_profile_class\" n'est pas définie."
+
+#: Photon/User.php:424
+#, php-format
+msgid "No profiles available for user: %s"
+msgstr "Aucun profile disponible pour l'utilisateur : %s"
+
+#: Photon/Error.php:93
+msgid "DB error:"
+msgstr "Erreur de la base de données :"
+
+#: Photon/Form/Field/Float.php:39
+msgid "Enter a number."
+msgstr "Entrez un nombre."
+
+#: Photon/Form/Field/Float.php:42
+#, php-format
+msgid "Ensure this value is less than or equal to %s."
+msgstr "Assurez-vous que la valeur est inférieure ou égale à %s. "
+
+#: Photon/Form/Field/Float.php:45
+#, php-format
+msgid "Ensure this value is greater than or equal to %s."
+msgstr "Assurez-vous que la valeur est supérieure ou égale à %s."
+
+#: Photon/Form/Field/Email.php:38
+msgid "Enter a valid email address."
+msgstr "Entrez une adresse email valide."
+
+#: Photon/Form/Field/Datetime.php:61
+msgid "Enter a valid date/time."
+msgstr "Entrez une date/heure valide."
+
+#: Photon/Form/Field/Url.php:35
+msgid "Enter a valid address."
+msgstr "Entrez une adresse valide."
+
+#: Photon/Form/Field/Integer.php:40
+#: Photon/Form/Field/Integer.php:49
+#: Photon/Encoder.php:138
+msgid "The value must be an integer."
+msgstr "La valeur doit être un nombre entier."
+
+#: Photon/Form/Field/Integer.php:59
+#, php-format
+msgid "Ensure that this value is not greater than %1$d."
+msgstr "Assurez-vous que la valeur ne soit pas supérieure à %1$d."
+
+#: Photon/Form/Field/Integer.php:62
+#, php-format
+msgid "Ensure that this value is not lower than %1$d."
+msgstr "Assurez-vous que la valeur ne soit pas inférieure à %1$d."
+
+#: Photon/Form/Field/Date.php:46
+msgid "Enter a valid date."
+msgstr "Entrez une date valide."
+
+#: Photon/Form/Field/Varchar.php:38
+#, php-format
+msgid "Ensure this value has at most %1$d characters (it has %2$d)."
+msgstr "Assurez-vous que la valeur ait au maximum %1$d caractères (elle en contient %2$d)."
+
+#: Photon/Form/Field/Varchar.php:41
+#, php-format
+msgid "Ensure this value has at least %1$d characters (it has %2$d)."
+msgstr "Assurez-vous que la valeur ait au minimum %1$d caractères (elle en contient %2$d)."
+
+#: Photon/Form/Field/File.php:43
+#: Photon/Form/Field/File.php:59
+msgid "No files were uploaded. Please try to send the file again."
+msgstr "Aucun fichier n'a été transmis. Essayez d'envoyer le fichier une nouvelle fois."
+
+#: Photon/Form/Field/File.php:52
+msgid "The uploaded file is too large. Reduce the size of the file and send it again."
+msgstr "Le fichier transmis est trop gros. Réduisez la taille du fichier et transmettez le une nouvelle fois."
+
+#: Photon/Form/Field/File.php:55
+msgid "The upload did not complete. Please try to send the file again."
+msgstr "L'envoi du fichier ne s'est pas achevé. Essayez de l'envoyer une nouvelle fois."
+
+#: Photon/Form/Field/File.php:66
+msgid "The server has no temporary folder correctly configured to store the uploaded file."
+msgstr "Le serveur n'a pas de répertoire temporaire correctement configuré pour stocker les fichiers transmis."
+
+#: Photon/Form/Field/File.php:69
+msgid "The uploaded file has been stopped by an extension."
+msgstr "Le fichier transmis a été bloqué par une extension."
+
+#: Photon/Form/Field/File.php:72
+msgid "An error occured when upload the file. Please try to send the file again."
+msgstr "Une erreur est survenu pendant la transmission du fichier. Essayez de transmettre le fichier de nouveau."
+
+#: Photon/Form/Field/File.php:75
+#, php-format
+msgid "The uploaded file is to big (%1$s). Reduce the size to less than %2$s and try again."
+msgstr "Le fichier transmis est trop gros (%1$s). Essayez d'obtenir une taille inférieure à %2$s et essayez de nouveau."
+
+#: Photon/Form/Field/File.php:136
+msgid "An error occured when creating the upload path. Please try to send the file again."
+msgstr "Une erreur est survenu pendant la création du chemin de stockage. Essayez de transmettre le fichier de nouveau."
+
+#: Photon/Form/Field/File.php:140
+#, php-format
+msgid "A file with the name \"%s\" has already been uploaded."
+msgstr "Un fichier avec le nom \"%s\" a déjà été envoyé."
+
+#: Photon/Form/Field/File.php:143
+msgid "An error occured when uploading the file. Please try to send the file again."
+msgstr "Une erreur est survenu pendant la transmission du fichier. Essayez de transmettre le fichier de nouveau."
+
+#: Photon/Form/Field.php:115
+msgid "This field is required."
+msgstr "Ce champ est à fournir."
+
+#: Photon/Form/Model.php:82
+msgid "Cannot save the model from an invalid form."
+msgstr "Ne peut pas sauvegarder le modèle depuis un formulaire non valide."
+
+#: Photon/Queue.php:51
+msgid "message queue"
+msgstr "queue de messages"
+
+#: Photon/Queue.php:80
+msgid "action"
+msgstr "action"
+
+#: Photon/Queue.php:86
+msgid "lock status"
+msgstr "Statut du lock"
+
+#: Photon/Queue.php:89
+msgid "Free"
+msgstr "Libre"
+
+#: Photon/Queue.php:90
+msgid "In progress"
+msgstr "En cours"
+
+#: Photon/Queue.php:91
+msgid "Completed"
+msgstr "Terminé"
+
+#: Photon/Group.php:30
+msgid "group"
+msgstr "groupe"
+
+#: Photon/Group.php:46
+#: Photon/Permission.php:46
+msgid "name"
+msgstr "nom"
+
+#: Photon/Group.php:53
+#: Photon/Permission.php:61
+msgid "description"
+msgstr "description"
+
+#: Photon/Permission.php:30
+#: Photon/RowPermission.php:79
+msgid "permission"
+msgstr "permission"
+
+#: Photon/Permission.php:53
+msgid "code name"
+msgstr "nom de code"
+
+#: Photon/Permission.php:54
+msgid "The code name must be unique for each application. Standard permissions to manage a model in the interface are \"Model_Name-create\", \"Model_Name-update\", \"Model_Name-list\" and \"Model_Name-delete\"."
+msgstr "Le code doit être unique pour chaque application. Les permissions de base sont \"Model_Name-create\", \"Model_Name-update\", \"Model_Name-list\" et \"Model_Name-delete\"."
+
+#: Photon/Permission.php:68
+msgid "application"
+msgstr "application"
+
+#: Photon/Permission.php:69
+msgid "The application using this permission, for example \"YourApp\", \"CMS\" or \"SView\"."
+msgstr "L'application utilisant cette permission, par exemple \"VotreApp\", \"CMS\", etc."
+
+#: Photon/Date.php:206
+#, php-format
+msgid "%s ago"
+msgstr "il y a %s"
+
+#: Photon/Date.php:208
+#, php-format
+msgid "%s left"
+msgstr "%s restant"
+
+#: Photon/Calendar.php:318
+msgid "Sunday"
+msgstr "dimanche"
+
+#: Photon/Calendar.php:319
+msgid "Monday"
+msgstr "lundi"
+
+#: Photon/Calendar.php:320
+msgid "Tuesday"
+msgstr "mardi"
+
+#: Photon/Calendar.php:321
+msgid "Wednesday"
+msgstr "mercredi"
+
+#: Photon/Calendar.php:322
+msgid "Thursday"
+msgstr "jeudi"
+
+#: Photon/Calendar.php:323
+msgid "Friday"
+msgstr "vendredi"
+
+#: Photon/Calendar.php:324
+msgid "Saturday"
+msgstr "samedi"
+
+#: Photon/Encoder.php:62
+msgid "The value must not be empty."
+msgstr "La valeur ne doit pas être vide."
+
+#: Photon/Encoder.php:81
+#, php-format
+msgid "The URL <em>%s</em> is not valid."
+msgstr "L'URL <em>%s</em> n'est pas valide."
+
+#: Photon/Encoder.php:88
+#, php-format
+msgid "The value should not be more than <em>%s</em> characters long."
+msgstr "La valeur ne doit pas faire plus de <em>%s</em> caractères."
+
+#: Photon/Encoder.php:96
+#, php-format
+msgid "The password must be at least <em>%s</em> characters long."
+msgstr "Le password doit avoir au minimum <em>%s</em> caractères."
+
+#: Photon/Encoder.php:106
+#, php-format
+msgid "The email address \"%s\" is not valid."
+msgstr "L'adresse email \"%s\" n'est pas valid."
+
+#: Photon/Encoder.php:146
+#, php-format
+msgid "The date and time <em>%s</em> are not valid."
+msgstr "Le jour et l'heure <em>%s</em> ne sont pas valides."
+
+#: Photon/Encoder.php:157
+#, php-format
+msgid "The date <em>%s</em> is not valid."
+msgstr "La date <em>%s</em> n'est pas valide."
+
+#: Photon/Model.php:429
+#, php-format
+msgid "The view \"%s\" is not defined."
+msgstr "La vue \"%s\" n'est pas définie."
+
+#: Photon/Model.php:578
+#, php-format
+msgid "No matching foreign key found in model: %s for model %s"
+msgstr "Aucune clef étrangère trouvé dans le modèle %s pour le modèle %s"
+
+#: Photon/Template.php:142
+#, php-format
+msgid "Cannot write the compiled template: %s"
+msgstr "Ne peut pas écrire le gabarit compilé: %s"
+
+#: Photon/Template.php:270
+#: Photon/Template.php:272
+#: Photon/Template.php:284
+#: Photon/Template.php:286
+#: Photon/Paginator.php:713
+msgid "now"
+msgstr "maintenant"
+
+#: Photon/Paginator.php:396
+msgid "Prev"
+msgstr "Préc"
+
+#: Photon/Paginator.php:407
+msgid "Next"
+msgstr "Suivant"
+
+#: Photon/Paginator.php:558
+msgid "Name"
+msgstr "Nom"
+
+#: Photon/Paginator.php:595
+msgid "Sort"
+msgstr "Ordre"
+
+#: Photon/Paginator.php:598
+msgid "asc"
+msgstr "asc"
+
+#: Photon/Paginator.php:601
+msgid "desc"
+msgstr "desc"
+
+#: Photon/Paginator.php:617
+msgid "Filter the list:"
+msgstr "Filtrer la liste :"
+
+#: Photon/Paginator.php:620
+msgid "Filter"
+msgstr "Filtre"
+
+#: Photon/Test/Fixture.php:41
+#, php-format
+msgid "Fixture file not found: %s."
+msgstr "Fichier de fixtures non trouvé : %s."
+
+#: Photon/Test/Fixture.php:56
+#, php-format
+msgid "Cannot load existing model <%1$s(%2$s)>."
+msgstr "Ne peut pas charger le modèle <%1$s(%2$s)>."
+
+#: Photon/Views.php:63
+msgid "The login or the password is not valid. The login and the password are case sensitive."
+msgstr "L'identifiant ou le mot de passe n'est pas valide. Les majuscules/minuscules doivent être respectées."
+
+#: Photon/Views.php:66
+msgid "You need to enable the cookies in your browser to access this website."
+msgstr "Vous devez activer les cookies dans votre navigateur pour accéder à ce site."
+
+#: Photon/Views.php:82
+msgid "Sign In"
+msgstr "Se connecter"
+
+#: Photon/Views.php:180
+#: Photon/Views.php:256
+#, php-format
+msgid "The %s was created successfully."
+msgstr "Le %s a été crée avec succès."
+
+#: Photon/Views.php:325
+#, php-format
+msgid "The %s was deleted successfully."
+msgstr "Le %s a été supprimé avec succès."
+
+#: Photon/Utils.php:89
+msgid "MB"
+msgstr "Mo"
+
+#: Photon/Utils.php:91
+msgid "kB"
+msgstr "ko"
+
+#: Photon/Utils.php:93
+msgid "bytes"
+msgstr "octets"
+
+#: Photon/Form.php:228
+#, php-format
+msgid "(Hidden field %1$s) %2$s"
+msgstr "(Champ caché %1$s) %2$s"
+
+#: Photon/Template/Compiler.php:262
+#: Photon/Template/Compiler.php:427
+#: Photon/Template/Compiler.php:433
+#: Photon/Template/Compiler.php:450
+#: Photon/Template/Compiler.php:493
+#, php-format
+msgid "End tag of a block missing: %s"
+msgstr "Fin du marqueur de bloc manquant: %s"
+
+#: Photon/Template/Compiler.php:398
+#, php-format
+msgid "Invalid modifier syntax: (%s) %s"
+msgstr "Syntaxe de modificateur invalide : %s"
+
+#: Photon/Template/Compiler.php:408
+#, php-format
+msgid "Unknown modifier: (%s) %s"
+msgstr "Modificateur inconnu: (%s) %s"
+
+#: Photon/Template/Compiler.php:462
+msgid "End tag of a block missing: literal"
+msgstr "Fin du marqueur de bloc manquant: literal"
+
+#: Photon/Template/Compiler.php:466
+msgid "Start tag of a block missing: literal"
+msgstr "Début du marqueur de bloc manquant: literal"
+
+#: Photon/Template/Compiler.php:548
+#, php-format
+msgid "The function tag \"%s\" is not allowed."
+msgstr "Le tag \"%s\" n'est pas autorisé."
+
+#: Photon/Template/Compiler.php:572
+#, php-format
+msgid "The function tag \"{%s ...}\" is not supported."
+msgstr "Le tag \"{%s ...}\" n'est pas supporté."
+
+#: Photon/RowPermission.php:44
+msgid "model ID"
+msgstr "ID du modèle"
+
+#: Photon/RowPermission.php:57
+msgid "owner ID"
+msgstr "ID du propriétaire"
+
+#: Photon/RowPermission.php:64
+msgid "owner class"
+msgstr "Class du propriètaire"
+
+#: Photon/RowPermission.php:65
+msgid "For example Photon_User or Photon_Group."
+msgstr "Par exemple Photon_User ou Photon_Group."
+
+#: Photon/RowPermission.php:72
+msgid "do not have the permission"
+msgstr "n'a pas la permission"
+
+#: Photon/Date.php:179
+msgid "year"
+msgid_plural "years"
+msgstr[0] "an"
+msgstr[1] "ans"
+
+#: Photon/Date.php:182
+msgid "month"
+msgid_plural "months"
+msgstr[0] "mois"
+msgstr[1] "mois"
+
+#: Photon/Date.php:185
+msgid "day"
+msgid_plural "days"
+msgstr[0] "jour"
+msgstr[1] "jours"
+
+#: Photon/Date.php:188
+msgid "hour"
+msgid_plural "hours"
+msgstr[0] "heure"
+msgstr[1] "heures"
+
+#: Photon/Date.php:191
+msgid "minute"
+msgid_plural "minutes"
+msgstr[0] "minute"
+msgstr[1] "minutes"
+
+#: Photon/Date.php:194
+msgid "second"
+msgid_plural "seconds"
+msgstr[0] "seconde"
+msgstr[1] "secondes"
+
+#~ msgid "years"
+#~ msgstr "années"
+#~ msgid "months"
+#~ msgstr "mois"
+#~ msgid "days"
+#~ msgstr "jours"
+#~ msgid "hours"
+#~ msgstr "heures"
+#~ msgid "minutes"
+#~ msgstr "minutes"
+#~ msgid "seconds"
+#~ msgstr "secondes"
+#~ msgid "Authentication"
+#~ msgstr "Authentification"
+#~ msgid "KB"
+#~ msgstr "Ko"
+#~ msgid "The page <em>%s</em> was not found on the server."
+#~ msgstr "La page <em>%s</em> n'a pas été trouvée sur le serveur."
+
+

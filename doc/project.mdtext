@@ -1,0 +1,76 @@
+title: Project File Structure
+author: Loïc d'Anterroches
+description:
+Organization of a Photon project. This includes the directory and file structure.
++++
+content:
+# Everything Is Done By Convention
+
+Conventions rule the directory structure. This means that in practice
+you can use any directory or file structure you want, but your code
+will be easier to maintain if you follow the conventions. The use of
+conventions over hard rules enforced at the code level means less code
+to maintain and most of the time better performance.
+
+# Structure of a Website Implemented With Photon
+
+bad bad bad, a website is a configuration file, an url file and some
+custom templates.
+
+
+
+A website powered by Photon is composed of components, each component having:
+
+- **views**, this is where the code to handle the request and generate the answer lies;
+- **models**, fat ORM or slime, this is the gateway to your persistent storage;
+- **templates**, to render the pages;
+- **web assets**, that is, images, CSS and JS files;
+- **data**, files used by your application, for example a GeoIP database;
+
+on top of that, you have project level configuration data. 
+
+~~~~~
+myproject/config/myproject.php
+myproject/config/myproject-dev.php (alternative config files)
+myproject/config/myproject-prod.php
+myproject/config/urls.php - returns an array, could be set to somewhere else in the config file or set to null to directly use the defined 'urls' key from the config.
+myproject/config/path.php (set the include path manually)
+
+myproject/apps/openid/ - openid app.
+myproject/apps/openid/views.php - namespace \openid\views;
+myproject/apps/openid/models.php
+
+myproject/apps/tagging/ - tagging app.
+myproject/apps/tagging/views.php - namespace \tagging\views;
+myproject/apps/tagging/models.php
+myproject/apps/tagging/templates/tagging/index.html - templates
+myproject/apps/tagging/www/media/tagging/img/
+
+in fact openid and tagging can be symlinks to an out of the box app.
+
+myproject/templates/ - custom templates for the apps
+
+myproject/www/ - here are the assets
+myproject/www/media/myapp - symlink to the given app corresponding asset folder
+myproject/www/media/myapp/img/*.png
+myproject/www/media/myapp/img/*.js
+myproject/www/media/myapp/img/*.css
+
+myproject/www/m2-myproject.php - Mongrel2 handler for the project
+
+
+ /
+ /config/myproject.php
+ /config/myproject-dev.php
+ /config/myproject-prod.php
+ /src/myproject.php
+ /src/myproject/views.php (namespace myproject\views)
+ /src/myproject/models.php
+ /src/myproject/urls.php
+ /src/myproject/templates/myproject/*/*.html
+ /www/media/myproject/img/*.png
+ /www/media/myproject/js/*.js
+ /www/media/myproject/css/*.css
+ /data/*.*
+~~~~~
+

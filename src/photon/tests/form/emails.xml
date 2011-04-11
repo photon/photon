@@ -1,0 +1,323 @@
+<?xml version="1.0" standalone="yes"?>
+<tests><t><a>first.last@iana.org</a><r>t</r></t>
+<t><a>1234567890123456789012345678901234567890123456789012345678901234@iana.org</a><r>t</r></t>
+<t><a>first.last@sub.do,com</a><r>f</r></t>
+<t><a>"first\"last"@iana.org</a><r>t</r></t>
+<t><a>first\@last@iana.org</a><r>f</r></t>
+<t><a>"first@last"@iana.org</a><r>t</r></t>
+<t><a>"first\\last"@iana.org</a><r>t</r></t>
+<t><a>x@x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x2</a><r>t</r></t>
+<t><a>1234567890123456789012345678901234567890123456789012345678@12345678901234567890123456789012345678901234567890123456789.12345678901234567890123456789012345678901234567890123456789.123456789012345678901234567890123456789012345678901234567890123.iana.org</a><r>t</r></t>
+<t><a>first.last@a123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890foo.com</a><r>f</r></t>
+<t><a>first.last@[12.34.56.78]</a><r>t</r></t>
+<t><a>first.last@[300.34.56.78]</a><r>f</r></t>
+<t><a>first.last@[12.300.56.78]</a><r>f</r></t>
+<t><a>first.last@[12.34.560.78]</a><r>f</r></t>
+<t><a>first.last@[12.34.56.780]</a><r>f</r></t>
+<t><a>first.last@[IPv6:::12.34.56.78]</a><r>t</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333::4444:12.34.56.78]</a><r>t</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333:4444:5555:6666:12.34.56.78]</a><r>t</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333:4444:5555:6666:340.34.56.78]</a><r>f</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333:4444:5555:6666:12.340.56.78]</a><r>f</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333:4444:5555:6666:12.34.560.78]</a><r>f</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333:4444:5555:6666:12.34.56.780]</a><r>f</r></t>
+<t><a>first.last@[IPv6:::1111:2222:3333:4444:5555:6666]</a><r>t</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333::4444:5555:6666]</a><r>t</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333:4444:5555:6666::]</a><r>t</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333:4444:5555:6666:7777:8888]</a><r>t</r></t>
+<t><a>first.last@x23456789012345678901234567890123456789012345678901234567890123.iana.org</a><r>t</r></t>
+<t><a>first.last@3com.com</a><r>t</r></t>
+<t><a>first.last@123.iana.org</a><r>t</r></t>
+<t><a>123456789012345678901234567890123456789012345678901234567890@12345678901234567890123456789012345678901234567890123456789.12345678901234567890123456789012345678901234567890123456789.12345678901234567890123456789012345678901234567890123456789.12345.iana.org</a><r>f</r></t>
+<t><a>first.last</a><r>f</r></t>
+<t><a>12345678901234567890123456789012345678901234567890123456789012345@iana.org</a><r>f</r></t>
+<t><a>.first.last@iana.org</a><r>f</r></t>
+<t><a>first.last.@iana.org</a><r>f</r></t>
+<t><a>first..last@iana.org</a><r>f</r></t>
+<t><a>"first"last"@iana.org</a><r>f</r></t>
+<t><a>"first\last"@iana.org</a><r>t</r></t>
+<t><a>"""@iana.org</a><r>f</r></t>
+<t><a>"\"@iana.org</a><r>f</r></t>
+<t><a>""@iana.org</a><r>f</r></t>
+<t><a>first\\@last@iana.org</a><r>f</r></t>
+<t><a>first.last@</a><r>f</r></t>
+<t><a>x@x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456789.x23456</a><r>f</r></t>
+<t><a>first.last@[.12.34.56.78]</a><r>f</r></t>
+<t><a>first.last@[12.34.56.789]</a><r>f</r></t>
+<t><a>first.last@[::12.34.56.78]</a><r>f</r></t>
+<t><a>first.last@[IPv5:::12.34.56.78]</a><r>f</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333::4444:5555:12.34.56.78]</a><r>t</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333:4444:5555:12.34.56.78]</a><r>f</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333:4444:5555:6666:7777:12.34.56.78]</a><r>f</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333:4444:5555:6666:7777]</a><r>f</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333:4444:5555:6666:7777:8888:9999]</a><r>f</r></t>
+<t><a>first.last@[IPv6:1111:2222::3333::4444:5555:6666]</a><r>f</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333::4444:5555:6666:7777]</a><r>t</r></t>
+<t><a>first.last@[IPv6:1111:2222:333x::4444:5555]</a><r>f</r></t>
+<t><a>first.last@[IPv6:1111:2222:33333::4444:5555]</a><r>f</r></t>
+<t><a>first.last@example.123</a><r>t</r></t> 
+<t><a>first.last@com</a><r>t</r></t> 
+<t><a>first.last@-xample.com</a><r>f</r></t>
+<t><a>first.last@exampl-.com</a><r>f</r></t>
+<t><a>first.last@x234567890123456789012345678901234567890123456789012345678901234.iana.org</a><r>f</r></t>
+<t><a>"Abc\@def"@iana.org</a><r>t</r></t>
+<t><a>"Fred\ Bloggs"@iana.org</a><r>t</r></t>
+<t><a>"Joe.\\Blow"@iana.org</a><r>t</r></t>
+<t><a>"Abc@def"@iana.org</a><r>t</r></t>
+<t><a>"Fred Bloggs"@iana.org</a><r>t</r></t>
+<t><a>user+mailbox@iana.org</a><r>t</r></t>
+<t><a>customer/department=shipping@iana.org</a><r>t</r></t>
+<t><a>$A12345@iana.org</a><r>t</r></t>
+<t><a>!def!xyz%abc@iana.org</a><r>t</r></t>
+<t><a>_somename@iana.org</a><r>t</r></t>
+<t><a>dclo@us.ibm.com</a><r>t</r></t>
+<t><a>abc\@def@iana.org</a><r>f</r></t>
+<t><a>abc\\@iana.org</a><r>f</r></t>
+<t><a>peter.piper@iana.org</a><r>t</r></t>
+<t><a>Doug\ \"Ace\"\ Lovell@iana.org</a><r>f</r></t>
+<t><a>"Doug \"Ace\" L."@iana.org</a><r>t</r></t>
+<t><a>abc@def@iana.org</a><r>f</r></t>
+<t><a>abc\\@def@iana.org</a><r>f</r></t>
+<t><a>abc\@iana.org</a><r>f</r></t>
+<t><a>@iana.org</a><r>f</r></t>
+<t><a>doug@</a><r>f</r></t>
+<t><a>"qu@iana.org</a><r>f</r></t>
+<t><a>ote"@iana.org</a><r>f</r></t>
+<t><a>.dot@iana.org</a><r>f</r></t>
+<t><a>dot.@iana.org</a><r>f</r></t>
+<t><a>two..dot@iana.org</a><r>f</r></t>
+<t><a>"Doug "Ace" L."@iana.org</a><r>f</r></t>
+<t><a>Doug\ \"Ace\"\ L\.@iana.org</a><r>f</r></t>
+<t><a>hello world@iana.org</a><r>f</r></t>
+<t><a>gatsby@f.sc.ot.t.f.i.tzg.era.l.d.</a><r>f</r></t>
+<t><a>test@iana.org</a><r>t</r></t>
+<t><a>TEST@iana.org</a><r>t</r></t>
+<t><a>1234567890@iana.org</a><r>t</r></t>
+<t><a>test+test@iana.org</a><r>t</r></t>
+<t><a>test-test@iana.org</a><r>t</r></t>
+<t><a>t*est@iana.org</a><r>t</r></t>
+<t><a>+1~1+@iana.org</a><r>t</r></t>
+<t><a>{_test_}@iana.org</a><r>t</r></t>
+<t><a>"[[ test ]]"@iana.org</a><r>t</r></t>
+<t><a>test.test@iana.org</a><r>t</r></t>
+<t><a>"test.test"@iana.org</a><r>t</r></t>
+<t><a>test."test"@iana.org</a><r>t</r></t>
+<t><a>"test@test"@iana.org</a><r>t</r></t>
+<t><a>test@123.123.123.x123</a><r>t</r></t>
+<t><a>test@123.123.123.123</a><r>t</r></t>
+<t><a>test@[123.123.123.123]</a><r>t</r></t>
+<t><a>test@example.iana.org</a><r>t</r></t>
+<t><a>test@example.example.iana.org</a><r>t</r></t>
+<t><a>test.iana.org</a><r>f</r></t>
+<t><a>test.@iana.org</a><r>f</r></t>
+<t><a>test..test@iana.org</a><r>f</r></t>
+<t><a>.test@iana.org</a><r>f</r></t>
+<t><a>test@test@iana.org</a><r>f</r></t>
+<t><a>test@@iana.org</a><r>f</r></t>
+<t><a>-- test --@iana.org</a><r>f</r></t>
+<t><a>[test]@iana.org</a><r>f</r></t>
+<t><a>"test\test"@iana.org</a><r>t</r></t>
+<t><a>"test"test"@iana.org</a><r>f</r></t>
+<t><a>()[]\;:,&gt;&lt;@iana.org</a><r>f</r></t>
+<t><a>test@.</a><r>f</r></t>
+<t><a>test@example.</a><r>f</r></t>
+<t><a>test@.org</a><r>f</r></t>
+<t><a>test@123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012.com</a><r>f</r></t>
+<t><a>test@example</a><r>t</r></t>
+<t><a>test@[123.123.123.123</a><r>f</r></t>
+<t><a>test@123.123.123.123]</a><r>f</r></t>
+<t><a>NotAnEmail</a><r>f</r></t>
+<t><a>@NotAnEmail</a><r>f</r></t>
+<t><a>"test\\blah"@iana.org</a><r>t</r></t>
+<t><a>"test\blah"@iana.org</a><r>t</r></t>
+<t><a>"test\&#xD;blah"@iana.org</a><r>t</r></t>
+<t><a>"test&#xD;blah"@iana.org</a><r>f</r></t>
+<t><a>"test\"blah"@iana.org</a><r>t</r></t>
+<t><a>"test"blah"@iana.org</a><r>f</r></t>
+<t><a>customer/department@iana.org</a><r>t</r></t>
+<t><a>_Yosemite.Sam@iana.org</a><r>t</r></t>
+<t><a>~@iana.org</a><r>t</r></t>
+<t><a>.wooly@iana.org</a><r>f</r></t>
+<t><a>wo..oly@iana.org</a><r>f</r></t>
+<t><a>pootietang.@iana.org</a><r>f</r></t>
+<t><a>.@iana.org</a><r>f</r></t>
+<t><a>"Austin@Powers"@iana.org</a><r>t</r></t>
+<t><a>Ima.Fool@iana.org</a><r>t</r></t>
+<t><a>"Ima.Fool"@iana.org</a><r>t</r></t>
+<t><a>"Ima Fool"@iana.org</a><r>t</r></t>
+<t><a>Ima Fool@iana.org</a><r>f</r></t>
+<t><a>phil.h\@\@ck@haacked.com</a><r>f</r></t>
+<t><a>"first"."last"@iana.org</a><r>t</r></t>
+<t><a>"first".middle."last"@iana.org</a><r>t</r></t>
+<t><a>"first\\"last"@iana.org</a><r>f</r></t>
+<t><a>"first".last@iana.org</a><r>t</r></t>
+<t><a>first."last"@iana.org</a><r>t</r></t>
+<t><a>"first"."middle"."last"@iana.org</a><r>t</r></t>
+<t><a>"first.middle"."last"@iana.org</a><r>t</r></t>
+<t><a>"first.middle.last"@iana.org</a><r>t</r></t>
+<t><a>"first..last"@iana.org</a><r>t</r></t>
+<t><a>foo@[\1.2.3.4]</a><r>f</r></t>
+<t><a>"first\\\"last"@iana.org</a><r>t</r></t>
+<t><a>first."mid\dle"."last"@iana.org</a><r>t</r></t>
+<t><a>Test.&#xD;
+ Folding.&#xD;
+ Whitespace@iana.org</a><r>t</r></t>
+<t><a>first."".last@iana.org</a><r>f</r></t>
+<t><a>first\last@iana.org</a><r>f</r></t>
+<t><a>Abc\@def@iana.org</a><r>f</r></t>
+<t><a>Fred\ Bloggs@iana.org</a><r>f</r></t>
+<t><a>Joe.\\Blow@iana.org</a><r>f</r></t>
+<t><a>first.last@[IPv6:1111:2222:3333:4444:5555:6666:12.34.567.89]</a><r>f</r></t>
+<t><a>"test\&#xD;
+ blah"@iana.org</a><r>f</r></t>
+<t><a>"test&#xD;
+ blah"@iana.org</a><r>t</r></t>
+<t><a>{^c\@**Dog^}@cartoon.com</a><r>f</r></t>
+<t><a>(foo)cal(bar)@(baz)iamcal.com(quux)</a><r>t</r></t>
+<t><a>cal@iamcal(woo).(yay)com</a><r>t</r></t>
+<!-- <t><a>"foo"(yay)@(hoopla)[1.2.3.4]</a><r>f</r></t> -->
+<t><a>cal(woo(yay)hoopla)@iamcal.com</a><r>t</r></t>
+<t><a>cal(foo\@bar)@iamcal.com</a><r>t</r></t>
+<t><a>cal(foo\)bar)@iamcal.com</a><r>t</r></t>
+<t><a>cal(foo(bar)@iamcal.com</a><r>f</r></t>
+<t><a>cal(foo)bar)@iamcal.com</a><r>f</r></t>
+<t><a>cal(foo\)@iamcal.com</a><r>f</r></t>
+<t><a>first().last@iana.org</a><r>t</r></t>
+<t><a>first.(&#xD;
+ middle&#xD;
+ )last@iana.org</a><r>t</r></t>
+<t><a>first(12345678901234567890123456789012345678901234567890)last@(1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890)iana.org</a><r>f</r></t>
+<t><a>first(Welcome to&#xD;
+ the ("wonderful" (!)) world&#xD;
+ of email)@iana.org</a><r>t</r></t>
+<t><a>pete(his account)@silly.test(his host)</a><r>t</r></t>
+<t><a>c@(Chris's host.)public.example</a><r>t</r></t>
+<t><a>jdoe@machine(comment).  example</a><r>t</r></t>
+<t><a>1234   @   local(blah)  .machine .example</a><r>t</r></t>
+<t><a>first(middle)last@iana.org</a><r>f</r></t>
+<t><a>first(abc.def).last@iana.org</a><r>t</r></t>
+<t><a>first(a"bc.def).last@iana.org</a><r>t</r></t>
+<t><a>first.(")middle.last(")@iana.org</a><r>t</r></t>
+<t><a>first(abc("def".ghi).mno)middle(abc("def".ghi).mno).last@(abc("def".ghi).mno)example(abc("def".ghi).mno).(abc("def".ghi).mno)com(abc("def".ghi).mno)</a><r>f</r></t>
+<t><a>first(abc\(def)@iana.org</a><r>t</r></t>
+<t><a>first.last@x(1234567890123456789012345678901234567890123456789012345678901234567890).com</a><r>t</r></t>
+<t><a>a(a(b(c)d(e(f))g)h(i)j)@iana.org</a><r>t</r></t>
+<t><a>a(a(b(c)d(e(f))g)(h(i)j)@iana.org</a><r>f</r></t>
+<t><a>name.lastname@domain.com</a><r>t</r></t>
+<t><a>.@</a><r>f</r></t>
+<t><a>a@b</a><r>t</r></t>
+<t><a>@bar.com</a><r>f</r></t>
+<t><a>@@bar.com</a><r>f</r></t>
+<t><a>a@bar.com</a><r>t</r></t>
+<t><a>aaa.com</a><r>f</r></t>
+<t><a>aaa@.com</a><r>f</r></t>
+<t><a>aaa@.123</a><r>f</r></t>
+<t><a>aaa@[123.123.123.123]</a><r>t</r></t>
+<t><a>aaa@[123.123.123.123]a</a><r>f</r></t>
+<t><a>aaa@[123.123.123.333]</a><r>f</r></t>
+<t><a>a@bar.com.</a><r>f</r></t>
+<t><a>a@bar</a><r>t</r></t>
+<t><a>a-b@bar.com</a><r>t</r></t>
+<t><a>+@b.c</a><r>t</r></t>
+<t><a>+@b.com</a><r>t</r></t>
+<t><a>a@-b.com</a><r>f</r></t>
+<t><a>a@b-.com</a><r>f</r></t>
+<t><a>-@..com</a><r>f</r></t>
+<t><a>-@a..com</a><r>f</r></t>
+<t><a>a@b.co-foo.uk</a><r>t</r></t>
+<t><a>"hello my name is"@stutter.com</a><r>t</r></t>
+<t><a>"Test \"Fail\" Ing"@iana.org</a><r>t</r></t>
+<t><a>valid@about.museum</a><r>t</r></t>
+<t><a>invalid@about.museum-</a><r>f</r></t>
+<t><a>shaitan@my-domain.thisisminekthx</a><r>t</r></t>
+<t><a>test@...........com</a><r>f</r></t>
+<t><a>foobar@192.168.0.1</a><r>t</r></t>
+<t><a>"Joe\\Blow"@iana.org</a><r>t</r></t>
+<t><a>Invalid \
+ Folding \
+ Whitespace@iana.org</a><r>f</r></t>
+<t><a>HM2Kinsists@(that comments are allowed)this.is.ok</a><r>t</r></t>
+<t><a>user%uucp!path@berkeley.edu</a><r>t</r></t>
+<t><a>"first(last)"@iana.org</a><r>t</r></t>
+<t><a> &#xD;
+ (&#xD;
+ x &#xD;
+ ) &#xD;
+ first&#xD;
+ ( &#xD;
+ x&#xD;
+ ) &#xD;
+ .&#xD;
+ ( &#xD;
+ x) &#xD;
+ last &#xD;
+ (  x &#xD;
+ ) &#xD;
+ @iana.org</a><r>t</r></t>
+<t><a>first.last @iana.org</a><r>t</r></t>
+<t><a>test. &#xD;
+ &#xD;
+ obs@syntax.com</a><r>t</r></t>
+<t><a>test.&#xD;
+&#xD;
+ obs@syntax.com</a><r>f</r></t>
+<!-- <t><a>"Unicode NULL \&#x2400;"@char.com</a><r>t</r></t>
+<t><a>"Unicode NULL &#x2400;"@char.com</a><r>f</r></t>
+<t><a>Unicode NULL \&#x2400;@char.com</a><r>f</r></t>
+<t><a>cdburgess+!#$%</a><r>t</r></t>  -->
+<t><a>first.last@[IPv6:::a2:a3:a4:b1:b2:b3:b4]</a><r>t</r></t>
+<t><a>first.last@[IPv6:a1:a2:a3:a4:b1:b2:b3::]</a><r>t</r></t>
+<t><a>first.last@[IPv6:a1:a2:a3:a4:b1:b2:b3::11.22.33.44.55]</a><r>f</r></t>
+<t><a>first.last@[IPv6::]</a><r>f</r></t>
+<t><a>first.last@[IPv6:::]</a><r>t</r></t>
+<t><a>first.last@[IPv6::::]</a><r>f</r></t>
+<t><a>first.last@[IPv6::b4]</a><r>f</r></t>
+<t><a>first.last@[IPv6:::b4]</a><r>t</r></t>
+<t><a>first.last@[IPv6::::b4]</a><r>f</r></t>
+<t><a>first.last@[IPv6::b3:b4]</a><r>f</r></t>
+<t><a>first.last@[IPv6:::b3:b4]</a><r>t</r></t>
+<t><a>first.last@[IPv6::::b3:b4]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1::b4]</a><r>t</r></t>
+<t><a>first.last@[IPv6:a1:::b4]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1:]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1::]</a><r>t</r></t>
+<t><a>first.last@[IPv6:a1:::]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1:a2:]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1:a2::]</a><r>t</r></t>
+<t><a>first.last@[IPv6:a1:a2:::]</a><r>f</r></t>
+<t><a>first.last@[IPv6:0123:4567:89ab:cdef::]</a><r>t</r></t>
+<t><a>first.last@[IPv6:0123:4567:89ab:CDEF::]</a><r>t</r></t>
+<t><a>first.last@[IPv6:::a3:a4:b1:ffff:11.22.33.44]</a><r>t</r></t>
+<t><a>first.last@[IPv6:::a2:a3:a4:b1:ffff:11.22.33.44]</a><r>t</r></t>
+<t><a>first.last@[IPv6:a1:a2:a3:a4::11.22.33.44]</a><r>t</r></t>
+<t><a>first.last@[IPv6:a1:a2:a3:a4:b1::11.22.33.44]</a><r>t</r></t>
+<t><a>first.last@[IPv6::11.22.33.44]</a><r>f</r></t>
+<t><a>first.last@[IPv6::::11.22.33.44]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1:11.22.33.44]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1::11.22.33.44]</a><r>t</r></t>
+<t><a>first.last@[IPv6:a1:::11.22.33.44]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1:a2::11.22.33.44]</a><r>t</r></t>
+<t><a>first.last@[IPv6:a1:a2:::11.22.33.44]</a><r>f</r></t>
+<t><a>first.last@[IPv6:0123:4567:89ab:cdef::11.22.33.44]</a><r>t</r></t>
+<t><a>first.last@[IPv6:0123:4567:89ab:cdef:cdef:bade:abcd:cdef:11.22.33.44]</a><r>f</r></t>
+<t><a>first.last@[IPv6:0123:4567:89ab:cdef::11.22.33.xx]</a><r>f</r></t>
+<t><a>first.last@[IPv6:0123:4567:89ab:CDEF::11.22.33.44]</a><r>t</r></t>
+<t><a>first.last@[IPv6:0123:4567:89ab:CDEF:01234::11.22.33.44]</a><r>f</r></t>
+<t><a>first.last@[IPv6:0123:4567:89ab:CDEFF::11.22.33.44]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1::a4:b1::b4:11.22.33.44]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1::11.22.33]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1::11.22.33.44.55]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1::b211.22.33.44]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1::b2:11.22.33.44]</a><r>t</r></t>
+<t><a>first.last@[IPv6:a1::b2::11.22.33.44]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1::b3:]</a><r>f</r></t>
+<t><a>first.last@[IPv6::a2::b4]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1:a2:a3:a4:b1:b2:b3:]</a><r>f</r></t>
+<t><a>first.last@[IPv6::a2:a3:a4:b1:b2:b3:b4]</a><r>f</r></t>
+<t><a>first.last@[IPv6:a1:a2:a3:a4::b1:b2:b3:b4]</a><r>f</r></t>
+<t><a>test@test.com</a><r>t</r></t>
+<!-- <t><a>test@example.com
+</a><r>f</r></t> -->
+<t><a>test@xn--example.com</a><r>t</r></t>
+<!-- <t><a>test@B&#xFC;cher.ch</a><r>t</r></t> -->
+</tests>

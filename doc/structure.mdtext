@@ -1,0 +1,100 @@
+# Structure of a Website Implemented With Photon
+
+Django has a project with multiple apps. Pluf has a website with
+multiple apps. Each way to split a website or set of website in
+reusable component has pros and contras. So, here are the list of the
+why we need to split to try to find the most efficient technical
+answer:
+
+- Code reuse;
+- Simplicity of development;
+- Speed of development;
+- Ease of maintenance.
+
+When we work with small components, the reuse of code is easy (as long
+as the backend storage is not hard coded) and the debugging/testing is
+easier.
+
+> **The core element of Photon is simply a component.**
+
+Yes, just a component and a component can provide one or more views
+(for example just a page giving the time of the day), special backend
+storage or more, like the OpenId logic. 
+
+# What Is a Photon Web Application?
+
+> A Photon web application is a collection of components receiving
+> client requests and providing answers.
+
+The components are binded together into one URL space through url
+mapping. One application server (Photon daemon) can server multiple
+applications at the same time (each with its own configuration). This
+can be interesting to save memory on a small system even so one can
+use mongrel to route the requests to two different Photon daemons with
+one application in each.
+
+# Conventions to Play Well With Others
+
+1. Never hard code the backend for very generic components. 
+   
+   For example, your search engine component should have a generic
+   interface and provide let say a MongoDB and Text file backend. If
+   you can change the backend with just one configuration entry, then
+   your component is well designed, if not, you need to justify it.
+
+   This way we can have authentication against a database, a LDAP
+   directory, OpenID or a combination of them without the need to fork
+   each time the code to support your modifications.
+
+2. Hard coding only if it makes sense and swapping of component is easy.
+
+   You really want to hard code your backend because the extra level
+   of separation between your business logic and the backend does not
+   make sense? Then, you should define a clean interface (duck typing,
+   no need of the PHP `interface`) and a way to select which class to
+   use for a programmer to swap and use the one he wants.
+
+   For example in your code:
+
+     $search = YourApp::load('search_engine');
+     $results = $search->query('photon framework php');
+
+   Here, your application is providing a way to select the search
+   engine system and you get a class with a standard interface (here a
+   `query` method) to use the search engine. This way, the class may
+   have a hard coded backend, but the user can easily switch to
+   something else.
+
+3. Unit test when it makes sense.
+   
+   If you unit test your getters and setters, that is, if you have in
+   your code something like:
+
+     $foo->setBar('toto');
+     $this->assertEqual($foo->getBar(), 'toto');
+
+   you are writing code which is helping nobody, just adding noise in
+   the system. These two lines are only acceptable if the set/get are
+   doing in fact deep operations that *you* coded to store data in a
+   datastore or something like that. If the object `$foo` is an ORM
+   which is used directly off-the-shelf, you do not need to do that,
+   the tests are already done at the ORM level. If you do that, your
+   unit testing code will look like the automatically generated unit
+   tests of a badly coded Ruby on Rails application, simply noise.
+
+   **Test the hard parts, the nasty ones, test when it makes sense.**
+
+# Breaking The Conventions
+
+Principles are here to be broken:
+
+> **Performance is a good reason to break the rules**.
+
+Suppose that you need to create thousands of small objects, but each
+object needs to load through dependency injection the right
+backend. This can create a clear performance hit. In that case, find
+the way to minimize the cost (cloning of the objects, registry) and
+fully document the why you did that. Also, you really need to
+benchmark before going one way or another, most of the time one think
+about issues where the real problem is somewhere else.
+
