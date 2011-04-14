@@ -36,7 +36,7 @@ fi
 # tree, so we try to find photon.php
 if [ ! -f $PHOTON ]; then
     HNU=`readlink -f $0 2>/dev/null`
-    if [[ $? == 0 ]]; then
+    if test "$?" = "0"; then
         HNUDIR=`dirname $HNU`
         PHOTON="$HNUDIR/../src/photon.php"
     else
