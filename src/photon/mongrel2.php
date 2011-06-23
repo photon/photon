@@ -230,6 +230,11 @@ class Connection
         return $this->send($req->sender, $req->conn_id, $msg);
     }
 
+    public function replyResponse($req, $response)
+    {
+        $response->sendIterable($req, $this);
+    }
+
     public function send($uuid, $conn_id, $msg)
     {
         return send($this->resp, $uuid, $conn_id, $msg);

@@ -250,7 +250,11 @@ class Server
         // another backend. Yes, you do not need to reply after a
         // recv().
         if (false !== $response) {
-            $conn->reply($mess, $response->render());
+            if (is_string($response->content)) {
+                $conn->reply($mess, $response->render());
+            } else {
+                $response->sendIterable($mess, $conn);
+            }
         }
         unset($mess); // Cleans the memory with the __destruct call.
         Log::perf(array('photon.process_request', $uuid, 
@@ -400,7 +404,11 @@ class TestServer
             // another backend. Yes, you do not need to reply after a
             // recv().
             if (false !== $response) {
-                $this->conn->reply($mess, $response->render());
+                if (is_string($response->content)) {
+                    $this->conn->reply($mess, $response->render());
+                } else {
+                    $response->sendIterable($mess, $this->conn);
+                }
             }
             unset($mess); // Cleans the memory with the __destruct call.
         }

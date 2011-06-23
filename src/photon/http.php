@@ -146,7 +146,7 @@ class Response
     /**
      * Render a response object.
      */
-    function render($output_body = true)
+    function render($output_body=true)
     {
         if (200 <= $this->status_code &&
             204 != $this->status_code &&
@@ -161,6 +161,25 @@ class Response
         }
 
         return $headers;
+    }
+
+    function sendIterable($msg, $conn, $output_body=true)
+    {
+        $headers = $this->getHeaders();
+
+        if (!$output_body) {
+            $conn->send($msg->sender, $msg->conn_id, $headers);            
+
+            return;
+        }
+        $out = $headers . "\r\n";
+        foreach ($this->content as $chunk) {
+            $out .= $chunk;
+            $conn->send($msg->sender, $msg->conn_id, $out);            
+            $out = '';
+        }
+
+        return;
     }
 
     /**
@@ -237,8 +256,10 @@ class Request
                         add_file_to_post($this->POST, $part['name'], $part);
                     }
                 }
-            } else {
+            } elseif ('application/x-www-form-urlencoded' === $this->mess->headers->{'content-type'}) {
                 $this->POST = parse_str(substr(stream_get_contents($mess->body), 0, -1));
+            } else {
+                $this->BODY =& $mess->body;
             }
         } else if ('JSON' === $this->mess->headers->METHOD) {
             $this->BODY = $this->mess->body;
