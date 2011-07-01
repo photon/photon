@@ -226,12 +226,12 @@ class Context
 {
     public $_vars;
 
-    function __construct($vars=array())
+    public function __construct($vars=array())
     {
         $this->_vars = new ContextVars($vars);
     }
 
-    function get($var)
+    public function get($var)
     {
         if (isset($this->_vars[$var])) {
 
@@ -241,9 +241,25 @@ class Context
         return '';
     }
 
-    function set($var, $value)
+    public function set($var, $value)
     {
         $this->_vars[$var] = $value;
+    }
+}
+
+/**
+ * Class storing the data that are then used in the template.
+ */
+class ContextRequest extends Context
+{
+    public function __construct($request, $vars=array())
+    {
+        $vars = array_merge(array('request' => $request), $vars);
+        foreach (Conf::f('template_context_processors', array()) as $proc) {
+            print_r($proc);
+            $vars = array_merge(call_user_func($proc, $request), $vars); 
+        }
+        $this->_vars = new ContextVars($vars);
     }
 }
 

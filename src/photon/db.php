@@ -37,7 +37,7 @@ namespace photon\db;
 
 use photon\config\Container as Conf;
 
-class UndefinedConnection extends Exception {};
+class UndefinedConnection extends \Exception {};
 
 class Connection
 {
@@ -49,7 +49,7 @@ class Connection
 
             return self::$conns[$db];
         }
-        $defs = Conf::f('databases', array());
+        $defs = Conf::f('db_servers', array());
         if (!isset($defs[$db])) {
             throw new UndefinedConnection(sprintf('The connection "%s" is not defined in the configuration.', $db));
         }
@@ -60,8 +60,7 @@ class Connection
     }
 }
 
-
-class Mongo
+class MongoDB
 {
     public static function get($def)
     {

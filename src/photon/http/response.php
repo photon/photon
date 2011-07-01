@@ -28,6 +28,7 @@ namespace photon\http\response;
 use photon\config\Container as Conf;
 use photon\http\Response as Response;
 use photon\template as template;
+use \photon\core\URL as URL;
 
 class Forbidden extends Response
 {
@@ -84,6 +85,44 @@ class Redirect extends Response
         $this->status_code = $code;
     }
 }
+
+class RedirectToLogin extends Response
+{
+    /**
+     * The $request object is used to know what the post login
+     * redirect url should be.
+     *
+     * If the action url of the login page is not set, it will try to
+     * get the url from the login view from the 'login_view'
+     * configuration key.
+     *
+     * @param Request The request object of the current page.
+     * @param string The full url of the login page (null)
+     */
+    function __construct($request, $loginurl=null)
+    {
+        $redirect = array('_redirect_after' => 
+                          \photon\crypto\Sign::dumps($request->path, 
+                                                     Conf::f('secret_key')));
+        if ($loginurl !== null) {
+            $murl = URL::forView();
+            
+            $url = URL::generate($loginurl, $redirect, false);
+            $encoded = URL::generate($loginurl, $redirect);
+        } else {
+            $url = URL::forView(Conf::f('login_view', 'login_view'),
+                                array(), $redirect, false);
+            $encoded = URL::forView(Conf::f('login_view', 'login_view'), 
+                                    array(), $redirect);
+        }
+        $content = sprintf(__('<a href="%s">Please, click here to be redirected</a>.'), $encoded);
+        parent::__construct($content);
+        $this->headers['Location'] = $url;
+        $this->status_code = 302;
+    }
+}
+
+
 
 class Json extends Response
 {
@@ -550,7 +589,11 @@ function html_pretty_server_error($e, $req)
       </table>
    <h4>Request Body</h4>
 <pre>';
-$out .= (string) $o($req->mess->body) . '</pre>';
+        if (is_string($req->mess->body)) {
+            $out .= (string) $o($req->mess->body) . '</pre>';
+        } else {
+            $out .= (string) $o((string)$req->mess->body) . '</pre>';
+        }
     $out .= '
       
   </div>

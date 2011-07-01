@@ -45,7 +45,10 @@ class Template
     public static function RenderToResponse($tmpl, $context, $request=null)
     {
         $renderer = new ptemplate\Renderer($tmpl, Conf::f('template_folders'));
-        $context = new ptemplate\Context($context);
+        $context = (null === $request) 
+            ? new ptemplate\Context($context)
+            : new ptemplate\ContextRequest($request, $context);
+
         return new \photon\http\Response($renderer->render($context));
     }
 }
