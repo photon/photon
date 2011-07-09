@@ -25,7 +25,7 @@ return array(
              'tmp_folder' => sys_get_temp_dir(),
 
              // The template folders are where your templates are stored.
-             'template_folders' => array(__DIR__ . '/apps/photonchat/templates'),
+             'template_folders' => array(__DIR__ . '/photonchat/templates'),
              // List of installed tasks
              'installed_tasks' => 
              array('photonchat_server' => '\photonchat\task\Server'),

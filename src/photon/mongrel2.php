@@ -108,41 +108,18 @@ class Message
  * ZMQ connection between Mongrel2 and the application server.
  *
  * The connection is used to retrieve a request and send a
- * response. You can use this class if you do not want to poll. For
- * polling, uses the PollConnection which is a bit more low level for
- * you to integrate it into your poller.
+ * response. The connection is getting the sockets for reading and
+ * writing. They are already instanciated by the server class.
  */
 class Connection
 {
-    public $sender_id;
-    public $sub_addr;
-    public $pub_addr;
-    public $reqs;
-    public $resp;
-    public $ctx; /**< zeromq context. Reused everywhere if needed. */
+    public $pull_socket;
+    public $pub_socket;
 
-    public function __construct($sender_id, $sub_addr, $pub_addr, $ctx=null)
+    public function __construct($pull_socket, $pub_socket)
     {
-        $this->sender_id = $sender_id;
-
-        if (null === $ctx) {
-            $this->ctx = new \ZMQContext();
-        } else {
-            $this->ctx = $ctx;
-        }
-
-        $reqs = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_UPSTREAM);
-        $reqs->connect($sub_addr);
-
-        $resp = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PUB);
-        $resp->connect($pub_addr);
-        $resp->setSockOpt(\ZMQ::SOCKOPT_IDENTITY, $sender_id);
-
-        $this->sub_addr = $sub_addr;
-        $this->pub_addr = $pub_addr;
-
-        $this->reqs = $reqs;
-        $this->resp = $resp;
+        $this->pull_socket = $pull_socket;
+        $this->pub_socket = $pub_socket;
     }
 
     /**
@@ -162,7 +139,7 @@ class Connection
     public function recv() 
     {
         $fp = fopen('php://temp/maxmemory:5242880', 'r+');
-        fputs($fp, $this->reqs->recv());
+        fputs($fp, $this->pull_socket->recv());
         rewind($fp);
 
         return $this->parse($fp);
@@ -225,65 +202,100 @@ class Connection
         return new Message($sender, $conn_id, $path, $headers, $body);
     }
 
-    public function reply($req, $msg)
+    /**
+     * Reply to the listener which generated the request.
+     *
+     * The listener is the one defined in the message.
+     *
+     * @param $mess Message 
+     * @param $payload What to send to the listener
+     * @return bool
+     */
+    public function reply($mess, $payload)
     {
-        return $this->send($req->sender, $req->conn_id, $msg);
-    }
-
-    public function replyResponse($req, $response)
-    {
-        $response->sendIterable($req, $this);
-    }
-
-    public function send($uuid, $conn_id, $msg)
-    {
-        return send($this->resp, $uuid, $conn_id, $msg);
+        return $this->send($mess->sender, $mess->conn_id, $payload);
     }
 
     /**
-     * Send the data back to a list of clients.
+     * Same as reply() but let the response object send.
      *
-     * @param $uuid ID of the sender
-     * @param $idents Array of the client connection ids
-     * @param $data Payload
+     * We call sendIterable() on the response object. This way the
+     * response object can stream large chunk in many small send()
+     * calls. Of course it blocks the handler, but this is not
+     * necessarily an issue.
      */
-    public function deliver($uuid, $idents, $data)
+    public function replyResponse($mess, $response)
     {
-        return deliver($this->resp, $uuid, $idents, $data);
+        $response->sendIterable($mess, $this);
     }
 
-    public function close()
+    /**
+     * Send a payload to a listener.
+     *
+     * It is publishing the payload on the pub socket and let the
+     * right Mongrel2 server pick it based on the UUID used as
+     * subscription.
+     *
+     * Use deliver() to send to many listeners.
+     *
+     * @param $uuid UUID of the Mongrel2 server to send the payload to
+     * @param $listener Listener
+     * @param $payload Just what to send
+     * @return bool Success
+     */
+    public function send($uuid, $listener, $payload)
     {
-        $this->reqs = null;
-        $this->resp = null;
+        return send($this->pub_socket, $uuid, $listener, $payload);
+    }
+
+    /**
+     * Send the payload back to a list of listeners.
+     *
+     * @param $uuid ID of the sender
+     * @param $listeners Array of the listeners connection ids
+     * @param $payload Payload
+     */
+    public function deliver($uuid, $listeners, $payload)
+    {
+        return deliver($this->pub_socket, $uuid, $listeners, $payload);
     }
 }
 
-function send($socket, $uuid, $conn_id, $msg)
+/**
+ * Send an answer over the socket.
+ *
+ * @param $socket ZMQ socket providing the send() method
+ * @param $uuid UUID of the server for subscription
+ * @param $listeners Space delimited list of listeners 
+ * @param $msg Payload
+ */
+function send($socket, $uuid, $listeners, $msg)
 {
-    $header = \sprintf('%s %d:%s,', $uuid, \strlen($conn_id), $conn_id);
+    $header = \sprintf('%s %d:%s,', $uuid, \strlen($listeners), $listeners);
     
     return $socket->send($header . ' ' . $msg);
 }
 
 /**
- * Deliver a piece of data to a series of clients.
+ * Deliver a piece of data to a series of listeners.
  *
  * @param $socket The delivery socket
  * @param $uuid ID of the sender
- * @param $idents Array of the client connection ids
- * @param $data Payload
+ * @param $lids Array of the listeners connection ids
+ * @param $payload Payload
  */
-function deliver($socket, $uuid, $idents, $data)
+function deliver($socket, $uuid, $lids, $payload)
 {
-    if (129 > count($idents)) {
-        return send($socket, $uuid, \join(' ', $idents),  $data);
+    if (129 > count($lids)) {
+        return send($socket, $uuid, \join(' ', $lids),  $payload);
     }
-    // We need to send multiple times the data. We are going to
-    // send the data in series of 128 to the clients.
+    // We need to send multiple times the data. We are going to send
+    // the data in series of 128 to the clients. 128 is the default
+    // maximum number of listeners which can be addressed in one go
+    // with Mongrel2. This value can be changed in the configuration. 
     $a = 1;
-    foreach (array_chunk($idents, 128) as $chunk) {
-        $a = $a & (int) send($socket, $uuid, \join(' ', $chunk),  $data);
+    foreach (array_chunk($lids, 128) as $chunk) {
+        $a = $a & (int) send($socket, $uuid, \join(' ', $chunk),  $payload);
     }
     return (bool) $a;
 }

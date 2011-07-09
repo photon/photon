@@ -32,20 +32,39 @@ class Exception extends \Exception {}
 
 class Base
 {
-    public $params;
-    public $project_dir;
+    /*
+     * The following member variables are set directly from the
+     * command line options.
+     */
+
+    public $verbose = false;
+    public $conf = ''; /**< Path to the configuration file */
+    public $cwd = ''; /**< Current working directory */
+    public $photon_path = '';
+    public $help;
+    public $version;
+
+    /*
+     * These are default internal member variables.
+     */
+    public $defaults = array();
+    public $params = array();
 
     /**
-     * Generate the structure of a new project.
-     *
      * @param $params Parameters from the command line
      */
     public function __construct($params)
     {
-        $this->params = $params;
-        if (isset($this->params['project'])) {
-            $this->project_dir = $this->params['cwd'] . '/' . $this->params['project'];
+        $this->photon_path = (\Phar::running()) 
+            ? \Phar::running()
+            : realpath(__DIR__ . '/../'); 
+        $defaults = array();
+        foreach ($params as $key => $value) {
+            $defaults[$key] = $this->$key; 
+            $this->$key = $value;
         }
+        $this->defaults = $defaults;
+        $this->params = $params;
     }
 
     /**
@@ -53,8 +72,8 @@ class Base
      */
     public function verbose($message, $eol=PHP_EOL)
     {
-        if ($this->params['verbose']) {
-            echo $message.$eol;
+        if ($this->verbose) {
+            echo $message . $eol;
         }
     }
 
@@ -63,47 +82,65 @@ class Base
      */
     public function info($message, $eol=PHP_EOL)
     {
-        echo $message.$eol;
+        echo $message . $eol;
     }
 
     /**
      * Returns an array with the configuration.
      *
-     * Either the configuration is in the config.php file in the
-     * current working directory or it is defined by the --conf
-     * parameter.
+     * The configuration is either stored in a php file or as a php
+     * file within the Phar archive. The search path is:
+     *  
+     * - path given with the --conf parameter
+     * - config.php in the current folder
+     * - config.php packaged in the current Phar
+     *
+     * The command line parameters are set in the 'cmd_params' key.
      */
-    public function getConfig()
+    public function loadConfig($default='config.php')
     {
-        $this->params['photon_path'] = realpath(__DIR__ . '/../');
-        // Forced config file
-        $config_file = (null !== $this->params['conf']) 
-            ? $this->params['conf']
-            : '';
-        if (!$config_file && file_exists($this->params['cwd'] . '/config.php')) {
-            $config_file = $this->params['cwd'] . '/config.php';
+        $paths=array();
+        if (strlen($this->conf)) {
+            $paths[] = $this->conf;
         }
-        if ($config_file && !file_exists($config_file)) {
-            throw new Exception(sprintf('The configuration file is not available: %s.',
-                                        $config_file));
-        } elseif ($config_file) {
-            $this->verbose(sprintf('Uses config file: %s.', 
-                                   realpath($config_file)));
-
-            return include $config_file;
-        }
-        // No forced config file and no config.php at the same level
-        // of the .phar, so we try to load from the phar if in a phar
+        $paths[] = $this->cwd . '/' . $default;
         if (\Phar::running()) {
-            $phar = new \Phar(\Phar::running(false));            
-            if (isset($phar['config.php'])) {
-                $this->verbose('Uses phar config file.');
-
-                return include \Phar::running() . '/config.php';
+            $paths[] = \Phar::running() . '/' . $default;
+        }
+        $conf = null;
+        foreach ($paths as $path) {
+            if (file_exists($path)) {
+                $this->verbose(sprintf('Uses config file: %s.', $path));
+                $conf = include $path;
+                break;
             }
         }
+        if (null === $conf) {
+            throw new Exception('No configuration files available.');
+        }
+        Conf::load($conf);
+        Conf::set('cmd_params', $this->params);
 
-        throw new Exception('No configuration files available.');
+        return $path;
+    }
+
+    public function daemonize()
+    {
+        $pid = pcntl_fork();
+        if (-1 === $pid) {
+            $this->verbose('Error: Could not fork.');
+
+            return false;
+        } elseif ($pid) {
+            // In the parent, we can write the pid and die
+            file_put_contents($this->pid_file, $pid, LOCK_EX);
+
+            exit(0);
+        } else {
+            $this->daemon = true;
+
+            return true;
+        }
     }
 }
 
@@ -117,6 +154,8 @@ class Base
  */
 class Init extends Base
 {
+    public $project_dir = ''; /**< Store the full path to the project files */
+    public $project = ''; /**< Name of the project */
 
     /**
      * Generate the default files for the project.
@@ -196,6 +235,8 @@ class Init extends Base
      */
      public function run()
      {
+         $this->project_dir = $this->cwd . '/' . $this->project;
+
          // make sure project directory doesn't already exist
          if (is_dir($this->project_dir)) {
              throw new Exception(sprintf('Project folder already exists: %s.',
@@ -207,379 +248,36 @@ class Init extends Base
 }
 
 /**
- * Run the development server.
+ * Base class for the Server and Task.
+ *
+ * It redefines some of the methods to take into account if the process
+ * is running as daemon or not.
+ *
+ * Each class extending this class must implement a runService() method.
  */
-class TestServer extends Base
+class Service extends Base
 {
-    public function run()
-    {
-        // If the ./apps subfolder is found, it is automatically added
-        // to the include_path.
-        if (file_exists($this->params['cwd'].'/apps')) {
-            set_include_path(get_include_path() . PATH_SEPARATOR 
-                             . $this->params['cwd'].'/apps');
-            $this->verbose(sprintf('Include path is now: %s',
-                                   get_include_path()));
-        }
-        Conf::load($this->getConfig());
-        $this->info('Starting the development server.');
-        $this->info('Press ^C to exit.');
-        $server = new \photon\server\TestServer(Conf::f('server_conf', array()));
-        $server->start();
-    }
-}
-
-/**
- * The server manager is forking children to handle the requests.
- *
- * The fork is done by running `photon server childstart` with the
- * same configuration file as the `photon server start` call.
- *
- * Photon is a single threaded low size daemon. It will use about 2MB
- * of memory to run one child process. In practice you run a
- * collection of child processes controlled by the ServerManager. You
- * communicate directly with the ServerManager process which itself
- * communicate with the children.
- *
- * The Photon servers runs in the background and listen to both the
- * Mongrel2 requests, the control requests from the ServerManager and
- * the SIGTERM signal. This is done using a poller for the zeromq
- * requests with a 500ms timeout to catch the SIGTERM event.
- *
- */
-class ServerManager extends Base
-{
-    /** 
-     * Answers and requests poller. 
-     *
-     * Contains $childs_pull and $ctl_rep.
-     */
-    public $poll = null; 
-    public $childs_pub = null;
-    public $childs_pull = null;
-    public $ctl_rep = null;
-    public $ctx = null;
-
-    /**
-     * List of children and tasks PIDs.
-     *
-     * Static to be able to access it in the signal handler for the
-     * TERM call. That way the handler can TERM the childs too.
-     */
-    static $childs = array();
-    static $tasks = array();
-
     /**
      * Track if in daemon or not. Needed for the info() and verbose()
      * calls.
      */
     public $daemon = false;
+    public $daemonize = false;
+    public $pid_file = './photon.pid';
+    public $server_id;
 
-    /**
-     * Command used to launch a new child and task.
-     */
-    public $childcmd = array();
-    public $taskcmd = array();
-
-    /**
-     * Children/tasks answer stack.
-     *
-     * When an order is dispatched to the children, the answers can
-     * take a bit of time to come. The answer stack is populated and
-     * then after maximum 1 sec or after getting answers for all the
-     * children, it is flushed back to the client.
-     */
-    public $childs_ans = array();
-
-    /**
-     * When the last order was requested.
-     */
-    public $order_time = null; 
-    public $in_order = false;
-
-    /**
-     * Run the production Photon server.
-     *
-     * The system tries to compute the maximum number of information
-     * before the fork, when everything ok, it forks and setup the zmq
-     * and signal handlers and the parent dies.
-     *
-     * By default, it outputs nothing, if you want some details, run
-     * in verbose mode.
-     */
     public function run()
     {
-        Conf::load($this->getConfig());
-        $n_children = ($this->params['children']) ? 
-            $this->params['children'] : 3;
-        // We have a double fork. First to create the master daemon,
-        // then to get new children.
-        $this->daemonize(); 
-        $this->setupChildrenCom();
-        $this->registerSignals();
-        // We are the master daemon.
-        $this->childcmd = $this->makeChildCmd($this->params['argv']);
-        $this->taskcmd = $this->makeTaskCmd($this->params['argv']);
-        foreach (Conf::f('installed_tasks', array()) as $name => $class) {
-            self::$tasks[] = $this->makeTask($name);
-            usleep(20000); // sleep 20 ms between the forks to make
-                           // the tasks
+        $this->loadConfig();
+        if ($this->daemonize) {
+            $this->daemonize(); 
+            $this->daemon = true;
+            Conf::set('daemon', true);
+        } else {
+            $this->info('Press ^C to exit.');
         }
-        for ($i=$n_children; $i>0; $i--) {
-            // Daemonize without killing the master
-            self::$childs[] = $this->makeChild();
-            usleep(20000); // sleep 20 ms between the forks to make
-                           // the children
-        }
-        // Now, we poll for the control
-        $this->setupControlCom();      
-        return $this->poll();
-    }
 
-    /**
-     * Send a command.
-     *
-     * Photon is using a very simple text based protocol to
-     * communicate with the processes. The command format is:
-     *
-     * "TARGET COMMAND"
-     *
-     * TARGET is either ALL or a given Photon process id (not the pid
-     * as we can have Photon processes with the same pid accross
-     * different servers). The COMMAND is just a string. At the
-     * moment, the availabel commands are LIST, INFO and STOP.
-     *
-     * @param $cmd string command
-     * @param $target string (ALL)
-     * @return bool success
-     */
-    public function sendCommand($cmd, $target='ALL')
-    {
-        $this->verbose(sprintf('Send command: %s %s', $target, $cmd));
-        return $this->childs_pub->send(sprintf('%s %s', $target, $cmd));
-    }
-
-    /**
-     * Read the children and command answers.
-     *
-     * Answers are sent by the processes, an answer is simply:
-     *
-     * "PHOTONID COMMAND LEN:JSONPAYLOAD"
-     * 
-     * The answer provides the name of the command back, the PHOTONID
-     * of the process providing the answer and a net string with the
-     * json encoded payload of the answer.
-     *
-     * Order are simply forwarded.
-     *
-     */
-    public function poll()
-    {
-        $to_read = array();
-        $to_write = array(); // Not used.
-        $events = 0;
-        while (true) {
-            $events = 0;
-            try {
-                // We poll and wait a maximum of 200ms. 
-                $events = $this->poll->poll($to_read, $to_write, 200000);
-                $errors = $this->poll->getLastErrors();
-                if (count($errors) > 0) {
-                    foreach ($errors as $error) {
-                        Log::error('Error polling object: ' . $error);
-                    }
-                }
-            } catch (\ZMQPollException $e) {
-                Log::fatal('Poll failed: ' . $e->getMessage());
-                // FIXME we need to kill the childs
-                return 1;
-            }
-            if ($events > 0) {
-                foreach ($to_read as $r) {
-                    if ($r === $this->childs_pull) {
-                        // We are receiving an answer from a child
-                        $this->processAnswer($r);
-                    }
-                    if ($r === $this->ctl_rep) {
-                        // We are receiving an order!
-                        $this->processOrder($r);
-                    }
-                }
-            }
-            $this->flushOrder();
-            $this->checkChilds();
-            pcntl_signal_dispatch();
-            clearstatcache();
-        }
-    }        
-
-    /**
-     * Check if a child has exited.
-     */
-    public function checkChilds()
-    {
-        $status = null;
-        while (0 < ($pid = pcntl_wait($status, WNOHANG | WUNTRACED))) {
-            $exit = pcntl_wexitstatus($status);
-            $idx = array_search($pid, self::$childs);
-            if (false !== $idx) {
-                unset(self::$childs[$idx]);
-            }
-            $idx = array_search($pid, self::$tasks);
-            if (false !== $idx) {
-                unset(self::$tasks[$idx]);
-            }
-        }
-    }
-
-    /**
-     * If needed, flush the order back to the client.
-     */
-    public function flushOrder()
-    {
-        if (!$this->in_order) {
-            return;
-        }
-        if ((count(self::$childs) + count(self::$tasks)) === count($this->childs_ans)
-            || (microtime(true) - $this->order_time) > 1.0) {
-            $this->in_order = false;
-            $this->ctl_rep->send(json_encode($this->childs_ans));
-            $this->childs_ans = array();
-        }
-    }
-
-    /**
-     * Parse the command answers.
-     *
-     * @param $mess string Message
-     * @return array($photonid, $answer)
-     */
-    public function processAnswer($socket)
-    {
-        $ans = $socket->recv();
-        list($id, $cmd, $payload) = explode(' ', $ans, 3);
-        if ('PONG' === $cmd) {
-            return; // Discarded, just internal comm.
-        }
-        $this->childs_ans[] = $ans;
-    }
-
-    /**
-     * Forward an order to the childs or process it directly.
-     *
-     * If a stop all is requested, the order is catched and the kill
-     * is done through signals.
-     */
-    public function processOrder($socket)
-    {
-        $this->in_order = true;
-        $this->order_time = microtime(true);
-        $this->childs_ans = array();
-        $order = $socket->recv();
-        if ('ALL STOP' === $order) {
-            $data = json_encode(array(microtime(true)));
-            $ans = sprintf('%s %s %d:%s', 'ALL', 'STOP', strlen($data), $data);
-            $this->ctl_rep->send(json_encode(array($ans)));
-            self::signalHandler(SIGTERM);
-        } elseif ('NEW START' === $order) {
-            self::$childs[] = $this->makeChild();
-            usleep(20000);
-            $data = json_encode(array(microtime(true)));
-            $ans = sprintf('%s %s %d:%s', 'NEW', 'OK', strlen($data), $data);
-            $this->ctl_rep->send(json_encode(array($ans)));
-            $this->in_order = false;
-            return;
-        } elseif ('OLD LESS' === $order) {
-            $pid = array_shift(self::$childs);
-            posix_kill($pid, SIGTERM);
-            usleep(20000);
-            $data = json_encode(array(microtime(true)));
-            $ans = sprintf('%s %s %d:%s', 'LESS', 'OK', strlen($data), $data);
-            $this->ctl_rep->send(json_encode(array($ans)));
-            $this->in_order = false;
-            return;
-        }
-        $this->childs_pub->send($order);
-    }
-
-    /**
-     * Start a new child.
-     */
-    public function runStart()
-    {
-
-    }
-
-
-    /**
-     * Setup the zmq communication to talk to the children.
-     *
-     * Must be done before calling setupControlCom()
-     */
-    public function setupChildrenCom()
-    {
-        $this->ctx = new \ZMQContext();
-
-        $this->childs_pub = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PUB); 
-        $this->childs_pub->bind(Conf::f('photon_ipc_internal_orders', 
-                                        'ipc://photon-internal-orders'));
-        $this->childs_pull = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PULL);
-        $this->childs_pull->bind(Conf::f('photon_ipc_internal_answers', 
-                               'ipc://photon-internal-answers'));
-        $this->poll = new \ZMQPoll();
-        $this->poll->add($this->childs_pull, \ZMQ::POLL_IN);
-    }
-
-    /**
-     * Setup the zmq communication to listen to the orders.
-     *
-     */
-    public function setupControlCom()
-    {
-        $this->ctl_rep = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_REP);
-        $this->ctl_rep->bind(Conf::f('photon_control_server', 
-                               'ipc://photon-control-server'));
-        $this->poll->add($this->ctl_rep, \ZMQ::POLL_IN);
-    }
-
-
-    /**
-     * Generate the cmd to run a child.
-     */
-    public function makeChildCmd($current_cmd)
-    {
-        $argv = array();
-        foreach ($current_cmd as $key => $val) {
-            if ($val == 'start') {
-                $argv[] = 'childstart';
-                continue;
-            }
-            if (0 === strpos($val, '--children')) {
-                continue;
-            }
-            $argv[] = $val;
-        }
-        $cmd = PHP_BINDIR . '/php';
-        return array($cmd, $argv);
-    }
-
-
-    /**
-     * Generate the cmd to run a task.
-     */
-    public function makeTaskCmd($current_cmd)
-    {
-        $argv = array($current_cmd[0]);
-        // Find conf
-        foreach ($current_cmd as $key => $val) {
-            if (0 === strpos($val, '--conf')) {
-                $argv[] = $val;
-                break;
-            }
-        }
-        $argv[] = 'taskstart';
-        $cmd = PHP_BINDIR . '/php';
-        return array($cmd, $argv);
+        return $this->runService();
     }
 
     /**
@@ -587,10 +285,10 @@ class ServerManager extends Base
      */
     public function verbose($message, $eol=PHP_EOL)
     {
-        if ($this->params['verbose'] && !$this->daemon) {
-            echo $message.$eol;
+        if ($this->verbose && !$this->daemon) {
+            echo $message . $eol;
         }
-        if ($this->params['verbose'] && $this->daemon) {
+        if ($this->verbose && $this->daemon) {
             Log::info($message);
         }
     }
@@ -601,419 +299,61 @@ class ServerManager extends Base
     public function info($message, $eol=PHP_EOL)
     {
         if (!$this->daemon) {
-            echo $message.$eol;
+            echo $message . $eol;
         } else {
             Log::info($message);
         }
     }
-
-    public function daemonize()
-    {
-        $pid = pcntl_fork();
-        if (-1 === $pid) {
-            $this->verbose('Error: Could not fork.');
-            return false;
-        } elseif ($pid) {
-            // In the parent, we can write the pid and die
-            $pid_file = Conf::f('pid_file', './run.pid');
-            file_put_contents($pid_file, $pid, LOCK_EX);
-            exit(0);
-        } else {
-            $this->daemon = true;
-            return true;
-        }
-    }
-
-    public function makeChild()
-    {
-        $pid = pcntl_fork();
-        if (-1 === $pid) {
-            $this->verbose('Error: Could not fork.');
-            return false;
-        } elseif ($pid) {
-            // In the parent
-            return $pid;
-        } else {
-            // We are in the child process
-            pcntl_exec($this->childcmd[0], $this->childcmd[1], $_ENV);
-            exit(0);
-        }
-    }
-
-    public function makeTask($task)
-    {
-        $pid = pcntl_fork();
-        if (-1 === $pid) {
-            $this->verbose('Error: Could not fork.');
-            return false;
-        } elseif ($pid) {
-            // In the parent
-            return $pid;
-        } else {
-            // We are in the child process
-            $arg = array_merge($this->taskcmd[1], array($task));
-            pcntl_exec($this->taskcmd[0], $arg, $_ENV);
-            exit(0);
-        }
-    }
-
-    /**
-     * Handles the signals.
-     *
-     * @param $signo The POSIX signal.
-     */
-     static public function signalHandler($signo)
-     {
-         if (SIGTERM === $signo) {
-             foreach (self::$childs as $child) {
-                 // TODO: Log the kill of the childs.
-                 posix_kill($child, SIGTERM);
-                 usleep(20000);
-             }
-             foreach (self::$tasks as $task) {
-                 // TODO: Log the kill of the childs.
-                 posix_kill($task, SIGTERM);
-                 usleep(20000);
-             }
-             exit(0);
-         }
-     }
-
-    public function registerSignals()
-    {
-        if (!pcntl_signal(SIGTERM, array('\photon\manager\ServerManager', 'signalHandler'))) {
-            Log::fatal('Cannot install the SIGTERM signal handler.');
-            die(1);
-        }
-    }
-
 }
 
 /**
- * Child of the production server.
+ * The server is starting a single handler.
  *
- * A child is just running the server. It answers queries on the
- * internal ipc ports and die on the SIG_TERM signal. It is supposed
- * to be forked by the ServerManager.
+ * Photon is a single threaded low size daemon. It will use about 2MB
+ * of memory to run one handler/task process. In practice you run a
+ * collection of them controlled by your process manager. 
+ *
  */
-class ChildServer extends Base
+class Server extends Service
 {
     /**
-     * Output a message if in verbose mode.
-     */
-    public function verbose($message, $eol=PHP_EOL)
-    {
-        if ($this->params['verbose'] && $this->daemon) {
-            Log::info($message);
-        }
-    }
-
-    /**
-     * Output a message.
-     */
-    public function info($message, $eol=PHP_EOL)
-    {
-        Log::info($message);
-    }
-
-    /**
      * Run the production Photon server.
+     *
+     * By default, it outputs nothing, if you want some details, run
+     * in verbose mode.
      */
-    public function run()
+    public function runService()
     {
-        // If the ./apps subfolder is found, it is automatically added
-        // to the include_path.
-        if (file_exists($this->params['cwd'].'/apps')) {
-            set_include_path(get_include_path() . PATH_SEPARATOR 
-                             . $this->params['cwd'].'/apps');
-            $this->verbose(sprintf('Include path is now: %s',
-                                   get_include_path()));
-        }
-
-        Conf::load($this->getConfig());
         $server = new \photon\server\Server(Conf::f('server_conf', array()));
 
         return $server->start();
     }
+
 }
 
 /**
  * Task.
  *
- * A task is a bit like a children, but it does not answer directly to
- * Mongrel2 requests. It has a ipc control ports and react on
- * SIG_TERM. The ServerManager is taking care of them.
  */
-class Task extends Base
+class Task extends Service
 {
+    public $task = '';
+
     /**
-     * Output a message if in verbose mode.
+     * Overloaded to set the pid file.
      */
-    public function verbose($message, $eol=PHP_EOL)
+    public function __construct($params)
     {
-        if ($this->params['verbose'] && $this->daemon) {
-            Log::info($message);
-        }
+        $this->pid_file = sprintf('./photon-%s.pid', $params['task']);
+        parent::__construct($params);
     }
 
-    /**
-     * Output a message.
-     */
-    public function info($message, $eol=PHP_EOL)
+    public function runService()
     {
-        Log::info($message);
-    }
-
-    /**
-     * Run the production Photon server.
-     */
-    public function run()
-    {
-        // If the ./apps subfolder is found, it is automatically added
-        // to the include_path.
-        if (file_exists($this->params['cwd'].'/apps')) {
-            set_include_path(get_include_path() . PATH_SEPARATOR 
-                             . $this->params['cwd'].'/apps');
-            $this->verbose(sprintf('Include path is now: %s',
-                                   get_include_path()));
-        }
-
-        Conf::load($this->getConfig());
         $tasks = Conf::f('installed_tasks');
-        $task = new $tasks[$this->params['task']];
+        $task = new $tasks[$this->task];
 
         return $task->run();
-    }
-}
-
-/**
- * Command the production servers.
- *
- */
-class CommandServer extends Base
-{
-    /**
-     * Client to access the ServerManager.
-     */
-    public $client = null; 
-    public $ctx = null;
-
-    /**
-     * Setup the client.
-     */
-    public function setupSenderCom()
-    {
-        $this->ctx = new \ZMQContext();
-        $this->client = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_REQ);
-        $this->client->connect(Conf::f('photon_control_server', 
-                                       'ipc://photon-control-server'));
-    }
-
-    /**
-     * Send a command.
-     *
-     * Photon is using a very simple text based protocol to
-     * communicate with the processes. The command format is:
-     *
-     * "TARGET COMMAND"
-     *
-     * TARGET is either ALL or a given Photon process id (not the pid
-     * as we can have Photon processes with the same pid accross
-     * different servers). The COMMAND is just a string. At the
-     * moment, the availabel commands are LIST, INFO and STOP.
-     *
-     * @param $cmd string command
-     * @param $target string (ALL)
-     * @return bool success
-     */
-    public function sendCommand($cmd, $target='ALL')
-    {
-        $this->verbose(sprintf('Send command: %s %s', $target, $cmd));
-        return $this->client->send(sprintf('%s %s', $target, $cmd));
-    }
-
-    public function readAns()
-    {
-        return $this->client->recv();
-    }
-
-
-    /**
-     * The ServerManager is bulking together all the answers.
-     */
-    public function parseAnswers($raw)
-    {
-        $answers = array();
-        foreach (json_decode($raw) as $ans) {
-            list($id, $answer) = $this->parseAnswer($ans);
-            $answers[$id] = $answer;
-        }
-
-        return $answers;
-    }
-
-    /**
-     * Parse the command answer.
-     *
-     * @param $mess string Message
-     * @return array($photonid, $answer)
-     */
-    public function parseAnswer($mess)
-    {
-        list($id, $cmd, $payload) = explode(' ', $mess, 3);
-        if ('PONG' === $cmd) {
-
-            return array($id, 'PONG', (float) $payload);
-        }
-        list($len, $payload) = explode(':', $payload, 2);
-
-        return array($id, json_decode($payload));
-    }
-
-    /**
-     * List the running Photon processes.
-     *
-     * If a given server id is provided, poll the process to retrieve
-     * as many stats as possible.
-     */
-    public function runList()
-    {
-        Conf::load($this->getConfig());
-        $this->setupSenderCom();
-        // We send the order to all the servers. Servers must
-        // subscribe to ALL and to their own id.
-        $this->sendCommand('LIST');
-        $answers = $this->parseAnswers($this->readAns());
-        if ($this->params['json']) {
-            print json_encode($answers) . "\n";
-
-            return 0;
-        }
-        $idlen = 0;
-        foreach (array_keys($answers) as $id) {
-            if (strlen($id) > $idlen) {
-                $idlen = strlen($id);
-            }
-        }
-        $now = new \DateTime();
-        $total_mem = 0;
-        $info = str_pad('Photon id', $idlen+2) .
-            'Uptime        ' .
-            'Served  ' .
-            'Mem. (kB)  ' .
-            'Peak mem. (kB)';
-        $this->info($info);
-        $this->info(str_pad('', strlen($info) + 2, '-'));
-        foreach ($answers as $id => $stats) {
-            $stats = (array) $stats;
-            $date = new \DateTime();
-            $date->setTimestamp($stats['start_time']);
-            $uptime = date_diff($date, $now);
-
-            $this->info(str_pad($id, $idlen+2) .
-                        str_pad($uptime->format('%ad%H:%I:%S'), 12) . '  ' .
-                        str_pad($stats['requests'], 6) . '  ' .
-                        str_pad((int) ($stats['memory_current'] / 1000), 9) . '  ' .
-                        (int) ($stats['memory_peak'] / 1000));
-            $total_mem += $stats['memory_current'];
-        }            
-        $this->info(str_pad('', strlen($info) + 2, '-'));
-        $this->info(sprintf('%d Photon servers running. Memory usage: %dkB.',
-                            count($answers), $total_mem/1000));
-        
-        return 0;
-    }
-
-    /**
-     * Stop the running Photon processes.
-     *
-     */
-    public function runStop()
-    {
-        Conf::load($this->getConfig());
-        $this->setupSenderCom();
-        // We send the order to all the servers. Servers must
-        // subscribe to ALL and to their own id.
-        $this->sendCommand('STOP');
-        $this->info('Waiting for the answers...');
-        $answers = $this->parseAnswers($this->readAns());
-        $idlen = 0;
-        foreach (array_keys($answers) as $id) {
-            if (strlen($id) > $idlen) {
-                $idlen = strlen($id);
-            }
-        }
-        $info = str_pad('Photon id', $idlen+2) . 'Answer ';
-        $this->info($info);
-        $this->info(str_pad('', strlen($info) + 2, '-'));
-        foreach ($answers as $id => $stats) {
-            $this->info(str_pad($id, $idlen+2) . 'KO');
-        }            
-        $this->info(str_pad('', strlen($info) + 2, '-'));
-        $this->info(sprintf('%d Photon servers stopped.',
-                            count($answers)));
-        
-        return 0;
-    }
-
-    /**
-     * Start a new child.
-     *
-     */
-    public function runStart()
-    {
-        Conf::load($this->getConfig());
-        $this->setupSenderCom();
-        // We send the order to all the servers. Servers must
-        // subscribe to ALL and to their own id.
-        $this->sendCommand('START', 'NEW');
-        $this->info('Waiting for the answers...');
-        $answers = $this->parseAnswers($this->readAns());
-        $idlen = 0;
-        foreach (array_keys($answers) as $id) {
-            if (strlen($id) > $idlen) {
-                $idlen = strlen($id);
-            }
-        }
-        $info = str_pad('Photon id', $idlen+2) . 'Answer ';
-        $this->info($info);
-        $this->info(str_pad('', strlen($info) + 2, '-'));
-        foreach ($answers as $id => $stats) {
-            $this->info(str_pad($id, $idlen+2) . 'OK');
-        }            
-        $this->info(str_pad('', strlen($info) + 2, '-'));
-        
-        return 0;
-    }
-
-    /**
-     * Stop an old child.
-     *
-     */
-    public function runLess()
-    {
-        Conf::load($this->getConfig());
-        $this->setupSenderCom();
-        // We send the order to all the servers. Servers must
-        // subscribe to ALL and to their own id.
-        $this->sendCommand('LESS', 'OLD');
-        $this->info('Waiting for the answers...');
-        $answers = $this->parseAnswers($this->readAns());
-        $idlen = 0;
-        foreach (array_keys($answers) as $id) {
-            if (strlen($id) > $idlen) {
-                $idlen = strlen($id);
-            }
-        }
-        $info = str_pad('Photon id', $idlen+2) . 'Answer ';
-        $this->info($info);
-        $this->info(str_pad('', strlen($info) + 2, '-'));
-        foreach ($answers as $id => $stats) {
-            $this->info(str_pad($id, $idlen+2) . 'OK');
-        }            
-        $this->info(str_pad('', strlen($info) + 2, '-'));
-        
-        return 0;
     }
 }
 
@@ -1031,63 +371,10 @@ class CommandServer extends Base
  */
 class RunTests extends Base
 {
-    /**
-     * Returns an array with the configuration.
-     *
-     * Either the configuration is in the config.test.php file in the
-     * current working directory or it is defined by the --conf
-     * parameter.
-     */
-    public function getConfig()
-    {
-        $this->params['photon_path'] = realpath(__DIR__ . '/../');
-        $config_file = $this->params['cwd'] . '/config.test.php';
-        if (null !== $this->params['conf']) {
-            $config_file = $this->params['conf'];
-        }
-        if (!file_exists($config_file)) {
-            throw new Exception(sprintf('The configuration file is not available: %s.',
-                                        $config_file));
-        }
-        $this->verbose(sprintf('Uses config file: %s.', 
-                               realpath($config_file)));
-
-        return include $config_file;
-    }
-
-    public function getConfigPath()
-    {
-        $config_file = $this->params['cwd'] . '/config.test.php';
-        if (null !== $this->params['conf']) {
-            $config_file = $this->params['conf'];
-        }
-        $config_file = realpath($config_file);
-        if (!file_exists($config_file)) {
-            throw new Exception(sprintf('The configuration file is not available: %s.',
-                                        $config_file));
-        }
-        if ('config.php' === basename($config_file)) {
-            throw new Exception(sprintf('The test configuration file cannot be named config.php: %s.',
-                                        $config_file));
-
-        }
-        $this->verbose(sprintf('Uses config file: %s.', 
-                               realpath($config_file)));
-        return $config_file;
-    }
-
     public function run()
     {
         $this->verbose('Run the project tests...');
-        $inc_path = ''; // for phpunit
-        if (file_exists($this->params['cwd'].'/apps')) {
-            set_include_path(get_include_path() . PATH_SEPARATOR 
-                             . $this->params['cwd'].'/apps');
-            $this->verbose(sprintf('Include path is now: %s',
-                                   get_include_path()));
-            $inc_path = '--include-path '.$this->params['cwd'].'/apps ';
-        }
-        Conf::load($this->getConfig());
+        $config_path = $this->loadConfig('config.test.php');
         $apps = Conf::f('installed_apps', array());
         // Now, we have a collection of apps, but each app is not
         // necessarily in the 'apps' subfolder of the project, some
@@ -1098,15 +385,15 @@ class RunTests extends Base
         $inc_dirs = explode(PATH_SEPARATOR,  get_include_path());
         foreach ($apps as $app) {
             foreach ($inc_dirs as $dir) {
-                if (file_exists($dir.'/'.$app.'/tests')) {
-                    $test_dirs[] = realpath($dir.'/'.$app.'/tests');
+                if (file_exists($dir . '/' . $app . '/tests')) {
+                    $test_dirs[] = realpath($dir . '/' . $app . '/tests');
                 }
-                if (file_exists($dir.'/'.$app.'/tests.php')) {
-                    $test_files[] = realpath($dir.'/'.$app.'/tests.php');
+                if (file_exists($dir . '/' . $app . '/tests.php')) {
+                    $test_files[] = realpath($dir . '/' . $app . '/tests.php');
                 }
             }
         }
-        if (0 === count($test_dirs) and 0 === count($test_files)) {
+        if (empty($test_dirs) && empty($test_files)) {
             $this->info('Nothing to test.');
 
             return 2;
@@ -1128,25 +415,26 @@ class RunTests extends Base
         $xml = sprintf($tmpl, 
                        implode("\n", $test_files),
                        implode("\n", $test_dirs),
-                       $this->params['photon_path'],
-                       $this->getConfigPath()
+                       $this->photon_path,
+                       $config_path
                        );
         $tmpfname = tempnam(Conf::f('tmp_folder', sys_get_temp_dir()), 'phpunit');
         file_put_contents($tmpfname, $xml, LOCK_EX);
         $this->verbose('PHPUnit configuration file:');
         $this->verbose($xml);
+
         if (isset($this->params['directory'])) {
             if (!file_exists($this->params['directory'])) {
                 mkdir($this->params['directory']);
             }
-            passthru('phpunit '.$inc_path.'--bootstrap '.realpath(__DIR__).'/autoload.php --coverage-html '.realpath($this->params['directory']).' --configuration '.$tmpfname, $rvar);
+            passthru('phpunit --bootstrap '.realpath(__DIR__).'/autoload.php --coverage-html '.realpath($this->params['directory']).' --configuration '.$tmpfname, $rvar);
             unlink($tmpfname);
             $this->info(sprintf('Code coverage report: %s/index.html.',
                                 realpath($this->params['directory'])));
         } else {
             $xmlout = tempnam(Conf::f('tmp_folder', sys_get_temp_dir()), 'phpunit').'.xml';
-            $this->verbose('phpunit '.$inc_path.'--bootstrap '.realpath(__DIR__).'/autoload.php --coverage-clover '.$xmlout.' --configuration '.$tmpfname);
-            passthru('phpunit '.$inc_path.'--bootstrap '.realpath(__DIR__).'/testbootstrap.php --coverage-clover '.$xmlout.' --configuration '.$tmpfname, $rvar);
+            $this->verbose('phpunit --bootstrap '.realpath(__DIR__).'/autoload.php --coverage-clover '.$xmlout.' --configuration '.$tmpfname);
+            passthru('phpunit --bootstrap '.realpath(__DIR__).'/testbootstrap.php --coverage-clover '.$xmlout.' --configuration '.$tmpfname, $rvar);
             unlink($tmpfname);
             if (!file_exists($xmlout)) {
 
@@ -1165,6 +453,7 @@ class RunTests extends Base
                                 $xml->project->metrics['statements'],
                                 round($perc * 100.0, 2)));
         }
+
         return $rvar;
     }
 }
@@ -1178,6 +467,8 @@ class RunTests extends Base
  */
 class SelfTest extends Base
 {
+    public $directory; /**< Code coverage report files */
+
     /**
      * Custom configuration generation.
      *
@@ -1191,48 +482,49 @@ class SelfTest extends Base
      * will be used. Else it will use an automatically generated
      * configuration and will use it.
      */
-    public function getConfig()
+    public function loadConfig($default='config.php')
     {
-        if (null !== $this->params['conf']) {
-            $config_file = $this->params['conf'];
-            if (!file_exists($config_file)) {
-                throw new Exception(sprintf('The configuration file is not available: %s.',
-                                            $config_file));
-            }
-            $this->verbose(sprintf('Uses config file: %s.', 
-                                   realpath($config_file)));
-
-            return include $config_file;
-        } else {
+        try {
+            $path = parent::loadConfig($default);
+        } catch (Exception $e) {
             $this->verbose('Uses automatically generated configuration:');
             $config = array('tmp_folder' => sys_get_temp_dir(),
                             'secret_key' => 'SECRET_KEY');
             $this->verbose(var_export($config, true));
-
-            return $config;
+            Conf::load($conf);
+            Conf::set('cmd_params', $this->params);
+            $path = '';
         }
+
+        return $path;
     }
 
     public function run()
     {
         $this->verbose('Run Photon selftesting routines...');
         $this->info(sprintf('Photon %s by Loïc d\'Anterroches and contributors.', \photon\VERSION));
-        Conf::load($this->getConfig());
+        $this->loadConfig();
         $this->info('Using ', ''); // To avoid a confusion with PHPUnit
-        if (isset($this->params['directory'])) {
-            if (!file_exists($this->params['directory'])) {
-                mkdir($this->params['directory']);
+        if (null !== $this->directory) {
+            if (!file_exists($this->directory)) {
+                mkdir($this->directory);
             }
-            $this->verbose('phpunit --bootstrap '.realpath(__DIR__).'/testbootstrap.php --coverage-html '.realpath($this->params['directory']).' '.realpath(__DIR__).'/tests/');
-            passthru('phpunit --bootstrap '.realpath(__DIR__).'/testbootstrap.php --coverage-html '.realpath($this->params['directory']).' '.realpath(__DIR__).'/tests/', $rvar);
+            $cmd = 'phpunit --bootstrap ' . $this->photon_path . '/photon/testbootstrap.php ' 
+                . '--coverage-html ' . realpath($this->directory) . ' '
+                . $this->photon_path . '/photon/tests/';
+            $this->verbose($cmd);
+            passthru($cmd, $rvar);
             $this->info(sprintf('Code coverage report: %s/index.html.',
-                                realpath($this->params['directory'])));
+                                realpath($this->directory)));
         } else {
             $xmlout = tempnam(Conf::f('tmp_folder', sys_get_temp_dir()), 'phpunit').'.xml';
-            $this->verbose('phpunit --bootstrap '.realpath(__DIR__).'/testbootstrap.php --coverage-clover '.$xmlout.' '.realpath(__DIR__).'/tests/');
-            passthru('phpunit --bootstrap '.realpath(__DIR__).'/testbootstrap.php --coverage-clover '.$xmlout.' '.realpath(__DIR__).'/tests/', $rvar);
+            $cmd = 'phpunit --bootstrap ' . $this->photon_path . '/photon/testbootstrap.php '
+                . '--coverage-clover ' . $xmlout . ' '
+                . $this->photon_path . '/photon/tests/';
+
+            $this->verbose($cmd);
+            passthru($cmd, $rvar);
             $xml = simplexml_load_string(file_get_contents($xmlout));
-            
             unlink($xmlout);
             $this->info(sprintf('Code coverage %s/%s (%s%%)',
                                 $xml->project->metrics['coveredstatements'],
@@ -1303,21 +595,25 @@ class SecretKeyGenerator extends Base
  */
 class Packager extends Base
 {
+    public $project; /**< Name of the phar archive without the extension */
+    public $conf_file; /**< Configuration file loaded in the phar */
+
     public function run()
     {
         // Package all the photon code without the tests folder
-        $phar_name = sprintf('%s.phar', $this->params['project']);
+        $phar_name = sprintf('%s.phar', $this->project);
         @unlink($phar_name);
         $phar = new \Phar($phar_name, 0, $phar_name);
         $phar->startBuffering();
         $this->addPhotonFiles($phar);
         $this->addProjectFiles($phar);
-        if ($this->params['conf_file']) {
-            $phar->addFile($this->params['conf_file'], 'config.php');
+        if (null !== $this->conf_file) {
+            $phar->addFile($this->conf_file, 'config.php');
             $phar['config.php']->compress(\Phar::GZ);
         }
-        $stub = file_get_contents(__DIR__ . '/data/pharstub.php');
-        $phar->setStub(sprintf($stub, $phar_name, $phar_name, $phar_name));
+        $stub = file_get_contents($this->photon_path . '/photon/data/pharstub.php');
+        $phar->setStub(sprintf($stub, 
+                               $phar_name, $phar_name, $phar_name, $phar_name));
         $phar->stopBuffering();
     }
 
@@ -1345,7 +641,7 @@ class Packager extends Base
             $phar->addFile($path, $file);
             $phar[$file]->compress(\Phar::GZ);
         }
-        $photon = file(__DIR__ . '/../photon.php');
+        $photon = file($this->photon_path . '/photon.php');
         foreach ($photon as &$line) {
             if (trim($line) == 'include_once __DIR__ . \'/photon/autoload.php\';') {
                 $line = '    include_once \'photon/autoload.php\';'."\n";
@@ -1353,7 +649,7 @@ class Packager extends Base
         }
         array_shift($photon); // Remove shebang
         $phar->addFromString('photon.php', implode('', $photon));
-        $auto = file(__DIR__ . '/../photon/autoload.php');
+        $auto = file($this->photon_path . '/photon/autoload.php');
         foreach ($photon as &$line) {
             if (0 === strpos(trim($line), 'set_include_path')) {
                 $line = '';
@@ -1375,10 +671,9 @@ class Packager extends Base
      */
     public function getProjectFiles()
     {
-        $cwd = $this->params['cwd'];
         $out = array();
         $files = new \RecursiveIteratorIterator(
-                     new \RecursiveDirectoryIterator($cwd),
+                     new \RecursiveDirectoryIterator($this->cwd),
                      \RecursiveIteratorIterator::SELF_FIRST);
         foreach ($files as $disk_path => $file) {
             if (!$files->isFile()) {
@@ -1387,7 +682,7 @@ class Packager extends Base
             if (substr($disk_path, -5) == '.phar') {
                 continue;
             }
-            $phar_path = substr($disk_path, strlen($cwd) + 1);
+            $phar_path = substr($disk_path, strlen($this->cwd) + 1);
             if (preg_match('/^config\.(\w+\.)*php/', $phar_path)) {
                 continue;
             }
@@ -1409,16 +704,15 @@ class Packager extends Base
      */
     public function getPhotonFiles()
     {
-        $photon_dir = __DIR__;
         $out = array();
         $files = new \RecursiveIteratorIterator(
-                     new \RecursiveDirectoryIterator($photon_dir),
+                     new \RecursiveDirectoryIterator($this->photon_path),
                      \RecursiveIteratorIterator::SELF_FIRST);
         foreach ($files as $disk_path => $file) {
             if (!$files->isFile()) {
                 continue;
             }
-            $phar_path = substr($disk_path, strlen($photon_dir) - 6);
+            $phar_path = substr($disk_path, strlen($this->photon_path) + 1);
             if (false !== strpos($phar_path, 'photon/tests/')) {
                 continue;
             }
@@ -1434,5 +728,3 @@ class Packager extends Base
         return $out;
     }
 }
-
-

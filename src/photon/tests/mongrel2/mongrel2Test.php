@@ -56,6 +56,14 @@ class DummyZMQSocket
     }
 }
 
+class DummyResponse
+{
+    public function sendIterable($mess, $conn)
+    {
+        return true;
+    }
+}
+
 class mongrel2Test extends \PHPUnit_Framework_TestCase
 {
     protected $conf;
@@ -90,64 +98,30 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
         $this->assertEquals(21894, strlen($mess->body));
     }
 
-    public function testConnection()
-    {
-        $sender_id = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378';
-        $sub_addr = 'ipc://sub-addr';
-        $pub_addr = 'ipc://pub-addr';
-        $conn = new mongrel2\Connection($sender_id, $sub_addr, $pub_addr);
-        $this->assertSame('ZMQSocket', get_class($conn->reqs));
-        $this->assertSame('ZMQSocket', get_class($conn->resp));
-        $conn->close();
-    }
-
-    public function testContextConnection()
-    {
-        $sender_id = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378';
-        $sub_addr = 'ipc://sub-addr';
-        $pub_addr = 'ipc://pub-addr';
-        $ctx = new \ZMQContext();
-        $conn = new mongrel2\Connection($sender_id, $sub_addr, $pub_addr, $ctx);
-        $this->assertSame('ZMQSocket', get_class($conn->reqs));
-        $this->assertSame('ZMQSocket', get_class($conn->resp));
-        $conn->close();
-    }
-
     public function testConnectionRecv()
     {
-        $sender_id = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378';
-        $sub_addr = 'ipc://sub-addr';
-        $pub_addr = 'ipc://pub-addr';
-        $conn = new mongrel2\Connection($sender_id, $sub_addr, $pub_addr);
-        $conn->close();
-        $conn->reqs = new DummyZMQSocket();
-        $conn->reqs->setNextRecv(file_get_contents(__DIR__ . '/../data/example.payload'));
+        $socket = new DummyZMQSocket();
+        $socket->setNextRecv(file_get_contents(__DIR__ . '/../data/example.payload'));
+
+        $conn = new mongrel2\Connection($socket, null);
         $mess = $conn->recv();
         $this->assertEquals($mess->path, '/handlertest/foo');
     }
 
     public function testConnectionRecvGet()
     {
-        $sender_id = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378';
-        $sub_addr = 'ipc://sub-addr';
-        $pub_addr = 'ipc://pub-addr';
-        $conn = new mongrel2\Connection($sender_id, $sub_addr, $pub_addr);
-        $conn->close();
-        $conn->reqs = new DummyZMQSocket();
-        $conn->reqs->setNextRecv('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 421:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"GET","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},0:');
+        $socket = new DummyZMQSocket();
+        $socket->setNextRecv('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 421:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"GET","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},0:');
+        $conn = new mongrel2\Connection($socket, null);
         $mess = $conn->recv();
         $this->assertEquals($mess->path, '/handlertest/foo');
     }
 
     public function testConnectionRecvJson()
     {
-        $sender_id = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378';
-        $sub_addr = 'ipc://sub-addr';
-        $pub_addr = 'ipc://pub-addr';
-        $conn = new mongrel2\Connection($sender_id, $sub_addr, $pub_addr);
-        $conn->close();
-        $conn->reqs = new DummyZMQSocket();
-        $conn->reqs->setNextRecv('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 422:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"JSON","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},7:"HELLO"');
+        $socket = new DummyZMQSocket();
+        $socket->setNextRecv('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 422:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"JSON","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},7:"HELLO"');
+        $conn = new mongrel2\Connection($socket, null);
         $mess = $conn->recv();
         $this->assertEquals($mess->path, '/handlertest/foo');
         $this->assertEquals($mess->body, 'HELLO');
@@ -164,13 +138,9 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
         }
         $headers = json_encode($headers);
         $msg = sprintf('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo %d:%s,%d:%s,',  strlen($headers), $headers, 7, '"HELLO"');
-        $sender_id = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378';
-        $sub_addr = 'ipc://sub-addr';
-        $pub_addr = 'ipc://pub-addr';
-        $conn = new mongrel2\Connection($sender_id, $sub_addr, $pub_addr);
-        $conn->close();
-        $conn->reqs = new DummyZMQSocket();
-        $conn->reqs->setNextRecv($msg);
+        $socket = new DummyZMQSocket();
+        $socket->setNextRecv($msg);
+        $conn = new mongrel2\Connection($socket, null);
         $mess = $conn->recv();
         $this->assertEquals($mess->path, '/handlertest/foo');
         $this->assertEquals($mess->body, 'HELLO');
@@ -178,13 +148,9 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
 
     public function testConnectionSend()
     {
-        $sender_id = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378';
-        $sub_addr = 'ipc://sub-addr';
-        $pub_addr = 'ipc://pub-addr';
-        $conn = new mongrel2\Connection($sender_id, $sub_addr, $pub_addr);
-        $conn->close();
-        $conn->reqs = new DummyZMQSocket();
-        $conn->resp = new DummyZMQSocket();
+        $socket_pull = new DummyZMQSocket();
+        $socket_pub = new DummyZMQSocket();
+        $conn = new mongrel2\Connection($socket_pull, $socket_pub);
         $req = (object) array('sender' => '34f9ceee-cd52-4b7f-b197-88bf2f0ec378',
                               'conn_id' => '6');
         $this->assertEquals(true, $conn->reply($req, 'Hello !'));
@@ -193,20 +159,26 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
 
     public function testConnectionDeliver()
     {
-        $sender_id = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378';
-        $sub_addr = 'ipc://sub-addr';
-        $pub_addr = 'ipc://pub-addr';
-        $conn = new mongrel2\Connection($sender_id, $sub_addr, $pub_addr);
-        $conn->close();
-        $conn->reqs = new DummyZMQSocket();
-        $conn->resp = new DummyZMQSocket();
+        $socket_pull = new DummyZMQSocket();
+        $socket_pub = new DummyZMQSocket();
+        $conn = new mongrel2\Connection($socket_pull, $socket_pub);
         $req = (object) array('sender' => '34f9ceee-cd52-4b7f-b197-88bf2f0ec378',
                               'conn_id' => '6');
         $this->assertEquals(true, $conn->reply($req, 'Hello !'));
         $connection_ids = range(1, 300);
         $this->assertEquals(true, $conn->deliver('34f9ceee-cd52-4b7f-b197-88bf2f0ec378', $connection_ids, 'Hello !'));
-        $conn->resp->maxsend = 2;
+        $conn->pub_socket->maxsend = 2;
         $this->assertEquals(false, $conn->deliver('34f9ceee-cd52-4b7f-b197-88bf2f0ec378', $connection_ids, 'Hello !'));
     }
 
+    public function testReplyResponse()
+    {
+        $response = new DummyResponse();
+        $socket_pull = new DummyZMQSocket();
+        $socket_pub = new DummyZMQSocket();
+        $conn = new mongrel2\Connection($socket_pull, $socket_pub);
+        $mess = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 422:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"JSON","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},7:"HELLO"';
+        $conn->replyResponse($mess, $response);
+        $this->assertEquals(false, false);
+    }
 }

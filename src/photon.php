@@ -59,125 +59,90 @@ namespace photon
             'name' => 'hnu',
             'description' => 'Photon command line manager.',
             'version'     => VERSION));
-        $parser->addOption('verbose',
-                           array('short_name'  => '-v',
-                                 'long_name'   => '--verbose',
-                                 'action'      => 'StoreTrue',
-                                 'description' => 'turn on verbose output'
-                                 ));
-        $parser->addOption('conf',
-                           array('long_name'   => '--conf',
-                                 'action'      => 'StoreString',
-                                 'help_name'   => 'path/conf.php',
-                                 'description' => 'where the configuration is to be found. By default, the configuration file is the config.php in the current working directory'
-                                 ));
 
-        $init_cmd = $parser->addCommand('init',
-                                        array('description' => 'generate the skeleton of a new Photon project in the current folder'));
-        $init_cmd->addArgument('project',
-                               array('description' => 'the name of the project'));
-        $rs_cmd = $parser->addCommand('testserver',
-                                      array('description' => 'run the development server to test your application'));
-        $rt_cmd = $parser->addCommand('runtests',
-                                      array('description' => 'run the tests of your project. Uses config.test.php as default config file'));
-        $rt_cmd->addOption('directory',
-                           array('long_name'   => '--coverage-html',
-                                 'action'      => 'StoreString',
-                                 'help_name'   => 'path/folder',
-                                 'description' => 'directory to store the code coverage report'
-                                 ));
+        $options = array('verbose' =>
+                         array('short_name'  => '-v',
+                               'long_name'   => '--verbose',
+                               'action'      => 'StoreTrue',
+                               'description' => 'turn on verbose output'),
+                         'conf' =>
+                         array('long_name'   => '--conf',
+                               'action'      => 'StoreString',
+                               'help_name'   => 'path/conf.php',
+                               'description' => 'where the configuration is to be found. By default, the configuration file is the config.php in the current working directory'));
 
-        $rt_cmd->addOption('bootstrap',
-                           array('long_name'   => '--bootstrap',
-                                 'action'      => 'StoreString',
-                                 'help_name'   => 'path/bootstrap.php',
-                                 'description' => 'bootstrap PHP file given to PHPUnit. By default the photon/testbootstrap.php file'
-                                 ));
+        foreach ($options as $name => $option) {
+            $parser->addOption($name, $option);
+        }
 
-        $rst_cmd = $parser->addCommand('selftest',
-                                      array('description' => 'run the Photon self test procedure'));
-        $rst_cmd->addOption('directory',
-                           array('long_name'   => '--coverage-html',
-                                 'action'      => 'StoreString',
-                                 'help_name'   => 'path/folder',
-                                 'description' => 'directory to store the code coverage report'
-                                 ));
+        $cmds = array('init' =>
+           array('desc' => 'generate the skeleton of a new Photon project in the current folder',
+                 'args' => array('project' =>
+                                 array('description' => 'the name of the project'))),
+                      'serve' =>
+           array('desc' => 'start a Photon handler server',
+                 'opts' => array('server_id' =>
+                                 array('long_name'   => '--server-id',
+                                       'action'      => 'StoreString',
+                                       'help_name'   => 'id',
+                                       'description' => 'set the server id'))),
 
-        $rserver_cmd = $parser->addCommand('server',
-                                      array('description' => 'run or command the Photon servers'));
-        $rserver_cmd->addOption('all',
-                           array('long_name'   => '--all',
-                                 'action'      => 'StoreTrue',
-                                 'description' => 'run the subcommand for all the running Photon processes'
-                                 ));
+                      'task' =>
+           array('desc' => 'start a Photon task server',
+                 'args' => array('task' =>
+                                 array('description' => 'the name of the task'))),
 
-        $rserver_cmd->addOption('server_id',
-                           array('long_name'   => '--server-id',
-                                 'action'      => 'StoreString',
-                                 'help_name'   => 'id',
-                                 'description' => 'run the subcommand for the given server id. If you start a process, it will receive this server id. The default subcommand is "start".'
-                                 ));
+                      'test' =>
+           array('desc' => 'run the tests of your project. Uses config.test.php as default config file',
+                 'opts' => array('directory' =>
+                                 array('long_name'   => '--coverage-html',
+                                       'action'      => 'StoreString',
+                                       'help_name'   => 'path/folder',
+                                       'description' => 'directory to store the code coverage report'),
+                                 'bootstrap' =>
+                                 array('long_name'   => '--bootstrap',
+                                       'action'      => 'StoreString',
+                                       'help_name'   => 'path/bootstrap.php',
+                                       'description' => 'bootstrap PHP file given to PHPUnit. By default the photon/testbootstrap.php file'))),
 
-        $sscd = $rserver_cmd->addCommand('start',
-                                         array('description' => 'start a Photon server'));
-        $sscd->addOption('children',
-                        array('long_name'   => '--children',
-                              'action'      => 'StoreInt',
-                              'description' => 'number of children to fork. By default 3'
-                                 ));
-
-        $rserver_cmd->addCommand('stop',
-                                 array('description' => 'stop one or more Photon server'));
-
-        $rserver_cmd->addCommand('new',
-                                 array('description' => 'start a new Photon server child'));
-
-        $rserver_cmd->addCommand('less',
-                                 array('description' => 'stop the oldest Photon server child'));
-
-        $lcd = $rserver_cmd->addCommand('list',
-                                        array('description' => 'list the running Photon servers'));
-
-        $lcd->addOption('json',
-                        array('long_name'   => '--json',
-                              'action'      => 'StoreTrue',
-                              'description' => 'output the information as json'
-                                 ));
-
-        $rserver_cmd->addCommand('childstart',
-                                 array('description' => 'internal use to fork worker children'));
+                      'selftest' =>
+           array('desc' => 'run the Photon self test procedure',
+                 'opts' => array('directory' =>
+                                 array('long_name'   => '--coverage-html',
+                                       'action'      => 'StoreString',
+                                       'help_name'   => 'path/folder',
+                                       'description' => 'directory to store the code coverage report'))),
 
 
-        $rserver_cmd->addOption('timeout',
-                        array('long_name'   => '--wait',
-                              'action'      => 'StoreString',
-                              'description' => 'waiting time in seconds for the answers. Needed if your servers are under heavy load'
-                                 ));
- 
-        $tcd = $parser->addCommand('taskstart',
-                                    array('description' => 'internal use to fork background task'));
+                      'package' =>
+           array('desc' => 'package a project as a standalone .phar file',
+                 'args' => array('project' =>
+                                 array('description' => 'the name of the project')),
+                 'opts' => array('conf_file' =>
+                                 array('long_name'   => '--include-conf',
+                                       'action'      => 'StoreString',
+                                       'help_name'   => 'path/config.prod.php',
+                                       'description' => 'path to the configuration file used in production'))),
 
-        $tcd->addArgument('task',
-                          array('description' => 'the name of the task'));
+                      'makekey' =>
+           array('desc' => 'prints out a unique random secret key for your configuration',
+                 'opts' => array('length' =>
+                                 array('long_name'   => '--length',
+                                       'action'      => 'StoreInt',
+                                       'description' => 'length of the generate secret key (64)'))));
 
-
-        $pcd = $parser->addCommand('package',
-                                    array('description' => 'package a project as a standalone .phar file'));
-
-        $pcd->addArgument('project',
-                          array('description' => 'the name of the project'));
-        $pcd->addOption('conf_file',
-                       array('long_name'   => '--include-conf',
-                             'action'      => 'StoreString',
-                             'help_name'   => 'path/config.prod.php',
-                             'description' => 'path to the configuration file used in production'));
-
-        $sk = $parser->addCommand('secretkey',
-                                  array('description' => 'prints out a unique random secret key for your configuration.'));
-        $sk->addOption('length',
-                       array('long_name'   => '--length',
-                             'action'      => 'StoreInt',
-                             'description' => 'length of the generate secret key (64)'));
+        $def_cmd = array('opts' => array(), 'args' => array());
+        foreach ($cmds as $name => $cmd) {
+            $pcmd = $parser->addCommand($name, 
+                                        array('description' => $cmd['desc']));
+            $cmd = array_merge($def_cmd, $cmd);
+            foreach ($cmd['opts'] as $oname => $oinfo) {
+                $pcmd->addOption($oname, $oinfo);
+            }
+            foreach ($cmd['args'] as $aname => $ainfo) {
+                $pcmd->addArgument($aname, $ainfo);
+            }
+        }
 
         return $parser;
     }
@@ -204,11 +169,7 @@ namespace
                 $m = new \photon\manager\Init($params);
                 $m->run();
                 break;
-            case 'testserver':
-                $m = new \photon\manager\TestServer($params);
-                $m->run();
-                break;
-            case 'runtests':
+            case 'test':
                 $params['directory'] = $result->command->options['directory'];
                 $params['bootstrap'] = $result->command->options['bootstrap'];
                 $m = new \photon\manager\RunTests($params);
@@ -219,55 +180,17 @@ namespace
                 $m = new \photon\manager\SelfTest($params);
                 exit($m->run());
                 break;
-            case 'server':
-                // Server is a special command which has
-                // subcommands. The sub commands are start/stop/list,
-                // but they do not take any options, the options are
-                // set at the server command level.
-                // This is why you have runStart, runStop and runList
-                // depending on the subcommand.
-                $params['wait'] = $result->command->options['timeout'];
-                switch ($result->command->command_name) {
-                case 'stop':
-                    $m = new \photon\manager\CommandServer($params);
-                    exit($m->runStop());
-                    break;
-                case 'new':
-                    $m = new \photon\manager\CommandServer($params);
-                    exit($m->runStart());
-                    break;
-                case 'less':
-                    $m = new \photon\manager\CommandServer($params);
-                    exit($m->runLess());
-                    break;
-                case 'list':
-                    $params += $result->command->command->options;
-                    $m = new \photon\manager\CommandServer($params);
-                    exit($m->runList());
-                    break;
-                case 'childstart':
-                    $m = new \photon\manager\ChildServer($params);
-                    exit($m->run(false)); 
-                    break;
-                case 'start':
-                    // Will go daemon and will fork children with childstart
-                    $params += $result->command->command->options;
-                    $params['argv'] = $argv;
-                    $m = new \photon\manager\ServerManager($params);
-                    exit($m->run()); 
-                    break;
-                }
-                // no command entered
-                print "No command entered, nothing to do.\n";
-                $parser->commands["server"]->displayUsage();
-                exit(5);
+            case 'serve':
+                $params += $result->command->options;
+                $m = new \photon\manager\Server($params);
+                exit($m->run()); 
                 break;
-            case 'taskstart':
+            case 'task':
                 $params['task'] = $result->command->args['task'];
                 $m = new \photon\manager\Task($params);
                 exit($m->run());
                 break;
-            case 'secretkey':
+            case 'makekey':
                 $params['length'] = $result->command->options['length'];
                 $m = new \photon\manager\SecretKeyGenerator($params);
                 $m->run();

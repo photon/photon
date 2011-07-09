@@ -49,52 +49,67 @@ function request_uuid($unique)
 }
 
 /**
- * Production server.
+ * Photon server.
  *
- * Compared to the TestServer, the production server opens an IPC
- * control port to be commanded, it also reacts on SIGTERM to stop
- * itself nicely.
+ * It can daemonize, it reacts on SIGTERM and can optionally send
+ * smart statistics to a sink.
  */
 class Server
 {
    /**
-     * The id of this server daemon. Many servers can have the same
-     * id, you can group your servers by ids and filter at answer at
-     * the Mongrel2 level.
+     * Must be set if you want persistance of the published messages,
+     * but, in this case, you need to have one per server. Also, if
+     * you restart, you need to reuse the same and restart on the same
+     * host.
      */
-    public $sender_id = '26f97e5e-2ce7-4381-9649-f61673892d2e';
+    public $sender_id = '';
+
+   /**
+     * The id of this server daemon. It is unique, randomly generated
+     * or retrieved from the command line.
+     */
+    public $server_id = '';
 
     /**
-     * Where the request is provided.
+     * Where the requests are provided.
+     *
+     * It is either a string, when the application server is
+     * connecting to a single Mongrel2 server or an array when pulling
+     * from many Mongrel2.
      */
-    public $sub_addr = 'tcp://127.0.0.1:9997';
+    public $pull_addrs = 'tcp://127.0.0.1:9997';
 
     /**
-     * Where the answer is pushed.
+     * Where the answers are pushed.
      */
     public $pub_addr = 'tcp://127.0.0.1:9996';
 
     /**
      * Where the control requests are given.
      */
-    public $ipc_internal_orders = 'ipc://photon-internal-orders';
+    public $smart_port = '';
 
     /**
      * Where the control answer is pushed.
      */
-    public $ipc_internal_answers = 'ipc://photon-internal-answers';
+    public $smart_interval = 0;
 
     /**
-     * Wrapper for the zeromq connections.
+     * ZeroMQ sockets connected to the Mongrel2 servers.
      */
-    public $conn = null;
+    public $pull_sockets = array();
 
     /**
-     * zeromq context.
+     * ZeroMQ socket publishing the answers.
+     */
+    public $pub_socket = null;
+
+    /**
+     * ZeroMQ context.
      */
     public $ctx = null; 
 
-    public $phid = '';
+
 
     public $stats = array('start_time' => 0,
                           'requests' => 0,
@@ -112,17 +127,26 @@ class Server
         foreach ($conf as $key=>$value) {
             $this->$key = $value;
         }
+        if (!is_array($this->pull_addrs)) {
+            $this->pull_addrs = array($this->pull_addrs);
+        }
+        // Get a unique id for the process
+        if ('' === $this->server_id) {
+            $this->server_id = sprintf('%s-%s-%s', gethostname(), posix_getpid(), time());
+        }
+        // Check if smart is configured
+        if (0 === strlen($this->smart_port)) {
+            $this->smart_interval = 0;  
+        } 
     }
 
     /**
-     * Must be started when running as daemon.
+     * Must be started when already running as daemon.
      */
     public function start()
     {
         $this->stats['start_time'] = time();
 
-        // Get a unique id for the process
-        $this->phid = sprintf('%s-%s-%s', gethostname(), posix_getpid(), time());
         $this->registerSignals(); // For SIGTERM handling
 
         // We create a zeromq context which will be used everywhere
@@ -131,43 +155,44 @@ class Server
         // once.
         $this->ctx = new \ZMQContext(); 
 
-        // We need to be able to listen to the control requests and
-        // send answers.
-        $this->ctl_ans = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PUSH); 
-        $this->ctl_ans->connect($this->ipc_internal_answers);
-        $this->ctl_ord = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_SUB); 
-        $this->ctl_ord->connect($this->ipc_internal_orders);
-        $this->ctl_ord->setSockOpt(\ZMQ::SOCKOPT_SUBSCRIBE, 'ALL');
-        $this->ctl_ord->setSockOpt(\ZMQ::SOCKOPT_SUBSCRIBE, $this->phid);
-        usleep(200000); 
+        // If we have smart, we connect to the server to push the stats.
+        if ($this->smart_interval) {
+            $this->smart = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PUSH); 
+            $this->smart->connect($this->smart_port);
+            Log::info(sprintf('Smart port: %s.', $this->smart_port));
+            $smart_nextpush = time() + $this->smart_interval;
+        }
 
-        // This makes the connection with the Mongrel2 server.        
-        $this->conn = new \photon\mongrel2\Connection($this->sender_id,
-                                                      $this->sub_addr,
-                                                      $this->pub_addr,
-                                                      $this->ctx);
+        // Connect to the Mongrel2 servers and add them to the poll
+        $poll = new \ZMQPoll();
+        foreach ($this->pull_addrs as $addr) {
+            $socket = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PULL);
+            $socket->connect($addr);
+            $poll_id = $poll->add($socket, \ZMQ::POLL_IN);
+            $this->pull_sockets[$poll_id] = $socket;
+        }
 
-        // Now, we push all the zmq sockets waiting for an answer in
-        // the poll.
-        $this->conn->reqs; // Mongrel2 requests.
-        $this->conn->resp; // Mongrel2 answers.
-        $this->conn->ctx; // zeromq context.
+        // Connect to publish
+        $this->pub_socket = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PUB);
+        if (0 < strlen($this->sender_id)) {
+            $this->pub_socket->setSockOpt(\ZMQ::SOCKOPT_IDENTITY, $sender_id);
+        }
+        $this->pub_socket->connect($this->pub_addr);
 
-        $this->poll = new \ZMQPoll();
-        $this->poll->add($this->conn->reqs, \ZMQ::POLL_IN);
-        $this->poll->add($this->ctl_ord, \ZMQ::POLL_IN);
-
-        $to_write = array(); 
-        $to_read = array();
+        // We are using polling to not block indefinitely and be able
+        // to process the SIGTERM signal and send the stats with
+        // smart. The poll timeout is 1 second.
+        $timeout = 1000000; 
+        $to_read = $to_write = array();
 
         while (true) {
             $events = 0;
             try {
-                // We poll and wait a maximum of 200ms. 
                 Timer::start('photon.main_poll_time');
-                $events = $this->poll->poll($to_read, $to_write, 200000);
+                $events = $poll->poll($to_read, $to_write, $timeout);
                 $poll_time = Timer::stop('photon.main_poll_time');
-                $errors = $this->poll->getLastErrors();
+
+                $errors = $poll->getLastErrors();
                 if (count($errors) > 0) {
                     foreach ($errors as $error) {
                         Log::error('Error polling object: ' . $error);
@@ -180,18 +205,18 @@ class Server
             }
             if ($events > 0) {
                 foreach ($to_read as $r) {
-                    if ($r === $this->conn->reqs) {
-                        // We are receiving a request from Mongrel2
-                        $this->processRequest($this->conn);
-                        $this->stats['requests']++;
-                    }
-                    if ($r === $this->ctl_ord) {
-                        // We are receiving an order!
-                        $this->processOrder($this->ctl_ord);
-                    }
+                    $this->processRequest($r);
+                    $this->stats['requests']++;
                 }
             }
-            $this->updatePollStats($poll_time);
+            if ($this->smart_interval) {
+                $time = time();
+                $this->updatePollStats($poll_time, $time);
+                if ($smart_nextpush < $time) {
+                    $this->sendSmartStats();
+                    $smart_nextpush = $time + $this->smart_interval;
+                }
+            }
             pcntl_signal_dispatch();
         }
     }
@@ -210,10 +235,10 @@ class Server
      * (the timeout on the poll).
      *
      * @param $poll_time Latest poll time
+     * @param $time Current time
      */
-    public function updatePollStats($poll_time)
+    public function updatePollStats($poll_time, $time)
     {
-        $time = time();
         $time = $time - ($time % 60);
         if (isset($this->stats['poll_avg'][$time])) {
             $this->poll_stats['count']++;
@@ -232,15 +257,20 @@ class Server
         }
     }
 
-    public function processRequest($conn)
+    /**
+     * Process the request available on the socket.
+     *
+     * The socket is available for reading with recv().
+     */
+    public function processRequest($socket)
     {
-        $uuid = request_uuid($this->phid);
         Timer::start('photon.process_request');
-        $fp = fopen('php://temp/maxmemory:5242880', 'r+');
-        fputs($fp, $conn->reqs->recv());
-        $stats = fstat($fp);
-        rewind($fp);
-        $mess = $conn->parse($fp);
+        $conn = new \photon\mongrel2\Connection($socket, $this->pub_socket);
+        $mess = $conn->recv();
+        // This could be converted to use server_id + listener
+        // connection id, it will wrap but should provide enough
+        // uniqueness to track the effect of a request in the app.
+        $uuid = request_uuid($this->server_id); 
         $req = new \photon\http\Request($mess);
         $req->uuid = $uuid;
         $req->conn = $conn;
@@ -258,81 +288,24 @@ class Server
         }
         unset($mess); // Cleans the memory with the __destruct call.
         Log::perf(array('photon.process_request', $uuid, 
-                        Timer::stop('photon.process_request'),
-                        $stats['size']));
+                        Timer::stop('photon.process_request')));
     }
 
     /**
-     * Process the orders.
-     *
-     * @param $socket zmq socket from which to read the orders.
-     */
-    public function processOrder($socket)
-    {
-        $order = $socket->recv();
-        list($target, $order) = explode(' ', $order, 2);
-        if (!in_array($target, array('ALL', $this->phid))) {
-            Log::warn(array('Bad order destination', 
-                            array($target, $order), 
-                            array('ALL', $this->phid)));
-            return false;
-        }
-        switch (trim($order)) {
-        case 'PING':
-
-            return $this->answerPong();
-        case 'LIST':
-
-            return $this->answerList();
-        case 'STOP':
-
-            return $this->answerStop();
-        default:
-
-            return false; // ignore
-        }
-    }
-
-    /**
-     * Answer to a LIST request.
+     * Send the smart stats to the smart server.
      *
      * A list request provides the id, memory stats, processed
      * requests and uptime of the current process.
      */
-    public function answerList()
+    public function sendSmartStats()
     {
         $this->stats['memory_current'] = memory_get_usage();
         $this->stats['memory_peak'] = memory_get_peak_usage();
         $data = json_encode($this->stats);
-        $ans = sprintf('%s %s %d:%s', $this->phid, 'LIST',
+        $ans = sprintf('%s %s %d:%s', $this->server_id, 'STATS',
                        strlen($data), $data);
-        return $this->ctl_ans->send($ans);
+        return $this->smart->send($ans);
     }
-
-    /**
-     * Answer to a PING request.
-     */
-    public function answerPong()
-    {
-        $data = json_encode(array(microtime(true)));
-        $ans = sprintf('%s %s %d:%s', $this->phid, 'PONG',
-                       strlen($data), $data);
-        return $this->ctl_ans->send($ans);
-    }
-
-    /**
-     * Answer to a STOP request.
-     */
-    public function answerStop()
-    {
-        $data = json_encode(array(microtime(true)));
-        $ans = sprintf('%s %s %d:%s', $this->phid, 'STOP',
-                       strlen($data), $data);
-        $this->ctl_ans->send($ans);
-        usleep(200000);
-        die(0);
-    }
-
     
     /**
      * Handles the signals.
@@ -341,76 +314,17 @@ class Server
      */
      static public function signalHandler($signo)
      {
-         if (SIGTERM === $signo) {
+         if (\SIGTERM === $signo) {
+             Log::info('Received SIGTERM, now stopping.');
              die(0); // Happy death, normally we run the predeath hook.
          }
      }
 
     public function registerSignals()
     {
-        if (!pcntl_signal(SIGTERM, array('\photon\server\Server', 'signalHandler'))) {
+        if (!pcntl_signal(\SIGTERM, array('\photon\server\Server', 'signalHandler'))) {
             Log::fatal('Cannot install the SIGTERM signal handler.');
             die(1);
-        }
-    }
-}
-
-
-/**
- * Simplest server to handle requests without long polling.
- *
- */
-class TestServer
-{
-    /**
-     * The id of this server daemon. Many servers can have the same
-     * id, you can group your servers by ids and filter at answer at
-     * the Mongrel2 level.
-     */
-    public $sender_id = '26f97e5e-2ce7-4381-9649-f61673892d2e';
-
-    /**
-     * Where the request is provided.
-     */
-    public $sub_addr = 'tcp://127.0.0.1:9997';
-
-    /**
-     * Where the answer is pushed.
-     */
-    public $pub_addr = 'tcp://127.0.0.1:9996';
-
-    /**
-     * Wrapper for the zeromq connections.
-     */
-    public $conn = null;
-
-    public function __construct($conf=array())
-    {
-        foreach ($conf as $key=>$value) {
-            $this->$key = $value;
-        }
-    }
-
-    public function start()
-    {
-        $this->conn = new \photon\mongrel2\Connection($this->sender_id,
-                                                      $this->sub_addr,
-                                                      $this->pub_addr);
-        while ($mess = $this->conn->recv()) {
-            $req = new \photon\http\Request($mess);
-            list($req, $response) = \photon\core\Dispatcher::dispatch($req);
-            // If the response is false, the view is simply not
-            // sending an answer, most likely the work was pushed to
-            // another backend. Yes, you do not need to reply after a
-            // recv().
-            if (false !== $response) {
-                if (is_string($response->content)) {
-                    $this->conn->reply($mess, $response->render());
-                } else {
-                    $response->sendIterable($mess, $this->conn);
-                }
-            }
-            unset($mess); // Cleans the memory with the __destruct call.
         }
     }
 }
