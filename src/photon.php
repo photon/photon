@@ -85,12 +85,27 @@ namespace photon
                                  array('long_name'   => '--server-id',
                                        'action'      => 'StoreString',
                                        'help_name'   => 'id',
-                                       'description' => 'set the server id'))),
-
+                                       'description' => 'set the Photon handler id'),
+                                 'daemonize' =>
+                                 array('long_name'   => '--daemonize',
+                                       'action'      => 'StoreTrue',
+                                       'description' => 'run as daemon'),
+                                 )),
                       'task' =>
            array('desc' => 'start a Photon task server',
                  'args' => array('task' =>
-                                 array('description' => 'the name of the task'))),
+                                 array('description' => 'the name of the task')),
+                 'opts' => array('server_id' =>
+                                 array('long_name'   => '--server-id',
+                                       'action'      => 'StoreString',
+                                       'help_name'   => 'id',
+                                       'description' => 'set the Photon task id'),
+                                 'daemonize' =>
+                                 array('long_name'   => '--daemonize',
+                                       'action'      => 'StoreTrue',
+                                       'description' => 'run as daemon'),
+                                 )
+                 ),
 
                       'test' =>
            array('desc' => 'run the tests of your project. Uses config.test.php as default config file',
