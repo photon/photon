@@ -65,6 +65,23 @@ class NotModified extends Response
     }
 }
 
+class NotSupported extends Response
+{
+    public function __construct($request, $allow)
+    {
+        $content = sprintf('HTTP method %s is not supported for the URL %s.' . "\n" .
+                           'Supported methods are: %s.' . "\n" .
+                           '405 - Not Supported',
+                           $request->method,
+                           implode ($allow, ', '),
+                           str_replace(array('&',     '"',      '<',    '>'),
+                                       array('&amp;', '&quot;', '&lt;', '&gt;'),
+                                       $request->path));
+        parent::__construct($content, 'text/plain');
+        $this->headers['Allow'] = implode ($allow, ', ');
+        $this->status_code = 405;
+    }
+} 
 
 /**
  * A HTTP response doing a redirect.
