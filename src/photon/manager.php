@@ -130,16 +130,27 @@ class Base
         if (-1 === $pid) {
             $this->verbose('Error: Could not fork.');
 
-            return false;
+            exit(1);
         } elseif ($pid) {
-            // In the parent, we can write the pid and die
-            file_put_contents($this->pid_file, $pid, LOCK_EX);
-
-            exit(0);
+            // In the parent, go and die nicely
+            exit(0);            
         } else {
-            $this->daemon = true;
+            // First fork done, go for the 2nd
+            $pid = pcntl_fork();
+            if (-1 === $pid) {
+                $this->verbose('Error: Could not fork.');
 
-            return true;
+                exit(1);
+            } elseif ($pid) {
+                // In the parent, we can write the pid and die
+                file_put_contents($this->pid_file, $pid, LOCK_EX);
+                exit(0);
+            } else {
+                // In the grand child, we keep running as daemon
+                $this->daemon = true;
+
+                return true;
+            }
         }
     }
 }
