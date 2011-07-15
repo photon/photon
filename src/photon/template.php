@@ -73,7 +73,8 @@ class Renderer
         $this->compiled_template = $tmpl_path;
         $this->class = 'Template_' . $tmpl_uid;
 
-        if (!class_exists('\photon\template\compiled\\' . $this->class, false)) {
+        if (!\Phar::running() &&
+            !class_exists('\photon\template\compiled\\' . $this->class, false)) {
             if (!file_exists($this->compiled_template) || Conf::f('debug')) {
                 $this->compiler = new Compiler($this->tpl, $this->folders, $options);
                 $this->getCompiledTemplateContent();
@@ -118,8 +119,7 @@ class Renderer
     {
         // The compiled template not only depends on the file but also
         // on the possible folders in which it can be found.
-        $tmp = var_export($this->folders, true);
-        $uid = md5($tmp . $this->tpl);
+        $uid = md5($this->tpl);
 
         return array($this->cache . '/photon_template_compiled_' . $uid . '.phps', 
                      $uid);

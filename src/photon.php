@@ -137,8 +137,12 @@ namespace photon
                                  array('long_name'   => '--include-conf',
                                        'action'      => 'StoreString',
                                        'help_name'   => 'path/config.prod.php',
-                                       'description' => 'path to the configuration file used in production'))),
-
+                                       'description' => 'path to the configuration file used in production'),
+                                 'exclude_files' =>
+                                 array('long_name'   => '--exclude-files',
+                                       'action'      => 'StoreString',
+                                       'help_name'   => '\..*',
+                                       'description' => 'comma separated list of patterns matching files to exclude'))),
                       'makekey' =>
            array('desc' => 'prints out a unique random secret key for your configuration',
                  'opts' => array('length' =>
@@ -213,6 +217,7 @@ namespace
             case 'package':
                 $params['project'] = $result->command->args['project'];
                 $params['conf_file'] = $result->command->options['conf_file'];
+                $params['exclude_files'] = $result->command->options['exclude_files'];
                 $m = new \photon\manager\Packager($params);
                 $m->run();
                 break;
