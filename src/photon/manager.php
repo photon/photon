@@ -687,24 +687,29 @@ class Packager extends Base
      */
     public function getProjectFiles()
     {
-        $regex = array();
-        if (strlen($this->exclude_files)) {
-            foreach (explode(',', $this->exclude_files) as $_reg) {
-                $regex[] = '/' . $_reg . '/i';
-            }
-        }
-        $out = array();
-        foreach (\photon\path\Dir::listFiles($this->cwd, $regex) as $file) {
-            if (substr($file, -5) == '.phar') {
+        $dirItr = new \RecursiveDirectoryIterator($this->cwd);
+        $filterItr = new \photon\path\IgnoreFilterIterator($dirItr, 
+                                                           $this->cwd, $this->cwd . '/.pharignore');
+        $itr = new \RecursiveIteratorIterator($filterItr, 
+                                              \RecursiveIteratorIterator::SELF_FIRST);
+        $files = array();
+        foreach ($itr as $filePath => $fileInfo) {
+            if (!$fileInfo->isFile()) {
                 continue;
             }
-            if (preg_match('/^config\.(\w+\.)*php/', $file)) {
+            if (substr($fileInfo->getFilename(), -5) == '.phar') {
                 continue;
             }
-            $out[$file] = $this->cwd . '/' . $file;
-        }        
+            if (preg_match('/^config\.(\w+\.)*php/', $fileInfo->getFilename())) {
+                continue;
+            }
 
-        return $out;
+            $files[$fileInfo->getRealPath()] = substr($fileInfo->getRealPath(),
+                                           strlen($this->cwd) + 1,
+                                           strlen($fileInfo->getRealPath()));
+        }
+
+        return $files;
     }
 
     /**
@@ -789,6 +794,5 @@ class %s
 
         $this->verbose(sprintf('Added %d compiled templates.', 
                                count($already_compiled)));
-        $this->verbose($compiled);
     }
 }

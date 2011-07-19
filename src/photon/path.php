@@ -100,6 +100,7 @@ class RecursiveDotDirsFilterIterator extends \RecursiveFilterIterator
         }
         foreach (self::$regex as $regex) {
             if (preg_match($regex, $this->current()->getFilename())) {
+
                 return false;
             }
         }
@@ -107,3 +108,88 @@ class RecursiveDotDirsFilterIterator extends \RecursiveFilterIterator
         return true;
     }
 }
+
+
+/**
+ * Filter out files a bit like a .gitignore way.
+ *
+ * Usage:
+ *
+ * <pre>
+ * $dirItr = new \RecursiveDirectoryIterator('/sample/path');
+ * $filterItr = new IgnoreFilterIterator($dirItr, '/sample/path', 
+ *                                       '/path/to/.ignoredef');
+ * $itr = new \RecursiveIteratorIterator($filterItr, 
+ *                                      \RecursiveIteratorIterator::SELF_FIRST);
+ * foreach ($itr as $filePath => $fileInfo) {
+ *     echo $fileInfo->getFilename() . PHP_EOL;
+ * }
+ *</pre>
+ */
+class IgnoreFilterIterator extends \RecursiveFilterIterator 
+{
+    public static $base_path = '';
+    public static $regex = array();
+
+    /**
+     * Constructor.
+     *
+     * @param $iterator Iterator object
+     * @param $base_path Directory without trailing slash
+     * @param $ignore_file File with patterns to ignore
+     */
+    public function __construct($iterator, $base_path=null, $ignore_file=null)
+    {
+        parent::__construct($iterator);
+        
+        if (null !== $base_path) {
+            self::$base_path = $base_path;
+        }
+        if (null !== $ignore_file) {
+            self::$regex = self::parsePatterns($ignore_file);
+        }
+    }
+
+    public function accept() 
+    {
+        $path = substr($this->current()->getRealPath(), 
+                       strlen(self::$base_path),
+                       strlen($this->current()->getRealPath()));
+        foreach (self::$regex as $regex) {
+            if (preg_match($regex, $path)) {
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Given an ignore file returns the matching patterns in it.
+     *
+     * @param $file Path to the file with the patterns
+     * @return array Array of patterns
+     */
+    public static function parsePatterns($file)
+    {
+        if (!file_exists($file)) {
+
+            return array();
+        }
+        $patterns = array();
+        $from = array('.',  '*');
+        $to =   array('\.', '.+');
+        foreach (file($file) as $pattern) {
+            $pattern = trim($pattern);
+            if (0 === strlen($pattern) || '#' === $pattern[0]) {
+                continue;
+            }
+            $pattern = str_replace($from, $to, $pattern);
+            $patterns[] = '#^' . $pattern . '$#';
+        }
+
+        return $patterns;
+    }
+}
+
