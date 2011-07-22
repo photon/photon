@@ -383,6 +383,9 @@ class Task extends Service
  */
 class RunTests extends Base
 {
+    public $directory; /** Where to store the results of the tests */
+    public $bootstrap; /** Different bootstrap file to use */
+
     public function run()
     {
         $this->verbose('Run the project tests...');
