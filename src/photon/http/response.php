@@ -103,6 +103,25 @@ class Redirect extends Response
     }
 }
 
+/**
+ * A response to redirect after POSTing a form.
+ */
+class FormRedirect extends Redirect
+{
+    /**
+     * Redirect response to a given URL.
+     *
+     * @param string  $url  URL
+     * @param integer $code A valid redirect code among 301, 302, (303) and 307.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3
+     */
+    function __construct($url, $code=303)
+    {
+        parent::__construct($url, $code=303);
+    }
+}
+
+
 class RedirectToLogin extends Response
 {
     /**
