@@ -49,7 +49,7 @@ class Connection
 
             return self::$conns[$db];
         }
-        $defs = Conf::f('db_servers', array());
+        $defs = Conf::f('databases', array());
         if (!isset($defs[$db])) {
             throw new UndefinedConnection(sprintf('The connection "%s" is not defined in the configuration.', $db));
         }
@@ -66,10 +66,13 @@ class MongoDB
     {
         $cfg = array_merge(
                            array('server' => 'mongodb://localhost:27017',
-                                 'options' => array('connect' => true)),
+                                 'options' => array('connect' => true),
+                                 'database' => 'test'),
                            $def
                            );
-        return new \Mongo($cfg['server'], $cfg['options']);
+        $conn = new \Mongo($cfg['server'], $cfg['options']);
+        
+        return $conn->selectDB($cfg['database']);
     }
 }
 
@@ -78,10 +81,11 @@ class SQLite
     public static function get($def)
     {
         $cfg = array_merge(
-                           array('filename' => ':memory:',
-                                 'flags' => \SQLITE3_OPEN_READWRITE | \SQLITE3_OPEN_CREATE),
+                           array('database' => ':memory:',
+                                 'options' => \SQLITE3_OPEN_READWRITE | \SQLITE3_OPEN_CREATE),
                            $def
                            );
-        return new \SQLite3($cfg['filename'], $cfg['flags']);
+        return new \SQLite3($cfg['database'], $cfg['options']);
     }
 }
+
