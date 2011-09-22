@@ -60,14 +60,9 @@ namespace
     $tmp =  (is_dir(__DIR__ . '/../../tmp')) 
         ? realpath(__DIR__ . '/../../tmp')
         : sys_get_temp_dir();
-    $config = array('tmp_folder' => $tmp,
+    $config = array('runtests' => true,
+                    'tmp_folder' => $tmp,
                     'debug' => true,
                     'secret_key' => 'SECRET_KEY');
-    $init = ini_get('photon.config');
-    if (file_exists($init)) {
-        $init = include ini_get('photon.config');
-        $config = array_merge($config, $init);
-    }
-    $config['runtests'] = true;
     \photon\config\Container::load($config);
 }

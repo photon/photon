@@ -418,7 +418,7 @@ class RunTests extends Base
             . "\n%s\n%s\n" . '</testsuite></testsuites>
 <filter><blacklist><directory suffix=".php">%s</directory></blacklist></filter>
 <php>
-  <env name="photon_config" value="%s"/>
+  <env name="photon.config" value="%s"/>
 </php>
 </phpunit>';
         $test_files = array_map(function($file) { 
