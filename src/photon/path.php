@@ -145,8 +145,8 @@ class IgnoreFilterIterator extends \RecursiveFilterIterator
         if (null !== $base_path) {
             self::$base_path = $base_path;
         }
-        if (null !== $ignore_file) {
-            self::$regex = self::parsePatterns($ignore_file);
+        if (null !== $ignore_file && file_exists($ignore_file)) {
+            self::$regex = self::parsePatterns(file($ignore_file));
         }
     }
 
@@ -168,19 +168,15 @@ class IgnoreFilterIterator extends \RecursiveFilterIterator
     /**
      * Given an ignore file returns the matching patterns in it.
      *
-     * @param $file Path to the file with the patterns
+     * @param $lines Array of raw patterns
      * @return array Array of patterns
      */
-    public static function parsePatterns($file)
+    public static function parsePatterns($lines)
     {
-        if (!file_exists($file)) {
-
-            return array();
-        }
         $patterns = array();
         $from = array('.',  '*');
         $to =   array('\.', '.+');
-        foreach (file($file) as $pattern) {
+        foreach ($lines as $pattern) {
             $pattern = trim($pattern);
             if (0 === strlen($pattern) || '#' === $pattern[0]) {
                 continue;
