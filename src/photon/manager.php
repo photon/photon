@@ -363,7 +363,8 @@ class Task extends Service
     public function runService()
     {
         $tasks = Conf::f('installed_tasks');
-        $task = new $tasks[$this->task];
+        $conf = Conf::f('photon_task_' . $this->task, array());
+        $task = new $tasks[$this->task]($conf);
 
         return $task->run();
     }
