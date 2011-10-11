@@ -184,6 +184,10 @@ class Compiler
     protected $_sourceFile;
 
     /**
+     * All the source files touched by this compilation.
+     */
+    public $sourceFiles = array();
+    /**
      * Current tag.
      */
     protected $_currentTag;
@@ -240,7 +244,7 @@ class Compiler
                                             $this->_op);
 
         if ($options['load']) {
-            $this->loadTemplateFile($this->_sourceFile);
+            $this->sourceFiles[] = $this->loadTemplateFile($this->_sourceFile);
         }
     }
 
@@ -332,7 +336,7 @@ class Compiler
         if (strlen($this->_extendedTemplate) > 0) {
             // The template of interest is now the extended template
             // as we are not in a base template
-            $this->loadTemplateFile($this->_extendedTemplate);
+            $this->sourceFiles[] = $this->loadTemplateFile($this->_extendedTemplate);
             $this->_sourceFile = $this->_extendedTemplate;
             $this->compileBlocks(); //It will recurse to the base template.
         } else {
@@ -361,7 +365,7 @@ class Compiler
             $full_path = $folder . '/' . $file;
             if (file_exists($full_path)) {
                 $this->templateContent = file_get_contents($full_path);
-                return;
+                return $full_path;
             }
         }
         throw new Exception(sprintf(__('Template file not found: %s.'), $file));
@@ -701,5 +705,9 @@ class Compiler
                 $this->_usedModifiers[] = $_um;
             }
         }
+        // The other compiler was a clone of the current one and then
+        // it went through the blocks, this means it collected more
+        // source files but it includes the ones of the current compiler.
+        $this->sourceFiles = $compiler->sourceFiles;
     }
 }

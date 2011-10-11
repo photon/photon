@@ -194,6 +194,7 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         list($req, $resp) = Dispatcher::dispatch($req);
         $this->assertNotEquals(false, strpos($resp->content, 'coredispatchTest'));
         Conf::set('debug', false);
+        Conf::set('template_force_compilation', true);
         $req = new \photon\http\Request($msg);
         list($req, $resp) = Dispatcher::dispatch($req);
         $this->assertNotEquals(false, strpos($resp->content, 'we will correct'));

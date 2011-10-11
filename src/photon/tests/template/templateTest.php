@@ -54,6 +54,7 @@ class templateTest extends \PHPUnit_Framework_TestCase
         $compiler = new compiler\Compiler('data-template-extend-simpleblock.html', 
                                           array(__DIR__));
         $this->assertEquals('Hello You!'."\n", $compiler->compile());
+        $this->assertEquals(2, count($compiler->sourceFiles));
     }
 
     public function testExtendWithMods()
