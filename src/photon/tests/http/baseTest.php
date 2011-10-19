@@ -107,6 +107,23 @@ class baseTest extends \PHPUnit_Framework_TestCase
         fclose($datafile);
     }
 
+    public function testBadPost()
+    {
+        $datafile = fopen(__DIR__ . '/../data/small.upload', 'rb');
+        $mess = (object) array('headers' => (object) array('QUERY' => 'a=b&c=d',
+                                                           'content-type' => 'foobar/form-data; boundary=---------------------------10102754414578508781458777923',
+                                                           'METHOD' => 'POST'),
+                               'path' => '/home',
+                               'sender' => 'mongrel2',
+                               'conn_id' => '2',
+                               'body' => $datafile);
+        $req = new Request($mess);
+        $this->assertEquals($req->path, '/home');
+        $this->assertEquals(0, count($req->POST));
+        $this->assertEquals(true, is_resource($req->BODY));
+        fclose($datafile);
+    }
+
     public function testForbidden()
     {
         $resp = new \photon\http\response\Forbidden('##content##');

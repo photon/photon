@@ -33,6 +33,8 @@ class Exception extends \Exception {}
  * TestCase automatically loading the configuration for each test.
  *
  * It is an abstract class not te be picked as real test by PHPUnit.
+ *
+ * @codeCoverageIgnore
  */
 abstract class TestCase extends \PHPUnit_Framework_TestCase
 {

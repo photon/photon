@@ -263,7 +263,6 @@ class ContextRequest extends Context
     {
         $vars = array_merge(array('request' => $request), $vars);
         foreach (Conf::f('template_context_processors', array()) as $proc) {
-            print_r($proc);
             $vars = array_merge(call_user_func($proc, $request), $vars); 
         }
         $this->_vars = new ContextVars($vars);
