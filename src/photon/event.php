@@ -24,7 +24,9 @@
  * Event system.
  *
  * The event system is very simple, you simply register callables to
- * be run when an event is fired. Nothing more.
+ * be run when an event is fired. Nothing more. If a callable returns
+ * false, it stops the list and prevent the callables left in the
+ * stack to be run.
  */
 namespace photon\event;
 
@@ -48,7 +50,9 @@ class Event
         if (!empty(self::$events[$event])) {
             foreach (self::$events[$event] as $key=>$val) {
                 if ($val[1] === null || $sender == $val[1]) {
-                    call_user_func_array($val[0], array($signal, &$params));
+                    if (!call_user_func_array($val[0], array($signal, &$params))) {
+                        break;
+                    }
                 }
             }
         }
