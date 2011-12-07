@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # This script is part of Photon, The High Performance PHP Framework.
 # Photon, copyrights 2011, Loïc d'Anterroches and contributors.
