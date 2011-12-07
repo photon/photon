@@ -138,29 +138,16 @@ class BaseTask
      */
     public $sub_addr = SUB_ADDR;
 
-    /**
-     * Where the control requests are given.
-     */
-    public $ipc_internal_orders = 'ipc://photon-internal-orders';
-
-    /**
-     * Where the control answer is pushed.
-     */
-    public $ipc_internal_answers = 'ipc://photon-internal-answers';
-
-    public $ctl_ord;
-    public $ctl_ans;
-
     public $phid = '';
     public $stats = array('start_time' => 0,
                           'requests' => 0,
                           'memory_current' => 0,
                           'memory_peak' => 0);
 
-    public function __construct()
+    public function __construct($conf)
     {
-        $this->loadConfig(Conf::f('photon_task_' . $this->name, array()));
-        $this->setupControl();
+        $this->loadConfig($conf);
+        $this->setupBase();
         $this->setupCom();
     }
 
@@ -187,14 +174,8 @@ class BaseTask
             }
             if ($events > 0) {
                 foreach ($to_read as $r) {
-                    if ($r === $this->ctl_ord) {
-                        // We are receiving an order!
-                        $this->processOrder($this->ctl_ord);
-                    } else {
-                        $this->work($r);
-                        $this->stats['requests']++;
-
-                    }
+                    $this->work($r);
+                    $this->stats['requests']++;
                 }
             }
             $this->loop();
@@ -211,9 +192,9 @@ class BaseTask
     }
 
     /**
-     * Setup the control ports.
+     * Base setup of the task.
      */
-    public function setupControl()
+    public function setupBase()
     {
         // Get a unique id for the process
         $this->phid = sprintf('%s-task-%s-%s-%s', gethostname(), $this->name,
@@ -225,20 +206,7 @@ class BaseTask
         // equivalent of one "zmq_init" and it should be run only
         // once.
         $this->ctx = new \ZMQContext(); 
-
-        // We need to be able to listen to the control requests and
-        // send answers.
-        $this->ctl_ans = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PUSH); 
-        $this->ctl_ans->connect($this->ipc_internal_answers);
-        $this->ctl_ord = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_SUB); 
-        $this->ctl_ord->connect($this->ipc_internal_orders);
-        $this->ctl_ord->setSockOpt(\ZMQ::SOCKOPT_SUBSCRIBE, 'ALL');
-        $this->ctl_ord->setSockOpt(\ZMQ::SOCKOPT_SUBSCRIBE, 'TASKS');
-        $this->ctl_ord->setSockOpt(\ZMQ::SOCKOPT_SUBSCRIBE, $this->phid);
-
         $this->poll = new \ZMQPoll();
-        $this->poll->add($this->ctl_ord, \ZMQ::POLL_IN);
-        usleep(200000); 
     }
 
     /**
@@ -276,20 +244,20 @@ class BaseTask
      *
      * @param $signo The POSIX signal.
      */
-     static public function signalHandler($signo)
-     {
-         if (SIGTERM === $signo) {
-             self::preTerm();
-             exit(0);
-         }
-     }
+    static public function signalHandler($signo)
+    {
+        if (SIGTERM === $signo) {
+            self::preTerm();
+            exit(0);
+        }
+    }
 
-     /**
-      * Run just before exiting because of a TERM request.
-      */
-     static public function preTerm()
-     {
-     }
+    /**
+     * Run just before exiting because of a TERM request.
+     */
+    static public function preTerm()
+    {
+    }
 
     public function registerSignals()
     {
@@ -298,79 +266,6 @@ class BaseTask
             exit(1);
         }
     }
-
-    /**
-     * Process the orders.
-     *
-     * @param $socket zmq socket from which to read the orders.
-     */
-    public function processOrder($socket)
-    {
-        $order = $socket->recv();
-        list($target, $order) = explode(' ', $order, 2);
-        if (!in_array($target, array('ALL', 'TASKS', $this->phid))) {
-            Log::warn(array('Bad order destination', 
-                            array($target, $order), 
-                            array('ALL', 'TASKS', $this->phid)));
-            return false;
-        }
-        switch (trim($order)) {
-        case 'PING':
-
-            return $this->answerPong();
-        case 'LIST':
-
-            return $this->answerList();
-        case 'STOP':
-
-            return $this->answerStop();
-        default:
-
-            return false; // ignore
-        }
-    }
-
-    /**
-     * Answer to a LIST request.
-     *
-     * A list request provides the id, memory stats, processed
-     * requests and uptime of the current process.
-     */
-    public function answerList()
-    {
-        $this->stats['memory_current'] = memory_get_usage();
-        $this->stats['memory_peak'] = memory_get_peak_usage();
-        $data = json_encode($this->stats);
-        $ans = sprintf('%s %s %d:%s', $this->phid, 'LIST',
-                       strlen($data), $data);
-        return $this->ctl_ans->send($ans);
-    }
-
-    /**
-     * Answer to a PING request.
-     */
-    public function answerPong()
-    {
-        $data = json_encode(array(microtime(true)));
-        $ans = sprintf('%s %s %d:%s', $this->phid, 'PONG',
-                       strlen($data), $data);
-        return $this->ctl_ans->send($ans);
-    }
-
-    /**
-     * Answer to a STOP request.
-     */
-    public function answerStop()
-    {
-        $data = json_encode(array(microtime(true)));
-        $ans = sprintf('%s %s %d:%s', $this->phid, 'STOP',
-                       strlen($data), $data);
-        $this->ctl_ans->send($ans);
-        self::preTerm();
-        usleep(200000);
-        die(0);
-    }
-
 }
 
 class AsyncTask extends BaseTask

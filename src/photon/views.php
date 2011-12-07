@@ -64,7 +64,6 @@ class AssetDir
      */
     public function serveFromPhar($request, $match, $directory)
     {
-        print_r($match);
         if (preg_match('/[^A-Za-z0-9\-\.\/]/', $match[1])
             || false !== strpos($match[1], '..')
             || in_array(substr($match[1], 0, 1), array('.', '/'))) {
@@ -78,7 +77,7 @@ class AssetDir
             throw new \photon\http\error\NotFound();
         }
         $file = $phar[$path];
-        $crc32 = abs($file->getCRC32());
+        $crc32 = dechex($file->getCRC32());
         $modified = $file->getMTime();
         // Get the headers
         $if_modified_since = 0;
@@ -86,16 +85,12 @@ class AssetDir
             $date = \DateTime::createFromFormat(\DateTime::RFC2822, $request->headers->{'if-modified-since'});
             $if_modified_since = ($date) ? $date->getTimestamp() : 0;
         }
-        // If none match
-        $if_none_match = (isset($request->headers->{'if-none-match'}))
-            ? $request->headers->{'if-none-match'}
-            : '';
         $comps = explode('.', $file);
         $ext = array_pop($comps);
         $mime = (isset(self::$mimes[$ext])) 
             ? self::$mimes[$ext] : 'application/octet-stream';
 
-        if ($if_none_match == $crc32) {
+        if ($request->getHeader('if-none-match') == $crc32) {
 
             return new \photon\http\response\NotModified('', $mime);
         }

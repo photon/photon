@@ -75,10 +75,6 @@ class Dispatcher
             if ($response === false) {   
                 $response = self::match($req);
             }
-            // // FUTURE: Need an elegant way to handle these vary etc.
-            // if ($response !== false && !empty($req->response_vary_on)) {
-            //     $response->headers['Vary'] = $req->response_vary_on;
-            // }
             $middleware = array_reverse($middleware);
             foreach ($middleware as $mw) {
                 if (method_exists($mw, 'process_response')) {
@@ -171,6 +167,17 @@ class Dispatcher
         if (is_array($ctl['view'])) {
             list($mn, $mv) = $ctl['view'];
             $m = new $mn();
+            if (isset($m->{$mv . '_precond'})) {
+                // Preconditions to respects. A precondition must return
+                // true or a response object.
+                $preconds = $m->{$mv . '_precond'};
+                foreach ($preconds as $precond) {
+                    $res = call_user_func_array($precond, array(&$req));
+                    if ($res !== true) {
+                        return $res;
+                    }
+                }
+            }
             if (!isset($ctl['params'])) {
                 return $m->{$mv}($req, $match);
             } else {
@@ -185,41 +192,6 @@ class Dispatcher
                 return $v($req, $match, $ctl['params']);
             }
         }
-
-        
-
-        // $m = new $ctl['model']();
-        // if (isset($m->{$ctl['method'] . '_precond'})) {
-        //     // Here we have preconditions to respects. If the "answer"
-        //     // is true, then ok go ahead, if not then it a response so
-        //     // return it or an exception so let it go.
-        //     $preconds = $m->{$ctl['method'] . '_precond'};
-        //     if (!is_array($preconds)) {
-        //         $preconds = array($preconds);
-        //     }
-        //     foreach ($preconds as $precond) {
-        //         if (!is_array($precond)) {
-        //             $res = call_user_func_array(explode('::', $precond),
-        //                                         array(&$req)
-        //                                         );
-        //         } else {
-        //             $res = call_user_func_array(explode('::', $precond[0]),
-        //                                         array_merge(array(&$req),
-        //                                                     array_slice($precond, 1))
-        //                                         );
-        //         }
-
-        //         if ($res !== true) {
-        //             return $res;
-        //         }
-        //     }
-        // }
-
-        // if (!isset($ctl['params'])) {
-        //     return $m->$ctl['method']($req, $match);
-        // } else {
-        //     return $m->$ctl['method']($req, $match, $ctl['params']);
-        // }
     }
 }
 
@@ -288,7 +260,6 @@ class URL
         foreach ($regbase as $regex) {
             $url .= self::buildReverse($regex, $params);
         }
-        //$url = $regbase[0] . $url;
 
         return $url;
     }

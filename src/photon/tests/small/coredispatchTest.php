@@ -48,6 +48,16 @@ class DummyMiddlewarePreempt
     }
 }
 
+function return_true() 
+{ 
+    return true; 
+}
+
+function return_caught() 
+{
+    return new \photon\http\Response('CAUGHT', 'text/plain; charset=utf-8');
+}
+
 class DummyViews
 {
     function simple($req, $match)
@@ -58,6 +68,20 @@ class DummyViews
     function withParams($req, $match, $params)
     {
         return new \photon\http\Response('WITHPARAMS:' . $params, 
+                                         'text/plain; charset=utf-8');
+    }
+
+    public $withPreconditions_precond = array('\photon\tests\small\coredispatchTest\return_true');
+    function withPreconditions($req, $match)
+    {
+        return new \photon\http\Response('WITHPRE:OK',
+                                         'text/plain; charset=utf-8');
+    }
+
+    public $withAnswerPreconditions_precond = array('\photon\tests\small\coredispatchTest\return_caught');
+    function withAnswerPreconditions($req, $match)
+    {
+        return new \photon\http\Response('WITHPRE:OK',
                                          'text/plain; charset=utf-8');
     }
 }
@@ -120,6 +144,36 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         $req = new \photon\http\Request($msg);
         list($req, $resp) = Dispatcher::dispatch($req);
         $this->assertEquals('WITHPARAMS:OK', $resp->content);
+    }
+
+    public function testSimpleDispatchViewPreconditions()
+    {
+        Conf::set('urls', array(
+                                array('regex' => '#^/home/(.+)/$#',
+                                      'view' => array('\photon\tests\small\coredispatchTest\DummyViews', 'withPreconditions'),
+                                      'name' => 'home',
+                                      ),
+                                ));
+        $headers = (object) array('METHOD' => 'GET');
+        $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
+        $req = new \photon\http\Request($msg);
+        list($req, $resp) = Dispatcher::dispatch($req);
+        $this->assertEquals('WITHPRE:OK', $resp->content);
+    }
+
+    public function testSimpleDispatchViewAnswerPreconditions()
+    {
+        Conf::set('urls', array(
+                                array('regex' => '#^/home/(.+)/$#',
+                                      'view' => array('\photon\tests\small\coredispatchTest\DummyViews', 'withAnswerPreconditions'),
+                                      'name' => 'home',
+                                      ),
+                                ));
+        $headers = (object) array('METHOD' => 'GET');
+        $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
+        $req = new \photon\http\Request($msg);
+        list($req, $resp) = Dispatcher::dispatch($req);
+        $this->assertEquals('CAUGHT', $resp->content);
     }
 
     public function testSimpleDispatchFuncParams()
@@ -194,6 +248,7 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         list($req, $resp) = Dispatcher::dispatch($req);
         $this->assertNotEquals(false, strpos($resp->content, 'coredispatchTest'));
         Conf::set('debug', false);
+        Conf::set('template_force_compilation', true);
         $req = new \photon\http\Request($msg);
         list($req, $resp) = Dispatcher::dispatch($req);
         $this->assertNotEquals(false, strpos($resp->content, 'we will correct'));
@@ -238,7 +293,28 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         list($req, $resp) = Dispatcher::dispatch($req);
         $this->assertEquals(false, $resp);
     }
-
+    /*
+array (
+  0 => 
+  array (
+    'regex' => '#^/jquery#',
+    'sub' => 
+    array (
+      0 => 
+      array (
+        'regex' => '#^/(.*)$#',
+        'view' => 
+        array (
+          0 => '\\photon\\views\\AssetDir',
+          1 => 'serve',
+        ),
+        'name' => 'jquery_static_assets',
+        'params' => '/home/pl/bankRoot/src/apps/Jquery/static',
+      ),
+    ),
+  ),
+) 
+*/
     public function testMongrelDisconnect()
     {
         $headers = (object) array('METHOD' => 'JSON');

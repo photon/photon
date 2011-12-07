@@ -67,7 +67,7 @@ class Gzip
 
         if (!preg_match('/\bgzip\b/i', $request->getHeader('accept-encoding'))) {
             
-            return $respons;
+            return $response;
         }
 
         $response->content = gzencode($response->content);

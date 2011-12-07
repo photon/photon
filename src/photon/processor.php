@@ -82,7 +82,7 @@ class AfterAnswer
     public static function process()
     {
         while (null !== ($item = array_shift(self::$queue))) {
-            call_user_func_array($item[0], $item[1])
+            call_user_func_array($item[0], $item[1]);
         }
     }
 }

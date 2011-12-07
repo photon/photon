@@ -66,7 +66,7 @@ class Auth
         }
         $key = Conf::f('auth_session_key', '_auth_user_id');
         $request->session[$key] = $user->login;
-
+        
         return true;
     }
 }

@@ -25,6 +25,7 @@ namespace photon\tests\template\rendererTest;
 
 use photon\template as template;
 use \photon\config\Container as Conf;
+use photon\template\ContextRequest;
 
 class TagFailure extends template\tag\Tag
 {
@@ -109,5 +110,20 @@ class rendererTest extends \PHPUnit_Framework_TestCase
 
     }
 
+    public function testContextRequest()
+    {
+        Conf::set('template_context_processors', array());
+        $request = 'DUMMY';
+        $cr = new ContextRequest($request, array('a' => 1));
+        $this->assertequals((array) $cr->_vars, array('request' => 'DUMMY',
+                                                      'a' => 1));
+        // It is adding a new 'other' variable based on $req.
+        Conf::set('template_context_processors', array(function($req) { return array('other' => $req . 'NOT');}));
+        $cr = new ContextRequest($request, array('a' => 1));
+        $this->assertequals((array) $cr->_vars, array('other' => 'DUMMYNOT',
+                                                      'request' => 'DUMMY',
+                                                      'a' => 1));
+
+    }
 }
 

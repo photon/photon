@@ -147,6 +147,8 @@ Beta release.
    <file name="photon/auth.php" role="php" />
    <file name="photon/data/pharstub.php" role="php" />
    <file name="photon/middleware.php" role="php" />
+   <file name="photon/commandline.php" role="php" />
+   <file name="photon/tests/commandlineTest.php" role="php" />
   </dir>
  </contents>
  <dependencies>

@@ -215,7 +215,7 @@ class Log
         if (0 === count(self::$stack)) {
             return;
         }
-        $writers = Conf::f('log_handlers', array('\photon\log\FileBackend'));
+        $writers = Conf::f('log_handlers', array('\photon\log\ConsoleBackend'));
         foreach ($writers as $writer) {
             $res = call_user_func(array($writer, 'write'), self::$stack);
             if (true === $res) {
@@ -367,6 +367,50 @@ class FileBackend
             @chmod($file, 0666);
             self::$chmoded = true;
         }
+
+        return self::$return;
+    }
+}
+
+/**
+ * Display on the console.
+ *
+ * Code coverage disabled because it annoys me to print stuff on the
+ * console to test the console.
+ * 
+ * @codeCoverageIgnore
+ */
+class ConsoleBackend
+{
+    /**
+     * Default return code.
+     *
+     * A logger can "break" the chain or not. For example, if you have
+     * a logger to a remote daemon and something is not working as
+     * expected you can default to file logging. The usage is simple,
+     * set your remote logger first in the list and return true
+     * normally, this will stop the logger chain, if something is not
+     * working ok, return false, the next logger, maybe a simple local
+     * file logger will take care of the logging.
+     *
+     * The ability to change the return code here is for unit testing
+     * purpose.
+     */
+    public static $return = false;
+
+    /**
+     * Flush the stack to the console.
+     *
+     * @param $stack Array
+     */
+    public static function write($stack)
+    {
+        $out = array();
+        foreach ($stack as $elt) {
+            $out[] = date(DATE_ISO8601, $elt[0]) . ' [' .
+                Log::$reverse[$elt[1]] . '] ' . json_encode($elt[2]);
+        }
+        print implode(PHP_EOL, $out) . PHP_EOL;
 
         return self::$return;
     }

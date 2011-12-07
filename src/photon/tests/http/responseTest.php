@@ -25,11 +25,25 @@ namespace photon\tests\http\responseTest;
 
 use \photon\config\Container as Conf;
 use \photon\http\response;
-
+use \photon\http;
+use \photon\mongrel2;
+use \photon\tests\mongrel2\mongrel2Test\DummyZMQSocket;
 
 
 class ResponseTest extends \PHPUnit_Framework_TestCase
 {
+    protected $conf;
+
+    public function setUp()
+    {
+        $this->conf = Conf::dump();
+    }
+
+    public function tearDown()
+    {
+        Conf::load($this->conf);
+    }
+
     public function testJsonResponse()
     {
         $json = new response\Json(array('foo', 'bar'));
@@ -41,5 +55,46 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
     {
         $nm = new response\NotModified('discarded content');
         $this->assertEquals('', $nm->content);
+    }
+
+    public function testNotSupported()
+    {
+        $request = (object) array('method' => 'POST', 'path' => '/toto');
+        $res = new response\NotSupported($request);
+        $this->assertSame(0, strpos($res->content, 'HTTP method POST is not supported for the URL /toto.'));
+    }
+
+    public function testFormRedirect()
+    {
+        $res = new response\FormRedirect('/');
+        $this->assertSame(303, $res->status_code);
+    }
+
+    public function testRedirectToLogin()
+    {
+        $request = (object) array('method' => 'POST', 'path' => '/toto');
+        $res = new response\RedirectToLogin($request, '/login');
+        $this->assertSame(302, $res->status_code);
+        Conf::set('urls', array(
+                                array('regex' => '#^/login$#',
+                                      'view' => array('Dummy', 'dummy'),
+                                      'name' => 'login_view',
+                                      ),
+                                ));
+        $res = new response\RedirectToLogin($request);
+        $this->assertSame(302, $res->status_code);
+    }
+
+    public function testSendIterable()
+    {
+        $iter = array('a', 'b');
+        $socket = new DummyZMQSocket();
+        $socket->setNextRecv(file_get_contents(__DIR__ . '/../data/example.payload'));
+        $conn = new mongrel2\Connection($socket, $socket);
+        $mess = $conn->recv();
+        
+        $res = new http\Response($iter);
+        $res->sendIterable($mess, $conn);
+        $res->sendIterable($mess, $conn, false);
     }
 }

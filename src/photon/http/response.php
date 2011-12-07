@@ -28,6 +28,7 @@ namespace photon\http\response;
 use photon\config\Container as Conf;
 use photon\http\Response as Response;
 use photon\template as template;
+use \photon\core\URL as URL;
 
 class Forbidden extends Response
 {
@@ -64,6 +65,25 @@ class NotModified extends Response
     }
 }
 
+class NotSupported extends Response
+{
+    public function __construct($request, $allow=array('GET'))
+    {
+        $content = sprintf('HTTP method %s is not supported for the URL %s.' 
+                           . "\n" .
+                           'Supported methods are: %s.' . "\n" .
+                           '405 - Not Supported',
+                           htmlspecialchars($request->method), 
+                           str_replace(array('&',     '"',      '<',    '>'),
+                                       array('&amp;', '&quot;', '&lt;', '&gt;'),
+                                       $request->path),
+                           implode ($allow, ', ')
+                           );
+        parent::__construct($content, 'text/plain');
+        $this->headers['Allow'] = implode ($allow, ', ');
+        $this->status_code = 405;
+    }
+} 
 
 /**
  * A HTTP response doing a redirect.
@@ -85,6 +105,61 @@ class Redirect extends Response
     }
 }
 
+/**
+ * A response to redirect after POSTing a form.
+ */
+class FormRedirect extends Redirect
+{
+    /**
+     * Redirect response to a given URL.
+     *
+     * @param string  $url  URL
+     * @param integer $code A valid redirect code among 301, 302, (303) and 307.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3
+     */
+    function __construct($url, $code=303)
+    {
+        parent::__construct($url, $code=303);
+    }
+}
+
+
+class RedirectToLogin extends Response
+{
+    /**
+     * The $request object is used to know what the post login
+     * redirect url should be.
+     *
+     * If the action url of the login page is not set, it will try to
+     * get the url from the login view from the 'login_view'
+     * configuration key.
+     *
+     * @param Request The request object of the current page.
+     * @param string The full url of the login page (null)
+     */
+    function __construct($request, $loginurl=null)
+    {
+        $redirect = array('_redirect_after' => 
+                          \photon\crypto\Sign::dumps($request->path, 
+                                                     Conf::f('secret_key')));
+        if ($loginurl !== null) {
+            $url = URL::generate($loginurl, $redirect, false);
+            $encoded = URL::generate($loginurl, $redirect);
+        } else {
+            $url = URL::forView(Conf::f('login_view', 'login_view'),
+                                array(), $redirect, false);
+            $encoded = URL::forView(Conf::f('login_view', 'login_view'), 
+                                    array(), $redirect);
+        }
+        $content = sprintf(__('<a href="%s">Please, click here to be redirected</a>.'), $encoded);
+        parent::__construct($content);
+        $this->headers['Location'] = $url;
+        $this->status_code = 302;
+    }
+}
+
+
+
 class Json extends Response
 {
     function render($output_body=true)
@@ -102,8 +177,12 @@ class Json extends Response
  */
 class ServerError extends Response
 {
+    public $exception;
+
     function __construct($exception, $mimetype=null)
     {
+        $this->exception = $exception;
+
         $content = '';
         $admins = Conf::f('admins', array());
         // if (count($admins) > 0) {
@@ -224,6 +303,8 @@ function pretty_server_error($e, $req)
  */
 class ServerErrorDebug extends Response
 {
+    public $exception;
+
     /**
      * Debug version of a server error.
      *
@@ -238,6 +319,7 @@ class ServerErrorDebug extends Response
 
     function setContent($e, $req)
     {
+        $this->exception = $e;
         $this->content = html_pretty_server_error($e, $req);
     }
 }
@@ -550,7 +632,11 @@ function html_pretty_server_error($e, $req)
       </table>
    <h4>Request Body</h4>
 <pre>';
-$out .= (string) $o($req->mess->body) . '</pre>';
+        if (is_string($req->mess->body)) {
+            $out .= (string) $o($req->mess->body) . '</pre>';
+        } else {
+            $out .= (string) $o((string)$req->mess->body) . '</pre>';
+        }
     $out .= '
       
   </div>

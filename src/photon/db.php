@@ -35,25 +35,57 @@
 
 namespace photon\db;
 
-/**
- * Access the handler of a given database.
- *
- * Provides a set of methods to access a database handler. This
- * support multiple DBs with the same backend. For example, using
- * several SQLite databases in the same application.
- */
-class DB
-{
-    public static $handles = array();
+use photon\config\Container as Conf;
 
-    public static function get_handle($handle='default')
+class UndefinedConnection extends \Exception {};
+
+class Connection
+{
+    public static $conns = array();
+
+    public static function get($db='default')
     {
-        if (isset(self::$handles[$handle])) {
-            return self::$handles[$handle];
+        if (isset(self::$conns[$db])) {
+
+            return self::$conns[$db];
         }
-        // Here add your code to create the connection and put the
-        // handler in self::$handles[$handle] 
-        // See the photon\db\mongo\DB class for an example.
-        throw new \Exception('Not implemented. You must use the database specific handler.');
+        $defs = Conf::f('databases', array());
+        if (!isset($defs[$db])) {
+            throw new UndefinedConnection(sprintf('The connection "%s" is not defined in the configuration.', $db));
+        }
+        $engine = $defs[$db]['engine'];
+        self::$conns[$db] = $engine::get($defs[$db]);
+
+        return self::$conns[$db];
     }
 }
+
+class MongoDB
+{
+    public static function get($def)
+    {
+        $cfg = array_merge(
+                           array('server' => 'mongodb://localhost:27017',
+                                 'options' => array('connect' => true),
+                                 'database' => 'test'),
+                           $def
+                           );
+        $conn = new \Mongo($cfg['server'], $cfg['options']);
+        
+        return $conn->selectDB($cfg['database']);
+    }
+}
+
+class SQLite
+{
+    public static function get($def)
+    {
+        $cfg = array_merge(
+                           array('database' => ':memory:',
+                                 'options' => \SQLITE3_OPEN_READWRITE | \SQLITE3_OPEN_CREATE),
+                           $def
+                           );
+        return new \SQLite3($cfg['database'], $cfg['options']);
+    }
+}
+

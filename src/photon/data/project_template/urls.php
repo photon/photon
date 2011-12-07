@@ -21,10 +21,10 @@ $content = '<html><head><title>Photon Demo</title></head><body>
 
 $http = array(
               array('regex' => '#^/hello#',
-                    'sub' => include __DIR__ . '/apps/helloworld/urls.php'
+                    'sub' => include __DIR__ . '/helloworld/urls.php'
                     ),
               array('regex' => '#^/chat#',
-                    'sub' => include __DIR__ . '/apps/photonchat/urls.php'
+                    'sub' => include __DIR__ . '/photonchat/urls.php'
                     ),
               array('regex' => '#^/$#',
                     'view' => function ($req, $match) use ($content) {
@@ -42,7 +42,7 @@ $http = array(
                     ),
               );
 
-$jssocket = include __DIR__ . '/apps/photonchat/urls_jssocket.php';
+$jssocket = include __DIR__ . '/photonchat/urls_jssocket.php';
 
 return array_merge($http, $jssocket);
 
