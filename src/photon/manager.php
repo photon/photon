@@ -235,7 +235,8 @@ class Init extends Base
                             $this->project_dir));
         $this->info('To start using this project run:');
         $this->info(sprintf('  $ cd %s', $this->project_dir));
-        $this->info('  $ hnu server start');
+        $this->info('  $ hnu serve');
+        $this->info('  $ hnu task photonchat_server');
         $this->info('  $ m2sh load -config mongrel2/conf/myproject-mongrel2.conf');
         $this->info('  $ m2sh start -host localhost');
         $this->info('Then access http://localhost:6767/demo/ with your browser');
@@ -339,6 +340,28 @@ class Server extends Service
         $server = new \photon\server\Server(Conf::f('server_conf', array()));
 
         return $server->start();
+    }
+
+}
+
+
+/**
+ * Broker to shuffle work between handlers and worker tasks.
+ *
+ */
+class Broker extends Service
+{
+    /**
+     * Run the production Photon server.
+     *
+     * By default, it outputs nothing, if you want some details, run
+     * in verbose mode.
+     */
+    public function runService()
+    {
+        $broker = new \photon\broker\MdBroker(Conf::f('broker_conf', array()));
+
+        return $broker->start();
     }
 
 }

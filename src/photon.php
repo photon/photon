@@ -91,10 +91,24 @@ namespace photon
                                        'action'      => 'StoreTrue',
                                        'description' => 'run as daemon'),
                                  )),
-                      'task' =>
-           array('desc' => 'start a Photon task server',
+                      'worker' =>
+           array('desc' => 'start a Photon worker',
                  'args' => array('task' =>
-                                 array('description' => 'the name of the task')),
+                                 array('description' => 'the name of the worker task')),
+                 'opts' => array('server_id' =>
+                                 array('long_name'   => '--server-id',
+                                       'action'      => 'StoreString',
+                                       'help_name'   => 'id',
+                                       'description' => 'set the Photon task id'),
+                                 'daemonize' =>
+                                 array('long_name'   => '--daemonize',
+                                       'action'      => 'StoreTrue',
+                                       'description' => 'run as daemon'),
+                                 )
+                 ),
+
+                      'broker' =>
+           array('desc' => 'start the Photon task broker',
                  'opts' => array('server_id' =>
                                  array('long_name'   => '--server-id',
                                        'action'      => 'StoreString',
@@ -202,6 +216,11 @@ namespace
             case 'serve':
                 $params += $result->command->options;
                 $m = new \photon\manager\Server($params);
+                exit($m->run()); 
+                break;
+            case 'broker':
+                $params += $result->command->options;
+                $m = new \photon\manager\Broker($params);
                 exit($m->run()); 
                 break;
             case 'task':
