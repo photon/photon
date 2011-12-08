@@ -731,9 +731,10 @@ class Packager extends Base
                 continue;
             }
 
-            $files[$fileInfo->getRealPath()] = substr($fileInfo->getRealPath(),
-                                           strlen($this->cwd) + 1,
-                                           strlen($fileInfo->getRealPath()));
+            $pharpath = substr($fileInfo->getRealPath(),
+                               strlen($this->cwd) + 1,
+                               strlen($fileInfo->getRealPath()));
+            $files[$pharpath] = $fileInfo->getRealPath();
         }
 
         return $files;
