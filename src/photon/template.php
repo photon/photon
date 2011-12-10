@@ -374,6 +374,24 @@ class Modifier
 
         return (null === $result) ? '' : $result;
     }
+
+    /**
+     * Convert a GMT date time to another format.
+     *
+     * @param $date string Date parseable by strtotime
+     * @param $format string Format for strftime ('%b %e, %Y')
+     */
+    public static function dateFormat($date, $format='%b %e, %Y') 
+    {
+        if ('WIN' === substr(PHP_OS, 0, 3)) {
+            $format	= str_replace(array('%e', '%T', '%D'),
+                                  array('%#d', '%H:%M:%S', '%m/%d/%y'),
+                                  $format);
+        }
+        $date = date('Y-m-d H:i:s', strtotime($date . ' GMT'));
+
+        return strftime($format, strtotime($date));
+    }
 }
 
 /**
