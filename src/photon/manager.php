@@ -112,7 +112,8 @@ class Base
         foreach ($paths as $path) {
             if (file_exists($path)) {
                 $this->verbose(sprintf('Uses config file: %s.', $path));
-                $conf = include $path;
+                $conf = array_merge(array('tmp_folder' => sys_get_temp_dir()),
+                                    include $path);
                 break;
             }
         }
