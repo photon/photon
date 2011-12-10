@@ -51,6 +51,7 @@ class LogTest extends \PHPUnit_Framework_TestCase
     {
         Log::setLevel('ALL');
         Conf::set('log_delayed', true);
+        Conf::set('log_handlers', array('\photon\log\NullBackend'));
         $message = 'dummy message';
         $i = 0;
         Log::plog($message);
