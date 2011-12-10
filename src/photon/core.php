@@ -312,8 +312,8 @@ class URL
             $groups = array_fill(0, count($params), '#\(([^)]+)\)#'); 
             $url = preg_replace($groups, $params, $url, 1);
         }
-        preg_match('/^#\^?([^#\$]+)/', $url, $matches);
+        preg_match('/^#\^?([^#\$\^]+)/', $url, $matches);
 
-        return $matches[1];
+        return isset($matches[1]) ? $matches[1] : '';
     }
 }
