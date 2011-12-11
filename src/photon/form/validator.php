@@ -97,6 +97,36 @@ class Numeric
 class Net
 {
     /**
+     * Validation of an IP address
+     * The validator accept IPv4 and IPv6.
+     * If you want only one version of IP, use flags FILTER_FLAG_IPV4 or FILTER_FLAG_IPV6
+     * 
+     * http://www.php.net/manual/en/filter.filters.validate.php
+     */
+    public static function ipAddress($ip, $flags=null)
+    {
+        if (filter_var($ip, FILTER_VALIDATE_IP, $flags) === false) {
+            throw new Invalid(__('Ensure this value has a correct IP address format.'), 'ip_format');
+        }
+        
+        return true;
+    }
+
+    /**
+     * Validation of a MAC address
+     * Separator between byte can be ":", "-" and no separator
+     */    
+    public static function macAddress($mac)
+    {
+        $mac = filter_var($mac, FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^([0-9A-F]{2}[:-]{0,1}){5}[0-9A-F]{2}$/i')));
+        if ($mac === false) {
+            throw new Invalid(__('Ensure this value has a correct MAC address format.'), 'mac_format');
+        }
+        
+        return true;
+    }
+
+    /**
      * Validation of an email address.
      *
      * Comments stripped, check the source for the full discussion,
