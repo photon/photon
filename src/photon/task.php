@@ -69,10 +69,9 @@ class Runner
         foreach (Conf::f('installed_tasks', array()) as $name => $class) {
             // We need to know if this is an async or sync task
             // We need to get the bind socket.
-            $type = $class::$type;
             $conf = Conf::f('photon_task_' . $name, array());
-            $bind = (isset($conf['sub_addr'])) 
-                ? $conf['sub_addr'] : SUB_ADDR;
+            $bind = (isset($conf['sub_addr'])) ? $conf['sub_addr'] : SUB_ADDR;
+            $type = (isset($conf['type'])) ? $conf['type'] : $class::$type;
             if ('async' === $type) {
                 self::$sockets[$name] = new \ZMQSocket(self::$ctx, 
                                                        \ZMQ::SOCKET_DOWNSTREAM);
