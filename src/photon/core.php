@@ -89,8 +89,12 @@ class Dispatcher
                 $response->setContent($e, $req);
             }
         }
+        $view_name = isset($req->view[0]['name']) 
+            ? $req->view[0]['name'] 
+            : 'not_defined';
         Log::perf(array('photon.dispatch', $req->uuid, 
                         Timer::stop('photon.dispatch'),
+                        $view_name,
                         array($req->method, $req->path)));
         return array($req, $response);
     }
