@@ -155,6 +155,14 @@ class Base
             }
         }
     }
+    
+    public function startup()
+    {
+        $startup = Conf::f('startup', array());
+        foreach($startup as $i) {
+            call_user_func($i);
+        }
+    }
 }
 
 /**
@@ -290,6 +298,7 @@ class Service extends Base
         } else {
             $this->info('Press ^C to exit.');
         }
+        $this->startup();
 
         return $this->runService();
     }

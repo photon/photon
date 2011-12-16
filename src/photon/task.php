@@ -159,7 +159,7 @@ class BaseTask
             $events = 0;
             try {
                 // We poll and wait a maximum of 200ms. 
-                $events = $this->poll->poll($to_read, $to_write, 200000);
+                $events = $this->poll->poll($to_read, $to_write, 200);
                 $errors = $this->poll->getLastErrors();
                 if (count($errors) > 0) {
                     foreach ($errors as $error) {
