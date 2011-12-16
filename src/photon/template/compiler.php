@@ -32,6 +32,8 @@
  */
 namespace photon\template\compiler;
 
+use photon\config\Container as Conf;
+
 class Exception extends \Exception {}
 
 /**
@@ -103,6 +105,9 @@ class Compiler
 
     /**
      * Output filters.
+     *
+     * These default filters are merged with the 'template_modifiers' defined
+     * in the configuration of the application.
      */
     protected $_modifier = array('upper' => '\\mb_strtoupper', 
                                  'lower' => '\\mb_strtolower',
@@ -187,6 +192,7 @@ class Compiler
      * All the source files touched by this compilation.
      */
     public $sourceFiles = array();
+
     /**
      * Current tag.
      */
@@ -230,9 +236,11 @@ class Compiler
                               $options);
 
         $this->_allowedTags = array_merge($this->_allowedTags,
-                                          $options['tags']);
+                                          $options['tags'],
+                                          Conf::f('template_tags', array()));
         $this->_modifier = array_merge($this->_modifier, 
-                                       $options['modifiers']);
+                                       $options['modifiers'],
+                                       Conf::f('template_modifiers', array()));
 
         foreach ($this->_allowedTags as $name=>$model) {
             $this->_extraTags[$name] = new $model();

@@ -37,6 +37,22 @@ class TagFailure extends template\tag\Tag
     }
 }
 
+class LocalModifier
+{
+    public static function hexa($in)
+    {
+        return new template\SafeString(dechex($in), true);
+    }
+}
+
+class LocalTag extends template\tag\Tag
+{
+    public function start()
+    {
+        echo "E=mc²";
+    }
+}
+
 class rendererTest extends \PHPUnit_Framework_TestCase
 {
     public function setUp()
@@ -124,6 +140,28 @@ class rendererTest extends \PHPUnit_Framework_TestCase
                                                       'request' => 'DUMMY',
                                                       'a' => 1));
 
+    }
+
+    public function testCustomModifier()
+    {
+        $modifiers = Conf::f('template_modifiers', array());
+        $modifiers['hexa'] = '\photon\tests\template\rendererTest\LocalModifier::hexa';
+        Conf::set('template_modifiers', $modifiers);
+
+        $renderer = new template\Renderer('data-template-custom-modifier.html', 
+                                          array(__dir__));
+        $this->assertequals("deadbeaf\n", $renderer->render(new template\Context(array('value' => 0xdeadbeaf))));
+    }
+
+    public function testCustomTag()
+    {
+        $tags = Conf::f('template_tags', array());
+        $tags['relativity'] = '\photon\tests\template\rendererTest\LocalTag';
+        Conf::set('template_tags', $tags);
+
+        $renderer = new template\Renderer('data-template-custom-tag.html', 
+                                          array(__dir__));
+        $this->assertequals("E=mc²\n", $renderer->render());
     }
 }
 
