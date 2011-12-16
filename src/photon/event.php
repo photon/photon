@@ -50,7 +50,7 @@ class Event
         if (!empty(self::$events[$event])) {
             foreach (self::$events[$event] as $key=>$val) {
                 if ($val[1] === null || $sender == $val[1]) {
-                    if (!call_user_func_array($val[0], array($signal, &$params))) {
+                    if (!call_user_func_array($val[0], array($event, &$params))) {
                         break;
                     }
                 }
