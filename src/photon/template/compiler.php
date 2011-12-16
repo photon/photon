@@ -33,6 +33,7 @@
 namespace photon\template\compiler;
 
 use photon\config\Container as Conf;
+use photon\event\Event;
 
 class Exception extends \Exception {}
 
@@ -238,9 +239,12 @@ class Compiler
         $this->_allowedTags = array_merge($this->_allowedTags,
                                           $options['tags'],
                                           Conf::f('template_tags', array()));
+        Event::send('\photon\template\compiler\Compiler::construct_load_tags', null, $this->_allowedTags);
+
         $this->_modifier = array_merge($this->_modifier, 
                                        $options['modifiers'],
                                        Conf::f('template_modifiers', array()));
+        Event::send('\photon\template\compiler\Compiler::construct_load_modifiers', null, $this->_modifier);
 
         foreach ($this->_allowedTags as $name=>$model) {
             $this->_extraTags[$name] = new $model();
