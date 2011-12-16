@@ -58,12 +58,12 @@ class LocalCompiler
 {
     public static function setupTags($signal, &$params)
     {
-
+        $params['relativity'] = '\photon\tests\template\rendererTest\LocalTag';
     }
 
     public static function setupModifiers($signal, &$params)
     {
-
+        $params['hexa'] = '\photon\tests\template\rendererTest\LocalModifier::hexa';
     }
 }
 
