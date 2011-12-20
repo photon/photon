@@ -653,6 +653,7 @@ class Packager extends Base
     public function run()
     {
         $this->loadConfig(); 
+        $this->startup();
         // Package all the photon code without the tests folder
         $phar_name = sprintf('%s.phar', $this->project);
         @unlink($phar_name);
@@ -660,6 +661,7 @@ class Packager extends Base
         $phar->startBuffering();
         $this->addPhotonFiles($phar);
         $this->addProjectFiles($phar);
+        
         $this->CompileAddTemplates($phar, 
                                    Conf::f('template_folders', array()));
         if (null !== $this->conf_file) {
