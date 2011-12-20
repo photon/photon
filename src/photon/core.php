@@ -166,6 +166,8 @@ class Dispatcher
      */
     public static function send($req, $ctl, $match)
     {
+        Log::debug(array('photon.dispatch.send', $req->uuid, 
+                         array($ctl, $match)));
         $req->view = array($ctl, $match);
 
         if (is_array($ctl['view'])) {
