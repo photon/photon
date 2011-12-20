@@ -599,6 +599,8 @@ class SecretKeyGenerator extends Base
     * @var array
     */
     protected static $to_excludes = array(34, 39, 92);
+ 
+    public $length = 64;
 
     public function run()
     {
