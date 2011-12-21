@@ -283,6 +283,8 @@ class Server
             if (is_string($response->content)) {
                 $conn->reply($mess, $response->render());
             } else {
+                Log::debug(array('photon.process_request', $uuid, 
+                                 'SendIterable'));
                 $response->sendIterable($mess, $conn);
             }
         }
