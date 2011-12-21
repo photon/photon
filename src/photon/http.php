@@ -253,7 +253,7 @@ class Request
                     if ('FIELD' === $part['of_type']) {
                         add_to_post($this->POST, $part['name'], $part['data']);
                     } else {
-                        add_file_to_post($this->POST, $part['name'], $part);
+                        add_file_to_post($this->FILES, $part['name'], $part);
                     }
                 }
             } elseif ('application/x-www-form-urlencoded' === $this->mess->headers->{'content-type'}) {
@@ -588,7 +588,7 @@ function add_to_post(&$post, $key, $value)
 }
 
 /**
- * Add the current file upload to the corresponding POST key.
+ * Add the current file upload to the corresponding FILES key.
  *
  * When you submit a form with a POST request, multiple values have to
  * be handled as an array. For example, if you submit a select with
@@ -597,7 +597,7 @@ function add_to_post(&$post, $key, $value)
  * This function takes care of adding the value as array or not to the
  * variables.
  *
- * @param &$post The POST array, modified by reference.
+ * @param &$post The FILES array, modified by reference.
  * @param $key The field name
  * @param $value The field value
  */
