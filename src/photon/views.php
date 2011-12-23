@@ -44,6 +44,21 @@ class Template
     }
 }
 
+class Simple
+{
+    /**
+     * Simple content view.
+     *
+     * @param Request Request object
+     * @param array Match
+     * @param string Content of the page
+     */
+    function content($request, $match, $content)
+    {
+        return new \photon\http\Response($content);
+    }
+}
+
 class AssetDir
 {
     /**
