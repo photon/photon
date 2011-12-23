@@ -37,7 +37,7 @@ class Gzip
     public function process_response($request, $response)
     {
         // It's not worth compressing non-OK or really short responses.
-        if ($response->status_code != 200 || strlen($response->content) < 200) {
+        if (!$response || $response->status_code != 200 || strlen($response->content) < 200) {
 
             return $response;
         }
