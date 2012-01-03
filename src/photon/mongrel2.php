@@ -184,7 +184,9 @@ class Connection
             list($body,) = parse_netstring(stream_get_contents($fp));
             $body = json_decode($body);
             fclose($fp);
-        } elseif ('POST' === $headers->METHOD) {
+        } elseif ('POST' === $headers->METHOD 
+                  || (isset($headers->{'content-length'}) 
+                      && 0 < (int) $headers->{'content-length'})) {
             // Here the parsing of the body should be done.
             //$body = stream_get_contents($fp);
             // just to get the position of the real start of the body
