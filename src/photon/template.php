@@ -392,6 +392,17 @@ class Modifier
 
         return strftime($format, strtotime($date));
     }
+
+    /**
+     * Convert a unix time to another format.
+     *
+     * @param $time int Unix time
+     * @param $format string Format for strftime ('%b %e, %Y')
+     */
+    public static function strftime($time, $format='%b %e, %Y') 
+    {
+        return strftime($format, $time);
+    }
 }
 
 /**

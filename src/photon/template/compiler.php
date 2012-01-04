@@ -126,6 +126,7 @@ class Compiler
                                  'rtrim' => '\\rtrim',
                                  'safe' => '\\photon\\template\\Modifier::safe',
                                  'date' => '\\photon\\template\\Modifier::dateFormat',
+                                 'ftime' => '\\photon\\template\\Modifier::strftime',
 
                                  /*
                                  'nl2br' => '\\todo',
