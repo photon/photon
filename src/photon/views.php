@@ -29,6 +29,8 @@
 namespace photon\views;
 
 use \photon\shortcuts;
+use \photon\core\URL as URL;
+use \photon\http\response\Redirect as Redirect;
 
 /**
  * Render a template.
@@ -56,6 +58,11 @@ class Simple
     function content($request, $match, $content)
     {
         return new \photon\http\Response($content);
+    }
+
+    function redirect($request, $match, $view)
+    {
+        return new Redirect(URL::forView($view[0], $view[1]));
     }
 }
 
