@@ -354,7 +354,7 @@ class SelectMultipleInput extends Widget
         if ($value === null) {
             $value = array();
         }
-        $final_attrs = $this->buildAttrs(array('name' => $name.'[]'), 
+        $final_attrs = $this->buildAttrs(array('name' => $name/*.'[]'*/), 
                                          $extra_attrs);
         $output[] = '<select multiple="multiple"'
             .widget_attrs($final_attrs).'>';
@@ -385,6 +385,8 @@ class SelectMultipleInput extends Widget
     {
         if (isset($data[$name]) and is_array($data[$name])) {
             return $data[$name];
+        } elseif (isset($data[$name])) {
+            return array($data[$name]);
         }
         return null;
     }

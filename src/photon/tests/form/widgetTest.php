@@ -125,7 +125,7 @@ class WidgetTest extends \PHPUnit_Framework_TestCase
     public function testSelectMultipleInput()
     {
         $widget = new widget\SelectMultipleInput(array('choices'=>array('foo'=>1, 'bar'=>2, 'group'=> array('toto'=> 3, 'titi'=>4))));
-        $expected = '<select multiple="multiple" name="select1[]">'."\n";
+        $expected = '<select multiple="multiple" name="select1">'."\n";
         $expected .= '<option value="1">foo</option>'."\n";
         $expected .= '<option value="2">bar</option>'."\n";
         $expected .= '<optgroup label="group">'."\n";
@@ -135,7 +135,7 @@ class WidgetTest extends \PHPUnit_Framework_TestCase
         $expected .= '</select>';
         $result = (string) $widget->render('select1', 3);
         $this->assertEquals($expected, $result);
-        $expected = '<select multiple="multiple" name="select1[]">'."\n";
+        $expected = '<select multiple="multiple" name="select1">'."\n";
         $expected .= '<option value="1">foo</option>'."\n";
         $expected .= '<option value="2">bar</option>'."\n";
         $expected .= '<optgroup label="group">'."\n";
@@ -147,7 +147,7 @@ class WidgetTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $result);
         $data = array('bar'=> array('3'), 'toto'=> array('1'), 'titi'=> 5);
         $this->assertEquals(null, $widget->valueFromFormData('foo', $data));
-        $this->assertEquals(null, $widget->valueFromFormData('titi', $data));
+        $this->assertEquals(array(5), $widget->valueFromFormData('titi', $data));
         $this->assertEquals(array('3'), $widget->valueFromFormData('bar', $data));
     }
 
