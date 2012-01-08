@@ -223,7 +223,7 @@ namespace
                 $m = new \photon\manager\Broker($params);
                 exit($m->run()); 
                 break;
-            case 'task':
+            case 'worker':
                 $params['task'] = $result->command->args['task'];
                 $m = new \photon\manager\Task($params);
                 exit($m->run());
