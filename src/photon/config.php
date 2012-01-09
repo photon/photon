@@ -79,4 +79,29 @@ class Container
     {
         self::$conf[$key] = $value;
     }
+
+    /**
+     * Access an array of configuration variables having a given
+     * prefix.
+     *
+     * @param string Prefix.
+     * @param bool Strip the prefix from the keys (false).
+     * @return array Configuration variables.
+     */
+    static function pf($pfx, $strip=false)
+    {
+        $ret = array();
+        $pfx_len = strlen($pfx);
+        foreach (self::$conf as $key=>$val) {
+            if (0 === strpos($key, $pfx)) {
+                if (!$strip) {
+                    $ret[$key] = $val;
+                } else {
+                    $ret[substr($key, $pfx_len)] = $val;
+                }
+            }
+        }
+
+        return $ret;
+    }
 }
