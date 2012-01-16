@@ -318,6 +318,9 @@ class Server
      {
          if (\SIGTERM === $signo) {
              Log::info('Received SIGTERM, now stopping.');
+             foreach(Conf::f('shutdown', array()) as $i) {
+                 call_user_func($i);
+             }
              die(0); // Happy death, normally we run the predeath hook.
          }
      }
