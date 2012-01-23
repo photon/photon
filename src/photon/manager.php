@@ -424,7 +424,7 @@ class RunTests extends Base
     {
         $this->verbose('Run the project tests...');
         $config_path = $this->loadConfig('config.test.php');
-        $apps = Conf::f('installed_apps', array());
+        $apps = Conf::f('tested_components', array());
         // Now, we have a collection of apps, but each app is not
         // necessarily in the 'apps' subfolder of the project, some
         // can be available on the include_path. So, we try to find
