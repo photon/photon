@@ -64,6 +64,11 @@ class Simple
     {
         return new Redirect(URL::forView($view[0], $view[1]));
     }
+
+    function redirectUrl($request, $match, $url)
+    {
+        return new Redirect($url);
+    }
 }
 
 class AssetDir
