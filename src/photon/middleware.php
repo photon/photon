@@ -54,10 +54,16 @@ class Gzip
 
             return $response;
         }
+        $ctype = strtolower($response->headers['Content-Type']);
 
+        // We do not recompress zip files and compressed files
+        if (false !== strpos($ctype, 'zip') ||
+            false !== strpos($ctype, 'compressed')) {
+
+            return $response;
+        }
         // MSIE have issues with gzipped respones of various content types.
         if (false !== strpos(strtolower($request->getHeader('user-agent')), 'msie')) {
-            $ctype = strtolower($response->headers['Content-Type']);
             if (0 !== strpos($ctype, 'text/') 
                 || false !== strpos($ctype, 'javascript')) {
 
