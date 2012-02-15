@@ -483,21 +483,8 @@ class CookieHandler
         if (0 === count($c)) {
             return '';
         }
-        // Now, we merge the cookies having the same path, flag,
-        // domain and expiration
-        $rcookies = array();
-        foreach ($c as $ck) {
-            $k = $ck['flags'] . '#1#' . $ck['expires'] . '#2#'
-                . $ck['path'] . '#3#' . $ck['domain'];
-            if (isset($rcookies[$k])) {
-                $rcookies[$k]['cookies'] = array_merge($rcookies[$k]['cookies'],
-                                                       $ck['cookies']);
-            } else {
-                $rcookies[$k] = $ck;
-            }
-        }
         $headers = '';
-        foreach ($rcookies as $ck) {
+        foreach ($c as $ck) {
             foreach ($ck['cookies'] as $name => $val) {
                 $ck['cookies'][$name] = \photon\crypto\Sign::dumps($val, $key);
             }
