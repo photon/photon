@@ -122,6 +122,9 @@ class Base
         }
         Conf::load($conf);
         Conf::set('cmd_params', $this->params);
+        if ('' === Conf::f('secret_key', '')) {
+            throw new Exception('The "secret_key" configuration variable is required.');
+        }
 
         return $path;
     }
