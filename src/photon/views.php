@@ -91,7 +91,7 @@ class AssetDir
      */
     public function serveFromPhar($request, $match, $directory)
     {
-        if (preg_match('/[^A-Za-z0-9\-\.\/]/', $match[1])
+        if (preg_match('/[^A-Za-z0-9\-\_\.\/]/', $match[1])
             || false !== strpos($match[1], '..')
             || in_array(substr($match[1], 0, 1), array('.', '/'))) {
 
