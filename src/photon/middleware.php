@@ -25,10 +25,16 @@
  */
 namespace photon\middleware;
 
+use \photon\http\response\Forbidden as Forbidden;
+use \photon\config\Container as Conf;
+
 /**
- * This middleware compresses content if the browser allows gzip
- * compression.  It sets the Vary header accordingly, so that caches
- * will base their storage on the Accept-Encoding header.
+ * Compress the rendered page.
+ *
+ * This middleware compresses content if the browser allows gzip or
+ * deflate compression.  It sets the Vary header accordingly, so that
+ * caches will base their storage on the Accept-Encoding header. It
+ * will use deflate when possible as faster than gzip.
  *
  * It is a rewrite of the corresponding Django middleware.
  */
@@ -55,13 +61,6 @@ class Gzip
             return $response;
         }
         $ctype = strtolower($response->headers['Content-Type']);
-
-        // We do not recompress zip files and compressed files
-        if (false !== strpos($ctype, 'zip') ||
-            false !== strpos($ctype, 'compressed')) {
-
-            return $response;
-        }
         // MSIE have issues with gzipped respones of various content types.
         if (false !== strpos(strtolower($request->getHeader('user-agent')), 'msie')) {
             if (0 !== strpos($ctype, 'text/') 
@@ -70,16 +69,109 @@ class Gzip
                 return $response;
             }
         }
+        // We do not recompress zip files and compressed files
+        if (false !== strpos($ctype, 'zip') ||
+            false !== strpos($ctype, 'compressed')) {
 
-        if (!preg_match('/\bgzip\b/i', $request->getHeader('accept-encoding'))) {
-            
             return $response;
         }
+        $accept = $request->getHeader('accept-encoding');
+        // deflate is the fastest, so first
+        $methods = array('deflate' => 'gzdeflate', 
+                         'gzip' => 'gzencode'); 
 
-        $response->content = gzencode($response->content);
-        $response->headers['Content-Encoding'] = 'gzip';
-        $response->headers['Content-Length'] = strlen($response->content);
+        foreach ($methods as $encoding => $encoder) {
+            if (preg_match('/\b' . $encoding . '\b/i', $accept)) {
+                $response->content = $encoder($response->content);
+                $response->headers['Content-Encoding'] = $encoding;
+                $response->headers['Content-Length'] = strlen($response->content);
+                break;
+            }
+        }
 
+        return $response;
+    }
+}
+
+
+/**
+ * Cross Site Request Forgery Middleware.
+ *
+ * This class provides a middleware that implements protection against
+ * request forgeries from other sites. This middleware must be before
+ * your session middleware. It is activated if the user has a session.
+ *
+ * Based on concepts from the Django CSRF middleware.
+ */
+class Csrf
+{
+    public static function makeToken($session_key)
+    {
+        return \hash_hmac('sha1', $session_key, Conf::f('secret_key'));
+    }
+
+    /**
+     * Process the request.
+     *
+     * When processing the request, if a POST request with a session,
+     * we will check that the token is available and valid.
+     *
+     * @param Pluf_HTTP_Request The request
+     * @return bool false
+     */
+    function process_request(&$request)
+    {
+        if ($request->method != 'POST') {
+            return false;
+        }
+        $cookie_name = Conf::f('session_cookie_name', 'sid');
+        if (!isset($request->COOKIE[$cookie_name])) {
+            // no session, nothing to do
+            return false;
+        }
+        if (!isset($request->POST['csrfmiddlewaretoken'])) {
+            return new Forbidden($request);
+        }
+        $token = self::makeToken($request->COOKIE[$cookie_name]);
+        if ($request->POST['csrfmiddlewaretoken'] != $token) {
+            return new Forbidden($request);
+        }
+        return false;
+    }
+
+    /**
+     * Process the response of a view.
+     *
+     * If we find a POST form, add the token to it.
+     *
+     * @param Pluf_HTTP_Request The request
+     * @param Pluf_HTTP_Response The response
+     * @return Pluf_HTTP_Response The response
+     */
+    function process_response($request, $response)
+    {
+        $cookie_name = Conf::f('session_cookie_name', 'sid');
+        if (!isset($request->COOKIE[$cookie_name])) {
+            // no session, nothing to do
+            return $response;
+        }
+        if (!isset($response->headers['Content-Type'])) {
+            return $response;
+        }
+        $ok = false;
+        $cts = array('text/html', 'application/xhtml+xml');
+        foreach ($cts as $ct) {
+            if (false !== strripos($response->headers['Content-Type'], $ct)) {
+                $ok = true;
+                break;
+            }
+        }
+        if (!$ok) {
+            return $response;
+        }
+        $token = self::makeToken($request->COOKIE[$cookie_name]);
+        $extra = '<div style="display:none;"><input type="hidden" name="csrfmiddlewaretoken" value="'.$token.'" /></div>';
+        $response->content = preg_replace('/(<form\W[^>]*\bmethod=(\'|"|)POST(\'|"|)\b[^>]*>)/i', '$1'.$extra, $response->content);
         return $response;
     }
 }
