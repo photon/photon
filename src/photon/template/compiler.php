@@ -160,6 +160,7 @@ class Compiler
      */
     protected $_allowedTags = array(
                                     'url' => '\\photon\\template\\tag\\Url',
+                                    'getmsgs' => '\\photon\\template\\tag\\Messages',
                                     /*
                                     'aurl' => '\\Photon_Template_Tag_Rurl',
                                     'media' => '\\Photon_Template_Tag_MediaUrl',
