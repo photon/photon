@@ -80,9 +80,10 @@ class Server
     public $pull_addrs = 'tcp://127.0.0.1:9997';
 
     /**
-     * Where the answers are pushed.
+     * Where the answers are pushed. Like the pull, it can publish on
+     * several sockets if an array.
      */
-    public $pub_addr = 'tcp://127.0.0.1:9996';
+    public $pub_addrs = 'tcp://127.0.0.1:9996';
 
     /**
      * Where the control requests are given.
@@ -97,7 +98,7 @@ class Server
     /**
      * ZeroMQ sockets connected to the Mongrel2 servers.
      */
-    public $pull_sockets = array();
+    public $pull_socket = null;
 
     /**
      * ZeroMQ socket publishing the answers.
@@ -129,6 +130,9 @@ class Server
         }
         if (!is_array($this->pull_addrs)) {
             $this->pull_addrs = array($this->pull_addrs);
+        }
+        if (!is_array($this->pub_addrs)) {
+            $this->pub_addrs = array($this->pub_addrs);
         }
         // Get a unique id for the process
         if ('' === $this->server_id) {
@@ -165,24 +169,28 @@ class Server
 
         // Connect to the Mongrel2 servers and add them to the poll
         $poll = new \ZMQPoll();
+        $this->pull_socket = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PULL);
         foreach ($this->pull_addrs as $addr) {
-            $socket = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PULL);
-            $socket->connect($addr);
-            $poll_id = $poll->add($socket, \ZMQ::POLL_IN);
-            $this->pull_sockets[$poll_id] = $socket;
+            $this->pull_socket->connect($addr);
         }
+        $poll->add($this->pull_socket, \ZMQ::POLL_IN);
 
         // Connect to publish
         $this->pub_socket = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PUB);
-        if (0 < strlen($this->sender_id)) {
-            $this->pub_socket->setSockOpt(\ZMQ::SOCKOPT_IDENTITY, $sender_id);
+        if (0 == strlen($this->sender_id)) {
+            // We generate a random sender_id if no id available. You
+            // need a unique sender_id per process.
+            $this->sender_id = request_uuid('sender_id'); 
         }
-        $this->pub_socket->connect($this->pub_addr);
+        $this->pub_socket->setSockOpt(\ZMQ::SOCKOPT_IDENTITY, $this->sender_id);
+        foreach ($this->pub_addrs as $addr) {
+            $this->pub_socket->connect($addr);
+        }
 
         // We are using polling to not block indefinitely and be able
         // to process the SIGTERM signal and send the stats with
         // smart. The poll timeout is 1 second.
-        $timeout = 1000000; 
+        $timeout = 1000; 
         $to_read = $to_write = array();
 
         while (true) {

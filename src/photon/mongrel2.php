@@ -156,7 +156,7 @@ class Connection
         $body = null;
         $line = fread($fp, 8192);
         list($sender, $conn_id, $path, $smsg) = \explode(' ', $line, 4);
-        // From $smsg, get the size of the headers
+         // From $smsg, get the size of the headers
         list($len, $rest) = \explode(':', $smsg, 2);
         unset($smsg);
         $len = (int) $len;
@@ -274,7 +274,6 @@ class Connection
 function send($socket, $uuid, $listeners, $msg)
 {
     $header = \sprintf('%s %d:%s,', $uuid, \strlen($listeners), $listeners);
-    
     return $socket->send($header . ' ' . $msg);
 }
 
