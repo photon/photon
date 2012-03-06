@@ -51,8 +51,7 @@ function request_uuid($unique)
 /**
  * Photon server.
  *
- * It can daemonize, it reacts on SIGTERM and can optionally send
- * smart statistics to a sink.
+ * It can daemonize, it reacts on SIGTERM.
  */
 class Server
 {
@@ -84,16 +83,6 @@ class Server
      * several sockets if an array.
      */
     public $pub_addrs = 'tcp://127.0.0.1:9996';
-
-    /**
-     * Where the control requests are given.
-     */
-    public $smart_port = '';
-
-    /**
-     * Where the control answer is pushed.
-     */
-    public $smart_interval = 0;
 
     /**
      * ZeroMQ sockets connected to the Mongrel2 servers.
@@ -138,10 +127,6 @@ class Server
         if ('' === $this->server_id) {
             $this->server_id = sprintf('%s-%s-%s', gethostname(), posix_getpid(), time());
         }
-        // Check if smart is configured
-        if (0 === strlen($this->smart_port)) {
-            $this->smart_interval = 0;  
-        } 
     }
 
     /**
@@ -158,14 +143,6 @@ class Server
         // equivalent of one "zmq_init" and it should be run only
         // once.
         $this->ctx = new \ZMQContext(); 
-
-        // If we have smart, we connect to the server to push the stats.
-        if ($this->smart_interval) {
-            $this->smart = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PUSH); 
-            $this->smart->connect($this->smart_port);
-            Log::info(sprintf('Smart port: %s.', $this->smart_port));
-            $smart_nextpush = time() + $this->smart_interval;
-        }
 
         // Connect to the Mongrel2 servers and add them to the poll
         $poll = new \ZMQPoll();
@@ -188,18 +165,15 @@ class Server
         }
 
         // We are using polling to not block indefinitely and be able
-        // to process the SIGTERM signal and send the stats with
-        // smart. The poll timeout is 1 second.
-        $timeout = 1000; 
+        // to process the SIGTERM signal. The poll timeout is .5 second.
+        $timeout = 500; 
         $to_read = $to_write = array();
-
+        $gc = gc_enabled();
+        $i = 0; 
         while (true) {
             $events = 0;
             try {
-                Timer::start('photon.main_poll_time');
                 $events = $poll->poll($to_read, $to_write, $timeout);
-                $poll_time = Timer::stop('photon.main_poll_time');
-
                 $errors = $poll->getLastErrors();
                 if (count($errors) > 0) {
                     foreach ($errors as $error) {
@@ -214,53 +188,15 @@ class Server
             if ($events > 0) {
                 foreach ($to_read as $r) {
                     $this->processRequest($r);
-                    $this->stats['requests']++;
-                }
-            }
-            if ($this->smart_interval) {
-                $time = time();
-                $this->updatePollStats($poll_time, $time);
-                if ($smart_nextpush < $time) {
-                    $this->sendSmartStats();
-                    $smart_nextpush = $time + $this->smart_interval;
+                    $i++;
                 }
             }
             pcntl_signal_dispatch();
-        }
-    }
-
-    /**
-     * Poll stats are good to know if your handlers are saturated.
-     *
-     * If the poll time starts to reach 0 for a long time, you know
-     * that as soon as your handler finished answering a request,
-     * another was still waiting in the pipe. This means that you are
-     * near saturation. You can use this information to start more
-     * children or kill the old ones.
-     *
-     * Poll time is sampled over one minute and the latest 15 minutes
-     * are available. On an idle system it should be basically 200ms
-     * (the timeout on the poll).
-     *
-     * @param $poll_time Latest poll time
-     * @param $time Current time
-     */
-    public function updatePollStats($poll_time, $time)
-    {
-        $time = $time - ($time % 60);
-        if (isset($this->stats['poll_avg'][$time])) {
-            $this->poll_stats['count']++;
-            $this->poll_stats['total'] += $poll_time;            
-            $this->poll_stats['avg'] = $this->poll_stats['total'] / $this->poll_stats['count'];
-            $this->stats['poll_avg'][$time] = $this->poll_stats['avg'];
-        } else {
-            // Entering a new sample minute
-            $this->poll_stats['count'] = 1;
-            $this->poll_stats['total'] = $poll_time;            
-            $this->poll_stats['avg'] = $poll_time;
-            $this->stats['poll_avg'][$time] = $poll_time;
-            if (count($this->stats['poll_avg']) > 15) {
-                array_shift($this->stats['poll_avg']);
+            if ($gc && 500 < $i) {
+                $collected = gc_collect_cycles();
+                Log::debug(array('photon.server.start', 
+                                 'collected_cycles', $collected));
+                $i = 0;
             }
         }
     }
@@ -301,22 +237,6 @@ class Server
                         Timer::stop('photon.process_request')));
     }
 
-    /**
-     * Send the smart stats to the smart server.
-     *
-     * A list request provides the id, memory stats, processed
-     * requests and uptime of the current process.
-     */
-    public function sendSmartStats()
-    {
-        $this->stats['memory_current'] = memory_get_usage();
-        $this->stats['memory_peak'] = memory_get_peak_usage();
-        $data = json_encode($this->stats);
-        $ans = sprintf('%s %s %d:%s', $this->server_id, 'STATS',
-                       strlen($data), $data);
-        return $this->smart->send($ans);
-    }
-    
     /**
      * Handles the signals.
      *
