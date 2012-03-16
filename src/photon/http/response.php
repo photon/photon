@@ -25,10 +25,11 @@
  */
 namespace photon\http\response;
 
-use photon\config\Container as Conf;
-use photon\http\Response as Response;
-use photon\template as template;
+use \photon\config\Container as Conf;
 use \photon\core\URL as URL;
+use \photon\http\Response as Response;
+use \photon\mail\EMail as Mail;
+use \photon\template as template;
 
 class Forbidden extends Response
 {
@@ -185,17 +186,17 @@ class ServerError extends Response
 
         $content = '';
         $admins = Conf::f('admins', array());
-        // if (count($admins) > 0) {
-        //     // Get a nice stack trace and send it by emails.
-        //     $stack = pretty_server_error($exception);
-        //     $subject = $exception->getMessage();
-        //     $subject = substr(strip_tags(nl2br($subject)), 0, 50).'...';
-        //     foreach ($admins as $admin) {
-        //         $email = new Pluf_Mail($admin[1], $admin[1], $subject);
-        //         $email->addTextMessage($stack);
-        //         $email->sendMail();
-        //     }
-        // }
+        if (count($admins) > 0) {
+            // Get a nice stack trace and send it by emails.
+            $stack = pretty_server_error($exception);
+            $subject = $exception->getMessage();
+            $subject = substr(strip_tags(nl2br($subject)), 0, 50).'...';
+            foreach ($admins as $admin) {
+                $email = new Mail($admin[1], $admin[1], $subject);
+                $email->addTextMessage($stack);
+                $email->sendMail();
+            }
+        }
         try {
             $context = new template\Context(array('message' => $exception->getMessage()));
             $renderer = new template\Renderer('500.html');
