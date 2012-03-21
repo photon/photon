@@ -29,6 +29,8 @@ namespace photon\mail;
 
 use photon\config\Container as Conf;
 
+class Exception extends \Exception {}
+
 /**
  * Generate and send multipart emails.
  *
@@ -204,7 +206,10 @@ class EMail
         $mail = $gmail->factory(Conf::f('mail_backend', 'mail'),
                                 $params);
         if (Conf::f('send_emails', true)) {
-            $mail->send($this->to_address, $hdrs, $body);
+            $ret = $mail->send($this->to_address, $hdrs, $body);
+            if (\PEAR::isError($ret) === true) {
+                throw new Exception($ret->getMessage());
+            }
         }
     }
 }
