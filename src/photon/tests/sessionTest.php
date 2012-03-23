@@ -23,7 +23,7 @@
 
 namespace photon\tests\sessionTest;
 
-use \photon\config\Container as Conf;
+use photon\config\Container as Conf;
 
 class DummyStore
 {

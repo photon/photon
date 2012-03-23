@@ -23,9 +23,9 @@
 
 namespace photon\tests\http\baseTest;
 
-use \photon\config\Container as Conf;
-use \photon\http\Response as Response;
-use \photon\http\Request as Request;
+use photon\config\Container as Conf;
+use photon\http\Response as Response;
+use photon\http\Request as Request;
 
 include_once __DIR__ . '/../../http.php';
 include_once __DIR__ . '/../../http/response.php';

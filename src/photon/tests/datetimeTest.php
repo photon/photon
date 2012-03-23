@@ -23,9 +23,9 @@
 
 namespace photon\tests\datetimeTest;
 
-use \photon\config\Container as Conf;
-use \photon\datetime\Date;
-use \photon\datetime\DateTime;
+use photon\config\Container as Conf;
+use photon\datetime\Date;
+use photon\datetime\DateTime;
 
 class DatetimeTest extends \PHPUnit_Framework_TestCase
 {

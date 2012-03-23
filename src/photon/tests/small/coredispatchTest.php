@@ -23,9 +23,9 @@
 
 namespace photon\tests\small\coredispatchTest;
 
-use \photon\config\Container as Conf;
-use \photon\core\Dispatcher as Dispatcher;
-use \photon\mongrel2\Message as Message;
+use photon\config\Container as Conf;
+use photon\core\Dispatcher as Dispatcher;
+use photon\mongrel2\Message as Message;
 
 class DummyMiddleware
 {

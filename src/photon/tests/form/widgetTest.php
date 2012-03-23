@@ -24,10 +24,10 @@
 namespace photon\tests\form\widgetTest;
 
 
-use \photon\form\field;
-use \photon\form\widget;
-use \photon\form\Form;
-use \photon\form\Invalid;
+use photon\form\field;
+use photon\form\widget;
+use photon\form\Form;
+use photon\form\Invalid;
 
 class WidgetTest extends \PHPUnit_Framework_TestCase
 {

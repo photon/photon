@@ -25,11 +25,11 @@
  */
 namespace photon\http\response;
 
-use \photon\config\Container as Conf;
-use \photon\core\URL as URL;
-use \photon\http\Response as Response;
-use \photon\mail\EMail as Mail;
-use \photon\template as template;
+use photon\config\Container as Conf;
+use photon\core\URL as URL;
+use photon\http\Response as Response;
+use photon\mail\EMail as Mail;
+use photon\template as template;
 
 class Forbidden extends Response
 {

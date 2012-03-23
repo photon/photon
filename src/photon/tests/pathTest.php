@@ -25,8 +25,8 @@
 
 namespace photon\tests\pathTest;
 
-use \photon\config\Container as Conf;
-use \photon\path\Dir;
+use photon\config\Container as Conf;
+use photon\path\Dir;
 
 class PathTest extends \PHPUnit_Framework_TestCase
 {

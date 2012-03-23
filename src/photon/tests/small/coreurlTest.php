@@ -23,8 +23,8 @@
 
 namespace photon\tests\small\coreurlTest;
 
-use \photon\config\Container as Conf;
-use \photon\core\URL as URL;
+use photon\config\Container as Conf;
+use photon\core\URL as URL;
 
 class coreurlTest extends \PHPUnit_Framework_TestCase
 {

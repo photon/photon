@@ -23,11 +23,11 @@
 
 namespace photon\tests\small\cryptoTest;
 
-use \photon\config\Container as Conf;
+use photon\config\Container as Conf;
 
-use \photon\crypto\Crypt;
-use \photon\crypto\Hash;
-use \photon\crypto\Sign;
+use photon\crypto\Crypt;
+use photon\crypto\Hash;
+use photon\crypto\Sign;
 
 class cryptoTest extends \PHPUnit_Framework_TestCase
 {

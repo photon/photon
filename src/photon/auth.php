@@ -39,7 +39,7 @@
  */
 namespace photon\auth;
 
-use \photon\config\Container as Conf;
+use photon\config\Container as Conf;
 
 /**
  * Provides authentication and login wrapper.

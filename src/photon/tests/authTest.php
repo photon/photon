@@ -23,11 +23,11 @@
 
 namespace photon\tests\authTest;
 
-use \photon\config\Container as Conf;
-use \photon\auth\ConfigBackend;
-use \photon\auth\Middleware;
-use \photon\auth\AnonymousUser;
-use \photon\crypto\Hash;
+use photon\config\Container as Conf;
+use photon\auth\ConfigBackend;
+use photon\auth\Middleware;
+use photon\auth\AnonymousUser;
+use photon\crypto\Hash;
 
 class SessionTest extends \PHPUnit_Framework_TestCase
 {

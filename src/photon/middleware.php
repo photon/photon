@@ -25,8 +25,8 @@
  */
 namespace photon\middleware;
 
-use \photon\http\response\Forbidden as Forbidden;
-use \photon\config\Container as Conf;
+use photon\http\response\Forbidden as Forbidden;
+use photon\config\Container as Conf;
 
 /**
  * Compress the rendered page.

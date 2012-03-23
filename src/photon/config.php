@@ -32,7 +32,7 @@ namespace photon\config;
  * space. Usage is very simple:
  *
  * <pre>
- * use \photon\config\Container as Conf;
+ * use photon\config\Container as Conf;
  * // Initialize the configuration
  * Conf::load(array('conf_key' => 'value'));
  * // Retrieve a key

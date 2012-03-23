@@ -23,9 +23,9 @@
 
 namespace photon\tests\http\cookiesTest;
 
-use \photon\config\Container as Conf;
-use \photon\http\Cookie as Cookie;
-use \photon\http\CookieHandler as CookieHandler;
+use photon\config\Container as Conf;
+use photon\http\Cookie as Cookie;
+use photon\http\CookieHandler as CookieHandler;
 
 
 class cookiesTest extends \PHPUnit_Framework_TestCase

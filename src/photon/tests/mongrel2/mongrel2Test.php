@@ -23,8 +23,8 @@
 
 namespace photon\tests\mongrel2\mongrel2Test;
 
-use \photon\config\Container as Conf;
-use \photon\mongrel2;
+use photon\config\Container as Conf;
+use photon\mongrel2;
 
 class DummyZMQSocket
 {
