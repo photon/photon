@@ -22,7 +22,7 @@
 
 namespace photon\http;
 
-use photon\config\Container as Conf;
+use \photon\config\Container as Conf;
 
 class Exception extends \Exception {}
 
@@ -508,10 +508,12 @@ class CookieHandler
         $c = \http_parse_cookie($cookie);
         $cookies = array();
         foreach ($c->cookies as $name => $val) {
-            try {
-                $cookies[$name] = \photon\crypto\Sign::loads($val, $key);
-            }  catch (\Exception $e) { 
-                // We simply ignore bad cookies.
+            if (strlen($val) > 0) {
+                try {
+                    $cookies[$name] = \photon\crypto\Sign::loads($val, $key);
+                }  catch (\Exception $e) { 
+                    // We simply ignore bad cookies.
+                }
             }
         }
 
