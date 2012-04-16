@@ -23,9 +23,9 @@
 
 namespace photon\tests\template\modifierTest;
 
-use photon\config\Container as Conf;
-use photon\template as template;
-use photon\template\Modifier as Modifier;
+use \photon\config\Container as Conf;
+use \photon\template as template;
+use \photon\template\Modifier as Modifier;
 
 class modifierTest extends \PHPUnit_Framework_TestCase
 {

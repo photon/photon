@@ -6,7 +6,7 @@
 
 namespace photonchat\views;
 
-use photon\shortcuts;
+use \photon\shortcuts;
 
 class Chat
 {

@@ -23,9 +23,9 @@
 
 namespace photon\tests\form\formTest;
 
-use photon\form\field;
-use photon\form\Form;
-use photon\form\Invalid;
+use \photon\form\field;
+use \photon\form\Form;
+use \photon\form\Invalid;
 
 class Simple extends Form
 {

@@ -28,9 +28,9 @@
  */
 namespace photon\views;
 
-use photon\shortcuts;
-use photon\core\URL as URL;
-use photon\http\response\Redirect as Redirect;
+use \photon\shortcuts;
+use \photon\core\URL as URL;
+use \photon\http\response\Redirect as Redirect;
 
 /**
  * Render a template.

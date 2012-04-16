@@ -23,10 +23,10 @@
 
 namespace photon\tests\logTest;
 
-use photon\config\Container as Conf;
-use photon\log\Log;
-use photon\log\FileBackend;
-use photon\log\Timer;
+use \photon\config\Container as Conf;
+use \photon\log\Log;
+use \photon\log\FileBackend;
+use \photon\log\Timer;
 
 class LogTest extends \PHPUnit_Framework_TestCase
 {

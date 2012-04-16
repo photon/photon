@@ -23,8 +23,8 @@
 
 namespace photon\tests\form\validatorTest;
 
-use photon\form\Invalid;
-use photon\form\validator;
+use \photon\form\Invalid;
+use \photon\form\validator;
 
 class ValidatorTest extends \PHPUnit_Framework_TestCase
 {

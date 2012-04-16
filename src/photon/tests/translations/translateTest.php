@@ -22,7 +22,7 @@
 
 
 namespace photon\tests\translations\translate;
-use photon\translation\Translation;
+use \photon\translation\Translation;
 include_once __DIR__ . '/../../translation.php';
 
 class TranslateTest extends \PHPUnit_Framework_TestCase

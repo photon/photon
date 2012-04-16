@@ -23,7 +23,7 @@
 
 namespace photon\tests\small\configTest;
 
-use photon\config\Container as Conf;
+use \photon\config\Container as Conf;
 
 class configTest extends \PHPUnit_Framework_TestCase
 {

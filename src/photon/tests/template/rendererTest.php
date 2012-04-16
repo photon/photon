@@ -24,7 +24,7 @@
 namespace photon\tests\template\rendererTest;
 
 use photon\template as template;
-use photon\config\Container as Conf;
+use \photon\config\Container as Conf;
 use photon\template\ContextRequest;
 use photon\event\Event;
 

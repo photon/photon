@@ -23,11 +23,11 @@
 
 namespace photon\tests\http\responseTest;
 
-use photon\config\Container as Conf;
-use photon\http\response;
-use photon\http;
-use photon\mongrel2;
-use photon\tests\mongrel2\mongrel2Test\DummyZMQSocket;
+use \photon\config\Container as Conf;
+use \photon\http\response;
+use \photon\http;
+use \photon\mongrel2;
+use \photon\tests\mongrel2\mongrel2Test\DummyZMQSocket;
 
 
 class ResponseTest extends \PHPUnit_Framework_TestCase
