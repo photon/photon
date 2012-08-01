@@ -35,7 +35,8 @@
 
 namespace photon\db;
 
-use photon\config\Container as Conf;
+use \photon\config\Container as Conf;
+use \photon\log\Log as Log;
 
 class UndefinedConnection extends \Exception {}
 class Exception extends \Exception {}
@@ -136,6 +137,8 @@ class PostgreSQL
                 $opts[$key] = $value;
             }
         }
+        Log::debug(array('photon.db.PostgreSQL.get', $cfgs,
+                         $user, $password, $opts));
 
         return new \PDO('pgsql:' . implode(';', $cfgs), 
                         $user, $password, $opts); 
