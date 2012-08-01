@@ -95,8 +95,11 @@ class Renderer
         $this->context = (null === $c) ? new Context() : $c;
         ob_start();
         try {
-            call_user_func(array('\photon\template\compiled\\' . $this->class, 
-                                 'render'), $this->context);
+            $res = @call_user_func(array('\photon\template\compiled\\' . $this->class, 
+                                         'render'), $this->context);
+            if (false === $res) {
+                throw new Exception('Error when loading compiled template.');
+            }
         } catch (\Exception $e) {
             ob_clean();
             throw $e;
