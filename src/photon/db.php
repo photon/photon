@@ -117,13 +117,16 @@ class PostgreSQL
     {
         $user = null;
         $password = null;
-        $allowed_cfg = array('server', 'database', 'user', 'hostaddr', 
+        $allowed_cfg = array('host', 'dbname', 'user', 'hostaddr', 
                              'port', 'password', 'connect_timeout', 
                              'options', 'sslmode', 'service');
 
         $cfgs = array();
         $opts = array();
         foreach ($def as $key => $value) {
+            if ('engine' === $key) {
+                continue;
+            }
             $key = str_replace(array('server', 'database'),
                                array('host',   'dbname'),
                                $key);
