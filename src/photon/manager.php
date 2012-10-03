@@ -112,7 +112,8 @@ class Base
         foreach ($paths as $path) {
             if (file_exists($path)) {
                 $this->verbose(sprintf('Uses config file: %s.', $path));
-                $conf = include $path;
+                $conf = array_merge(array('tmp_folder' => sys_get_temp_dir()),
+                                    include $path);
                 break;
             }
         }
@@ -121,6 +122,9 @@ class Base
         }
         Conf::load($conf);
         Conf::set('cmd_params', $this->params);
+        if ('' === Conf::f('secret_key', '')) {
+            throw new Exception('The "secret_key" configuration variable is required.');
+        }
 
         return $path;
     }
@@ -423,7 +427,7 @@ class RunTests extends Base
     {
         $this->verbose('Run the project tests...');
         $config_path = $this->loadConfig('config.test.php');
-        $apps = Conf::f('installed_apps', array());
+        $apps = Conf::f('tested_components', array());
         // Now, we have a collection of apps, but each app is not
         // necessarily in the 'apps' subfolder of the project, some
         // can be available on the include_path. So, we try to find
@@ -598,6 +602,8 @@ class SecretKeyGenerator extends Base
     * @var array
     */
     protected static $to_excludes = array(34, 39, 92);
+ 
+    public $length = 64;
 
     public function run()
     {
@@ -650,6 +656,7 @@ class Packager extends Base
     public function run()
     {
         $this->loadConfig(); 
+        $this->startup();
         // Package all the photon code without the tests folder
         $phar_name = sprintf('%s.phar', $this->project);
         @unlink($phar_name);
@@ -657,6 +664,7 @@ class Packager extends Base
         $phar->startBuffering();
         $this->addPhotonFiles($phar);
         $this->addProjectFiles($phar);
+        
         $this->CompileAddTemplates($phar, 
                                    Conf::f('template_folders', array()));
         if (null !== $this->conf_file) {
@@ -740,9 +748,10 @@ class Packager extends Base
                 continue;
             }
 
-            $files[$fileInfo->getRealPath()] = substr($fileInfo->getRealPath(),
-                                           strlen($this->cwd) + 1,
-                                           strlen($fileInfo->getRealPath()));
+            $pharpath = substr($fileInfo->getRealPath(),
+                               strlen($this->cwd) + 1,
+                               strlen($fileInfo->getRealPath()));
+            $files[$pharpath] = $fileInfo->getRealPath();
         }
 
         return $files;

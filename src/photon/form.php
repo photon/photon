@@ -143,8 +143,8 @@ class Form implements \Iterator, \ArrayAccess
                                                        $this->data); 
             try {
                 $this->cleaned_data[$name] = $field->clean($value);
-                if (in_array('clean_' . $name, $form_methods)) {
-                    $m = 'clean_' . $name;
+                $m = 'clean_' . $name;
+                if (in_array($m, $form_methods) || isset($this->$m)) {
                     $this->cleaned_data[$name] = $this->$m();
                 }                        
             } catch (Invalid $e) {
@@ -360,6 +360,18 @@ class Form implements \Iterator, \ArrayAccess
     function __get($prop)
     {
         return $this->$prop();
+    }
+
+    /**
+     * Magic call for the clean methods.
+     *
+     */
+    public function __call($method, $args)
+    {
+        if ( $this->$method instanceof \Closure) {
+            return call_user_func_array($this->$method, $args);
+        }        
+        throw new \Exception($method . ' is undefined.');
     }
 
     /**

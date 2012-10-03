@@ -102,8 +102,8 @@ class baseTest extends \PHPUnit_Framework_TestCase
                                'body' => $datafile);
         $req = new Request($mess);
         $this->assertEquals($req->path, '/home');
-        $this->assertEquals(2, count($req->POST));
-        $this->assertEquals(2, count($req->POST['upload']));
+        $this->assertEquals(1, count($req->POST));
+        $this->assertEquals(2, count($req->FILES['upload']));
         fclose($datafile);
     }
 

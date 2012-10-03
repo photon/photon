@@ -142,9 +142,21 @@ class Field
      */
     function clean($value)
     {
+        if ($this->multiple && is_array($value)) {
+            $nv = array();
+            foreach ($value as $v) {
+                $v = $this->toPhp($v);
+                $this->validate($v);
+                $this->runValidators($v);
+                $nv[] = $v;
+            }
+
+            return $nv;
+        }
         $value = $this->toPhp($value);
         $this->validate($value);
         $this->runValidators($value);
+
         return $value;
     }
 
@@ -366,10 +378,9 @@ class Email extends Varchar
         };
     }
 
-    public function clean($value)
+    public function toPhp($value)
     {
-        $value = trim($this->toPhp($value));        
-        return parent::clean($value);
+        return trim(parent::toPhp($value));
     }
 }
 

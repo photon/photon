@@ -156,7 +156,7 @@ class Connection
         $body = null;
         $line = fread($fp, 8192);
         list($sender, $conn_id, $path, $smsg) = \explode(' ', $line, 4);
-        // From $smsg, get the size of the headers
+         // From $smsg, get the size of the headers
         list($len, $rest) = \explode(':', $smsg, 2);
         unset($smsg);
         $len = (int) $len;
@@ -184,7 +184,9 @@ class Connection
             list($body,) = parse_netstring(stream_get_contents($fp));
             $body = json_decode($body);
             fclose($fp);
-        } elseif ('POST' === $headers->METHOD) {
+        } elseif ('POST' === $headers->METHOD 
+                  || (isset($headers->{'content-length'}) 
+                      && 0 < (int) $headers->{'content-length'})) {
             // Here the parsing of the body should be done.
             //$body = stream_get_contents($fp);
             // just to get the position of the real start of the body
@@ -272,7 +274,6 @@ class Connection
 function send($socket, $uuid, $listeners, $msg)
 {
     $header = \sprintf('%s %d:%s,', $uuid, \strlen($listeners), $listeners);
-    
     return $socket->send($header . ' ' . $msg);
 }
 

@@ -32,6 +32,9 @@
  */
 namespace photon\template\compiler;
 
+use photon\config\Container as Conf;
+use photon\event\Event;
+
 class Exception extends \Exception {}
 
 /**
@@ -103,6 +106,9 @@ class Compiler
 
     /**
      * Output filters.
+     *
+     * These default filters are merged with the 'template_modifiers' defined
+     * in the configuration of the application.
      */
     protected $_modifier = array('upper' => '\\mb_strtoupper', 
                                  'lower' => '\\mb_strtolower',
@@ -120,6 +126,7 @@ class Compiler
                                  'rtrim' => '\\rtrim',
                                  'safe' => '\\photon\\template\\Modifier::safe',
                                  'date' => '\\photon\\template\\Modifier::dateFormat',
+                                 'ftime' => '\\photon\\template\\Modifier::strftime',
 
                                  /*
                                  'nl2br' => '\\todo',
@@ -153,6 +160,7 @@ class Compiler
      */
     protected $_allowedTags = array(
                                     'url' => '\\photon\\template\\tag\\Url',
+                                    'getmsgs' => '\\photon\\template\\tag\\Messages',
                                     /*
                                     'aurl' => '\\Photon_Template_Tag_Rurl',
                                     'media' => '\\Photon_Template_Tag_MediaUrl',
@@ -187,6 +195,7 @@ class Compiler
      * All the source files touched by this compilation.
      */
     public $sourceFiles = array();
+
     /**
      * Current tag.
      */
@@ -230,9 +239,14 @@ class Compiler
                               $options);
 
         $this->_allowedTags = array_merge($this->_allowedTags,
-                                          $options['tags']);
+                                          $options['tags'],
+                                          Conf::f('template_tags', array()));
+        Event::send('\photon\template\compiler\Compiler::construct_load_tags', null, $this->_allowedTags);
+
         $this->_modifier = array_merge($this->_modifier, 
-                                       $options['modifiers']);
+                                       $options['modifiers'],
+                                       Conf::f('template_modifiers', array()));
+        Event::send('\photon\template\compiler\Compiler::construct_load_modifiers', null, $this->_modifier);
 
         foreach ($this->_allowedTags as $name=>$model) {
             $this->_extraTags[$name] = new $model();

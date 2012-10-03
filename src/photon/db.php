@@ -35,9 +35,11 @@
 
 namespace photon\db;
 
-use photon\config\Container as Conf;
+use \photon\config\Container as Conf;
+use \photon\log\Log as Log;
 
-class UndefinedConnection extends \Exception {};
+class UndefinedConnection extends \Exception {}
+class Exception extends \Exception {}
 
 class Connection
 {
@@ -80,12 +82,68 @@ class SQLite
 {
     public static function get($def)
     {
-        $cfg = array_merge(
-                           array('database' => ':memory:',
-                                 'options' => \SQLITE3_OPEN_READWRITE | \SQLITE3_OPEN_CREATE),
-                           $def
-                           );
-        return new \SQLite3($cfg['database'], $cfg['options']);
+        $cfg = array_merge(array('database' => ':memory:', $def));
+        $dsn = 'sqlite:' . $cfg['database'];
+        unset($cfg['database']); // All the other keys are options
+        
+        return new \PDO($dsn, null, null, $cfg);
     }
 }
 
+class PostgreSQL
+{
+    /**
+     * The definition to get a connection is:
+     *
+     * Required:
+     *
+     * - server (mapped to host in the connection string);
+     * - database (mapped to dbname in the connection string);
+     *
+     * Optional:
+     *
+     * - user;
+     * - hostaddr;
+     * - port;
+     * - password;
+     * - connect_timeout;
+     * - options;
+     * - sslmode;
+     * - service.
+     *
+     * You can read more about it here: http://www.php.net/pg_connect
+     */
+    public static function get($def)
+    {
+        $user = null;
+        $password = null;
+        $allowed_cfg = array('host', 'dbname', 'user', 'hostaddr', 
+                             'port', 'password', 'connect_timeout', 
+                             'options', 'sslmode', 'service');
+
+        $cfgs = array();
+        $opts = array();
+        foreach ($def as $key => $value) {
+            if ('engine' === $key) {
+                continue;
+            }
+            $key = str_replace(array('server', 'database'),
+                               array('host',   'dbname'),
+                               $key);
+            if ('user' == $key) {
+                $user = $value;
+            } elseif ('password' == $key) {
+                $password = $value;
+            } elseif (in_array($key, $allowed_cfg)) {
+                $cfgs[] = $key . '=' . $value;
+            } else {
+                $opts[$key] = $value;
+            }
+        }
+        Log::debug(array('photon.db.PostgreSQL.get', $cfgs,
+                         $user, $password, $opts));
+
+        return new \PDO('pgsql:' . implode(';', $cfgs), 
+                        $user, $password, $opts); 
+    }
+}

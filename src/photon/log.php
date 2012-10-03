@@ -416,3 +416,36 @@ class ConsoleBackend
     }
 }
 
+/**
+ * Eat the logs.
+ *
+ */
+class NullBackend
+{
+    /**
+     * Default return code.
+     *
+     * A logger can "break" the chain or not. For example, if you have
+     * a logger to a remote daemon and something is not working as
+     * expected you can default to file logging. The usage is simple,
+     * set your remote logger first in the list and return true
+     * normally, this will stop the logger chain, if something is not
+     * working ok, return false, the next logger, maybe a simple local
+     * file logger will take care of the logging.
+     *
+     * The ability to change the return code here is for unit testing
+     * purpose.
+     */
+    public static $return = false;
+
+    /**
+     * Flush the stack to the console.
+     *
+     * @param $stack Array
+     */
+    public static function write($stack)
+    {
+        return self::$return;
+    }
+}
+

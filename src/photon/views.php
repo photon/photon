@@ -29,6 +29,8 @@
 namespace photon\views;
 
 use \photon\shortcuts;
+use \photon\core\URL as URL;
+use \photon\http\response\Redirect as Redirect;
 
 /**
  * Render a template.
@@ -41,6 +43,31 @@ class Template
     public function simple($request, $match, $template)
     {
         return shortcuts\Template::RenderToResponse($template, array(), $request);
+    }
+}
+
+class Simple
+{
+    /**
+     * Simple content view.
+     *
+     * @param Request Request object
+     * @param array Match
+     * @param string Content of the page
+     */
+    function content($request, $match, $content)
+    {
+        return new \photon\http\Response($content);
+    }
+
+    function redirect($request, $match, $view)
+    {
+        return new Redirect(URL::forView($view[0], $view[1]));
+    }
+
+    function redirectUrl($request, $match, $url)
+    {
+        return new Redirect($url);
     }
 }
 
@@ -64,7 +91,7 @@ class AssetDir
      */
     public function serveFromPhar($request, $match, $directory)
     {
-        if (preg_match('/[^A-Za-z0-9\-\.\/]/', $match[1])
+        if (preg_match('/[^A-Za-z0-9\-\_\.\/]/', $match[1])
             || false !== strpos($match[1], '..')
             || in_array(substr($match[1], 0, 1), array('.', '/'))) {
 
@@ -103,6 +130,7 @@ class AssetDir
         $res->headers['Date'] = date('r');
         $res->headers['Last-Modified'] = date('r', $modified);
         $res->headers['ETag'] = $crc32;
+        $res->headers['Expires'] = date('r', $modified + 3600);
         
         return $res;
     }

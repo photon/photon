@@ -71,8 +71,9 @@ class Session implements \ArrayAccess
      *
      * This step is very important. Basically, it will provide the
      * request to the storage and let the storage initialize
-     * itself. Once the storage has initialized itself, it must return
-     * the corresponding id of the session if available.
+     * itself. If you are doing db storage of sessions, you should
+     * probably be smart and wait until the commit before really
+     * generating a session id and storing it.
      */
     public function init($key, $request)
     {
@@ -157,6 +158,11 @@ class Middleware
 
     public function process_response($request, $response)
     {
+        if (!$response) {
+            // The view took care of everything.
+            return $response;
+        }
+
         $accessed = $request->session->accessed;
         $modified = $request->session->modified;
         if ($request->session->accessed) {

@@ -26,6 +26,7 @@ namespace photon\tests\template\rendererTest;
 use photon\template as template;
 use \photon\config\Container as Conf;
 use photon\template\ContextRequest;
+use photon\event\Event;
 
 class TagFailure extends template\tag\Tag
 {
@@ -34,6 +35,35 @@ class TagFailure extends template\tag\Tag
         if ($fail) {
             throw new \Exception('Failure!');
         }
+    }
+}
+
+class LocalModifier
+{
+    public static function hexa($in)
+    {
+        return new template\SafeString(dechex($in), true);
+    }
+}
+
+class LocalTag extends template\tag\Tag
+{
+    public function start()
+    {
+        echo "E=mc²";
+    }
+}
+
+class LocalCompiler
+{
+    public static function setupTags($signal, &$params)
+    {
+        $params['relativity'] = '\photon\tests\template\rendererTest\LocalTag';
+    }
+
+    public static function setupModifiers($signal, &$params)
+    {
+        $params['hexa'] = '\photon\tests\template\rendererTest\LocalModifier::hexa';
     }
 }
 
@@ -124,6 +154,47 @@ class rendererTest extends \PHPUnit_Framework_TestCase
                                                       'request' => 'DUMMY',
                                                       'a' => 1));
 
+    }
+
+    public function testCustomModifier()
+    {
+        $modifiers = Conf::f('template_modifiers', array());
+        $modifiers['hexa'] = '\photon\tests\template\rendererTest\LocalModifier::hexa';
+        Conf::set('template_modifiers', $modifiers);
+
+        $renderer = new template\Renderer('data-template-custom-modifier.html', 
+                                          array(__dir__));
+        $this->assertequals("deadbeaf\n", $renderer->render(new template\Context(array('value' => 0xdeadbeaf))));
+        Conf::set('template_modifiers', array());
+    }
+
+    public function testCustomTag()
+    {
+        $tags = Conf::f('template_tags', array());
+        $tags['relativity'] = '\photon\tests\template\rendererTest\LocalTag';
+        Conf::set('template_tags', $tags);
+
+        $renderer = new template\Renderer('data-template-custom-tag.html', 
+                                          array(__dir__));
+        $this->assertequals("E=mc²\n", $renderer->render());
+        Conf::set('template_tags', array());
+    }
+
+    public function testConfigureCompilerFromEvent()
+    {
+        Event::connect('\photon\template\compiler\Compiler::construct_load_tags',
+                      '\photon\tests\template\rendererTest\LocalCompiler::setupTags');
+
+        Event::connect('\photon\template\compiler\Compiler::construct_load_modifiers',
+                      '\photon\tests\template\rendererTest\LocalCompiler::setupModifiers');
+
+        $renderer = new template\Renderer('data-template-custom-tag.html', 
+                                          array(__dir__));
+        $this->assertequals("E=mc²\n", $renderer->render());
+
+        $renderer = new template\Renderer('data-template-custom-modifier.html', 
+                                          array(__dir__));
+        $this->assertequals("deadbeaf\n", $renderer->render(new template\Context(array('value' => 0xdeadbeaf))));
     }
 }
 

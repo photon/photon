@@ -75,6 +75,18 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         }
     }
 
+    public function testUrlBuildReverseCompact()
+    {
+        $tests = array(
+                       // array( result, regex, params )
+                       array('/', '#^/#', array('')),
+                       array('', '#^$#', array('')),
+                       );
+        foreach ($tests as $t) {
+            $this->assertequals($t[0], URL::buildReverse($t[1], $t[2]));
+        }
+    }
+
     public function testUrlReverse()
     {
         $views = array(
@@ -130,6 +142,23 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         }
         $this->setExpectedException('\photon\core\Exception');
         URL::reverse($views, 'not_available');
+    }
+
+    public function testViewInSub2()
+    {
+        $views = array(array('regex' => '#^/#',
+                             'sub' => array(
+                                            array('regex' => '#^$#',
+                                                  'view' => array('\helloworld\views\Views', 'you'),
+                                                  'name' => 'home',
+                                                  ),
+                                            )));
+        $tests = array(
+                       array('/', 'home', array('')),
+                       );
+        foreach ($tests as $t) {
+            $this->assertequals($t[0], URL::reverse($views, $t[1], $t[2]));
+        }
     }
 }
 

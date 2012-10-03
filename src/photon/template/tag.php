@@ -133,3 +133,29 @@ class Url extends Tag
         echo \photon\core\URL::forView($view, $params, $get_params);
     }
 }
+
+/**
+ * Display messages for the user.
+ *
+ * It requires the $request variable to be available in the
+ * context. From the $request, it will find the session and if a
+ * '_mess' key is available, use it to display the message to
+ * the user.
+ */
+class Messages extends Tag
+{
+    function start()
+    {
+        $request = $this->context->get('request');
+        if ('' == $request || !isset($request->session)) {
+            return;
+        }
+        if (!isset($request->session['_msg'])) {
+            return;
+        }
+        list($class, $content) = explode('|', $request->session['_msg'], 2);
+        unset($request->session['_msg']);
+        echo sprintf('<div class="alert alert-%s">%s</div>' . "\n",
+                     $class, $content);
+    }
+}

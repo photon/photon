@@ -89,8 +89,12 @@ class Dispatcher
                 $response->setContent($e, $req);
             }
         }
+        $view_name = isset($req->view[0]['name']) 
+            ? $req->view[0]['name'] 
+            : 'not_defined';
         Log::perf(array('photon.dispatch', $req->uuid, 
                         Timer::stop('photon.dispatch'),
+                        $view_name,
                         array($req->method, $req->path)));
         return array($req, $response);
     }
@@ -162,6 +166,8 @@ class Dispatcher
      */
     public static function send($req, $ctl, $match)
     {
+        Log::debug(array('photon.dispatch.send', $req->uuid, 
+                         array($ctl, $match)));
         $req->view = array($ctl, $match);
 
         if (is_array($ctl['view'])) {
@@ -312,8 +318,8 @@ class URL
             $groups = array_fill(0, count($params), '#\(([^)]+)\)#'); 
             $url = preg_replace($groups, $params, $url, 1);
         }
-        preg_match('/^#\^?([^#\$]+)/', $url, $matches);
+        preg_match('/^#\^?([^#\$\^]+)/', $url, $matches);
 
-        return $matches[1];
+        return isset($matches[1]) ? $matches[1] : '';
     }
 }

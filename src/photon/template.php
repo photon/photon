@@ -95,8 +95,11 @@ class Renderer
         $this->context = (null === $c) ? new Context() : $c;
         ob_start();
         try {
-            call_user_func(array('\photon\template\compiled\\' . $this->class, 
-                                 'render'), $this->context);
+            $res = @call_user_func(array('\photon\template\compiled\\' . $this->class, 
+                                         'render'), $this->context);
+            if (false === $res) {
+                throw new Exception('Error when loading compiled template.');
+            }
         } catch (\Exception $e) {
             ob_clean();
             throw $e;
@@ -373,6 +376,35 @@ class Modifier
         $result = \array_pop($array);
 
         return (null === $result) ? '' : $result;
+    }
+
+    /**
+     * Convert a GMT date time to another format.
+     *
+     * @param $date string Date parseable by strtotime
+     * @param $format string Format for strftime ('%b %e, %Y')
+     */
+    public static function dateFormat($date, $format='%b %e, %Y') 
+    {
+        if ('WIN' === substr(PHP_OS, 0, 3)) {
+            $format	= str_replace(array('%e', '%T', '%D'),
+                                  array('%#d', '%H:%M:%S', '%m/%d/%y'),
+                                  $format);
+        }
+        $date = date('Y-m-d H:i:s', strtotime($date . ' GMT'));
+
+        return strftime($format, strtotime($date));
+    }
+
+    /**
+     * Convert a unix time to another format.
+     *
+     * @param $time int Unix time
+     * @param $format string Format for strftime ('%b %e, %Y')
+     */
+    public static function strftime($time, $format='%b %e, %Y') 
+    {
+        return strftime($format, $time);
     }
 }
 

@@ -22,7 +22,7 @@
 
 namespace photon\http;
 
-use photon\config\Container as Conf;
+use \photon\config\Container as Conf;
 
 class Exception extends \Exception {}
 
@@ -253,7 +253,7 @@ class Request
                     if ('FIELD' === $part['of_type']) {
                         add_to_post($this->POST, $part['name'], $part['data']);
                     } else {
-                        add_file_to_post($this->POST, $part['name'], $part);
+                        add_file_to_post($this->FILES, $part['name'], $part);
                     }
                 }
             } elseif ('application/x-www-form-urlencoded' === $this->mess->headers->{'content-type'}) {
@@ -483,21 +483,8 @@ class CookieHandler
         if (0 === count($c)) {
             return '';
         }
-        // Now, we merge the cookies having the same path, flag,
-        // domain and expiration
-        $rcookies = array();
-        foreach ($c as $ck) {
-            $k = $ck['flags'] . '#1#' . $ck['expires'] . '#2#'
-                . $ck['path'] . '#3#' . $ck['domain'];
-            if (isset($rcookies[$k])) {
-                $rcookies[$k]['cookies'] = array_merge($rcookies[$k]['cookies'],
-                                                       $ck['cookies']);
-            } else {
-                $rcookies[$k] = $ck;
-            }
-        }
         $headers = '';
-        foreach ($rcookies as $ck) {
+        foreach ($c as $ck) {
             foreach ($ck['cookies'] as $name => $val) {
                 $ck['cookies'][$name] = \photon\crypto\Sign::dumps($val, $key);
             }
@@ -521,10 +508,12 @@ class CookieHandler
         $c = \http_parse_cookie($cookie);
         $cookies = array();
         foreach ($c->cookies as $name => $val) {
-            try {
-                $cookies[$name] = \photon\crypto\Sign::loads($val, $key);
-            }  catch (\Exception $e) { 
-                // We simply ignore bad cookies.
+            if (strlen($val) > 0) {
+                try {
+                    $cookies[$name] = \photon\crypto\Sign::loads($val, $key);
+                }  catch (\Exception $e) { 
+                    // We simply ignore bad cookies.
+                }
             }
         }
 
@@ -588,7 +577,7 @@ function add_to_post(&$post, $key, $value)
 }
 
 /**
- * Add the current file upload to the corresponding POST key.
+ * Add the current file upload to the corresponding FILES key.
  *
  * When you submit a form with a POST request, multiple values have to
  * be handled as an array. For example, if you submit a select with
@@ -597,7 +586,7 @@ function add_to_post(&$post, $key, $value)
  * This function takes care of adding the value as array or not to the
  * variables.
  *
- * @param &$post The POST array, modified by reference.
+ * @param &$post The FILES array, modified by reference.
  * @param $key The field name
  * @param $value The field value
  */
