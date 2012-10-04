@@ -126,13 +126,14 @@ class Input extends Widget
      */
     public function render($name, $value, $extra_attrs=array())
     {
-        if ($value === null) $value = '';
         $final_attrs = $this->buildAttrs(array('name' => $name, 
-                                               'type' => $this->input_type),
+                                                'type' => $this->input_type),
                                          $extra_attrs);
-        if ($value !== '') {
+                                         
+        if ($value !== null && $value !== '') {
             $final_attrs['value'] = $value;
         }
+        
         return new SafeString('<input'.widget_attrs($final_attrs).' />', true);
     }
 }
