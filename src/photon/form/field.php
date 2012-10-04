@@ -132,6 +132,10 @@ class Field
             $widget->attrs = array_merge($widget->attrs, $attrs);
         }
         $this->widget = $widget;
+
+        if ($this->required === true) {
+            $widget->attrs['required'] = 'required';
+        }
     }
 
     /**
