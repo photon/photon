@@ -35,11 +35,11 @@ class ValidatorTest extends \PHPUnit_Framework_TestCase
         $bads = array('me @youec.com', 'me@localhost', 'me@com.123');
         foreach ($goods as $good) {
             try {
-                $email = validator\Net::email($good);
+                $isValid = validator\Net::email($good);
             } catch (Invalid $e) {
                 $this->fail(sprintf('This value should be good: %s.', $good));
             }
-            $this->assertEquals($email, $good);
+            $this->assertEquals($isValid, true);
         }
         foreach ($bads as $bad) {
             try {
