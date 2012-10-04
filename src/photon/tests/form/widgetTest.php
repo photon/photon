@@ -229,4 +229,12 @@ class WidgetTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('<input name="e1" type="hidden" />', (string) $widget->render('e1', null));
         $this->assertEquals('<input name="e1" type="hidden" value="foo" />', (string) $widget->render('e1', 'foo'));
     }
+    
+    public function testIPv4Input()
+    {
+        $field = new field\IPv4();
+        $widget = $field->widget;
+        $this->assertEquals('<input pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" name="e1" type="text" />', (string) $widget->render('e1', null));
+        $this->assertEquals('<input pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" name="e1" type="text" value="127.0.0.1" />', (string) $widget->render('e1', '127.0.0.1'));
+    }
 }

@@ -500,3 +500,48 @@ class File extends Field
     }
 }
 
+class IPv4 extends Varchar
+{
+    public function __construct($params=array())
+    {
+        parent::__construct($params);
+        $this->validators[] = function ($value) {
+            return validator\Net::ipAddress($value, FILTER_FLAG_IPV4);
+        };
+        $this->widget->attrs['pattern'] = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
+    }
+}
+
+class IPv6 extends Varchar
+{
+    public function __construct($params=array())
+    {
+        parent::__construct($params);
+        $this->validators[] = function ($value) {
+            return validator\Net::ipAddress($value, FILTER_FLAG_IPV6);
+        };
+    }
+}
+
+class IPv4v6 extends Varchar
+{
+    public function __construct($params=array())
+    {
+        parent::__construct($params);
+        $this->validators[] = function ($value) {
+            return validator\Net::ipAddress($value, FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6);
+        };
+    }
+}
+
+class MacAddress extends Varchar
+{
+    public function __construct($params=array())
+    {
+        parent::__construct($params);
+        $this->validators[] = function ($value) {
+            return validator\Net::macAddress($value);
+        };
+        $this->widget->attrs['pattern'] = '([0-9A-Fa-f]{2}[:-]{0,1}){5}[0-9A-Fa-f]{2}';
+    }
+}
