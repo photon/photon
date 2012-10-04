@@ -158,4 +158,75 @@ class WidgetTest extends \PHPUnit_Framework_TestCase
         $widget = new widget\TextareaInput(array('cols' => '32'));
         $this->assertEquals('<textarea cols="32" rows="10" name="content">my &lt;content&gt; is escaped</textarea>', (string) $widget->render('content', 'my <content> is escaped'));
     }
+
+    public function testEMailInput()
+    {
+        $field = new field\Email();
+        $widget = $field->widget;
+
+        $this->assertEquals('<input name="e1" type="email" />', (string) $widget->render('e1', null));
+        $this->assertEquals('<input name="e1" type="email" value="foo" />', (string) $widget->render('e1', 'foo'));
+    }
+
+    public function testHiddenEMailInput()
+    {
+        $field = new field\Email(array(
+            'widget' => '\photon\form\widget\HiddenInput',
+        ));
+        $widget = $field->widget;
+
+        $this->assertEquals('<input name="e1" type="hidden" />', (string) $widget->render('e1', null));
+        $this->assertEquals('<input name="e1" type="hidden" value="foo" />', (string) $widget->render('e1', 'foo'));
+    }
+
+    public function testIntegerInput()
+    {
+        $field = new field\Integer();
+        $widget = $field->widget;
+        $this->assertEquals('<input name="e1" type="number" />', (string) $widget->render('e1', null));
+        $this->assertEquals('<input name="e1" type="number" value="123" />', (string) $widget->render('e1', 123));
+    }
+
+    public function testFloatInput()
+    {
+        $field = new field\Float();
+        $widget = $field->widget;
+        $this->assertEquals('<input name="e1" type="number" />', (string) $widget->render('e1', null));
+        $this->assertEquals('<input name="e1" type="number" value="123" />', (string) $widget->render('e1', 123));
+    }
+
+    public function testIntegerBoundedInput()
+    {
+        $field = new field\Integer(array(
+            'max_value' => 20,
+        ));
+        $widget = $field->widget;
+        $this->assertEquals('<input max="20" name="e1" type="number" />', (string) $widget->render('e1', null));
+        $this->assertEquals('<input max="20" name="e1" type="number" value="123" />', (string) $widget->render('e1', 123));
+
+        $field = new field\Integer(array(
+            'min_value' => 10,
+        ));
+        $widget = $field->widget;
+        $this->assertEquals('<input min="10" name="e1" type="number" />', (string) $widget->render('e1', null));
+        $this->assertEquals('<input min="10" name="e1" type="number" value="123" />', (string) $widget->render('e1', 123));
+
+        $field = new field\Integer(array(
+            'min_value' => 10,
+            'max_value' => 20,
+        ));
+        $widget = $field->widget;
+        $this->assertEquals('<input min="10" max="20" name="e1" type="number" />', (string) $widget->render('e1', null));
+        $this->assertEquals('<input min="10" max="20" name="e1" type="number" value="123" />', (string) $widget->render('e1', 123));
+    }
+
+    public function testHiddenIntegerInput()
+    {
+        $field = new field\Integer(array(
+            'widget' => '\photon\form\widget\HiddenInput',
+        ));
+        $widget = $field->widget;
+        $this->assertEquals('<input name="e1" type="hidden" />', (string) $widget->render('e1', null));
+        $this->assertEquals('<input name="e1" type="hidden" value="foo" />', (string) $widget->render('e1', 'foo'));
+    }
 }

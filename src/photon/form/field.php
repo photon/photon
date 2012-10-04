@@ -254,6 +254,7 @@ class Varchar extends Field
             $this->validators[] = function ($value) use ($max) {
                 return validator\Text::maxLength($value, $max);
             };
+            $this->widget->attrs['maxlength'] = $max;
         }
     }
 
@@ -269,21 +270,7 @@ class Varchar extends Field
         }
         return $value;
     }
-
-    public function widgetAttrs($widget)
-    {
-        if ($this->max_length !== null and 
-            in_array(get_class($widget), 
-                     array('photon\form\widget\TextInput', 
-                           'photon\form\widget\PasswordInput'))) {
-            return array('maxlength'=>$this->max_length);
-        }
-        return array();
-    }
 }
-
-
-
 
 class Boolean extends Field
 {
@@ -382,6 +369,14 @@ class Email extends Varchar
     {
         return trim(parent::toPhp($value));
     }
+
+    public function widgetAttrs($widget)
+    {
+        if (get_class($widget) != 'photon\form\widget\HiddenInput') {
+            $widget->input_type = 'email';
+        }
+        return array();
+    }
 }
 
 class Integer extends Varchar
@@ -399,12 +394,14 @@ class Integer extends Varchar
             $this->validators[] = function ($value) use ($min) {
                 return validator\Numeric::minValue($value, $min);
             };
+            $this->widget->attrs['min'] = $min;
         }
         if (null !== $this->max_value) {
             $max = $this->max_value;
             $this->validators[] = function ($value) use ($max) {
                 return validator\Numeric::maxValue($value, $max);
             };
+            $this->widget->attrs['max'] = $max;
         }
     }
 
@@ -420,6 +417,14 @@ class Integer extends Varchar
             throw new Invalid($this->error_messages['invalid']);
         }
         return (int) $value;
+    }
+
+    public function widgetAttrs($widget)
+    {
+        if (get_class($widget) != 'photon\form\widget\HiddenInput') {
+            $widget->input_type = 'number';
+        }
+        return array();
     }
 }
 
