@@ -132,6 +132,10 @@ class Field
             $widget->attrs = array_merge($widget->attrs, $attrs);
         }
         $this->widget = $widget;
+
+        if ($this->required === true) {
+            $widget->attrs['required'] = 'required';
+        }
     }
 
     /**
@@ -254,6 +258,7 @@ class Varchar extends Field
             $this->validators[] = function ($value) use ($max) {
                 return validator\Text::maxLength($value, $max);
             };
+            $this->widget->attrs['maxlength'] = $max;
         }
     }
 
@@ -269,21 +274,7 @@ class Varchar extends Field
         }
         return $value;
     }
-
-    public function widgetAttrs($widget)
-    {
-        if ($this->max_length !== null and 
-            in_array(get_class($widget), 
-                     array('photon\form\widget\TextInput', 
-                           'photon\form\widget\PasswordInput'))) {
-            return array('maxlength'=>$this->max_length);
-        }
-        return array();
-    }
 }
-
-
-
 
 class Boolean extends Field
 {
@@ -382,6 +373,14 @@ class Email extends Varchar
     {
         return trim(parent::toPhp($value));
     }
+
+    public function widgetAttrs($widget)
+    {
+        if (get_class($widget) != 'photon\form\widget\HiddenInput') {
+            $widget->input_type = 'email';
+        }
+        return array();
+    }
 }
 
 class Integer extends Varchar
@@ -399,12 +398,14 @@ class Integer extends Varchar
             $this->validators[] = function ($value) use ($min) {
                 return validator\Numeric::minValue($value, $min);
             };
+            $this->widget->attrs['min'] = $min;
         }
         if (null !== $this->max_value) {
             $max = $this->max_value;
             $this->validators[] = function ($value) use ($max) {
                 return validator\Numeric::maxValue($value, $max);
             };
+            $this->widget->attrs['max'] = $max;
         }
     }
 
@@ -420,6 +421,14 @@ class Integer extends Varchar
             throw new Invalid($this->error_messages['invalid']);
         }
         return (int) $value;
+    }
+
+    public function widgetAttrs($widget)
+    {
+        if (get_class($widget) != 'photon\form\widget\HiddenInput') {
+            $widget->input_type = 'number';
+        }
+        return array();
     }
 }
 
@@ -491,3 +500,48 @@ class File extends Field
     }
 }
 
+class IPv4 extends Varchar
+{
+    public function __construct($params=array())
+    {
+        parent::__construct($params);
+        $this->validators[] = function ($value) {
+            return validator\Net::ipAddress($value, FILTER_FLAG_IPV4);
+        };
+        $this->widget->attrs['pattern'] = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
+    }
+}
+
+class IPv6 extends Varchar
+{
+    public function __construct($params=array())
+    {
+        parent::__construct($params);
+        $this->validators[] = function ($value) {
+            return validator\Net::ipAddress($value, FILTER_FLAG_IPV6);
+        };
+    }
+}
+
+class IPv4v6 extends Varchar
+{
+    public function __construct($params=array())
+    {
+        parent::__construct($params);
+        $this->validators[] = function ($value) {
+            return validator\Net::ipAddress($value, FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6);
+        };
+    }
+}
+
+class MacAddress extends Varchar
+{
+    public function __construct($params=array())
+    {
+        parent::__construct($params);
+        $this->validators[] = function ($value) {
+            return validator\Net::macAddress($value);
+        };
+        $this->widget->attrs['pattern'] = '([0-9A-Fa-f]{2}[:-]{0,1}){5}[0-9A-Fa-f]{2}';
+    }
+}

@@ -33,6 +33,32 @@ use \photon\form\Invalid;
 
 class FieldTest extends \PHPUnit_Framework_TestCase
 {
+    /*
+     *  Utils
+     */
+    public function validateSeries($field, $goods, $bads)
+    {
+        foreach ($goods as $good) {
+            try {
+                $email = $field->clean($good);
+            } catch (Invalid $e) {
+                $this->fail(sprintf('This value should be good: %s.', $good));
+            }
+            $this->assertEquals($email, $good);
+        }
+        foreach ($bads as $bad) {
+            try {
+                $email = $field->clean($bad);
+            } catch (Invalid $e) {
+                continue;
+            }
+            $this->fail(sprintf('This value should be bad: %s.', $bad));
+        }
+    }
+
+    /*
+     *  Tests
+     */
     public function testVarcharField()
     {
         $field = new field\Field();
@@ -186,22 +212,7 @@ class FieldTest extends \PHPUnit_Framework_TestCase
         $goods = array('me@you.com', '', 'foo@internet.toto.tetet.com',
                        'me+123@mail.com');
         $bads = array('me @youec.com', 'me@localhost');
-        foreach ($goods as $good) {
-            try {
-                $email = $field->clean($good);
-            } catch (Invalid $e) {
-                $this->fail(sprintf('This value should be good: %s.', $good));
-            }
-            $this->assertEquals($email, $good);
-        }
-        foreach ($bads as $bad) {
-            try {
-                $email = $field->clean($bad);
-            } catch (Invalid $e) {
-                continue;
-            }
-            $this->fail(sprintf('This value should be bad: %s.', $bad));
-        }
+        $this->validateSeries($field, $goods, $bads);
     }
 
     public function testIntegerField()
@@ -209,44 +220,13 @@ class FieldTest extends \PHPUnit_Framework_TestCase
         $field = new field\Integer();
         $goods = array('1', '', '2', 234);
         $bads = array('++123', 'me@localhost');
-        foreach ($goods as $good) {
-            try {
-                $pgood = $field->clean($good);
-            } catch (Invalid $e) {
-                $this->fail(sprintf('This value should be good: %s.', $good));
-            }
-            $this->assertEquals($good, $pgood);
-        }
-        foreach ($bads as $bad) {
-            try {
-                $bad = $field->clean($bad);
-            } catch (Invalid $e) {
-                continue;
-            }
-            $this->fail(sprintf('This value should be bad: %s.', $bad));
-        }
+        $this->validateSeries($field, $goods, $bads);
 
-        $minmax = new field\Integer(array('min_value' => -123,
+        $field = new field\Integer(array('min_value' => -123,
                                           'max_value' => 12));
         $bads = array(-124, 123);
         $goods = array(-123, 12, 0);
-        foreach ($goods as $good) {
-            try {
-                $pgood = $minmax->clean($good);
-            } catch (Invalid $e) {
-                $this->fail(sprintf('This value should be good: %s.', $good));
-            }
-            $this->assertEquals($good, $pgood);
-        }
-        foreach ($bads as $bad) {
-            try {
-                $bad = $minmax->clean($bad);
-            } catch (Invalid $e) {
-                continue;
-            }
-            $this->fail(sprintf('This value should be bad: %s.', $bad));
-        }
-
+        $this->validateSeries($field, $goods, $bads);
     }
 
     public function testFloatField()
@@ -254,43 +234,13 @@ class FieldTest extends \PHPUnit_Framework_TestCase
         $field = new field\Float();
         $goods = array('1', '', '2', 234.234, '123789.987');
         $bads = array('++123', 'me@localhost');
-        foreach ($goods as $good) {
-            try {
-                $pgood = $field->clean($good);
-            } catch (Invalid $e) {
-                $this->fail(sprintf('This value should be good: %s.', $good));
-            }
-            $this->assertEquals($good, $pgood);
-        }
-        foreach ($bads as $bad) {
-            try {
-                $bad = $field->clean($bad);
-            } catch (Invalid $e) {
-                continue;
-            }
-            $this->fail(sprintf('This value should be bad: %s.', $bad));
-        }
+        $this->validateSeries($field, $goods, $bads);
 
-        $minmax = new field\Float(array('min_value' => -123.0,
+        $field = new field\Float(array('min_value' => -123.0,
                                         'max_value' => 12.0));
         $bads = array(-124.0, 123.0);
         $goods = array(-123.0, 12.0, 0.0);
-        foreach ($goods as $good) {
-            try {
-                $pgood = $minmax->clean($good);
-            } catch (Invalid $e) {
-                $this->fail(sprintf('This value should be good: %s.', $good));
-            }
-            $this->assertEquals($good, $pgood);
-        }
-        foreach ($bads as $bad) {
-            try {
-                $bad = $minmax->clean($bad);
-            } catch (Invalid $e) {
-                continue;
-            }
-            $this->fail(sprintf('This value should be bad: %s.', $bad));
-        }
+        $this->validateSeries($field, $goods, $bads);
     }
 
     public function testFileField()
@@ -342,5 +292,51 @@ class FieldTest extends \PHPUnit_Framework_TestCase
         if (!$catched) {
             $this->fail('The name is too long.');
         }
+    }
+    
+    public function testIPv4Field()
+    {
+        $field = new field\IPv4();
+        $goods = array('127.0.0.1', '192.168.1.1', '1.2.3.4',
+                       '255.255.255.255');
+        $bads = array('1.2.3', '1..2.3');
+        $this->validateSeries($field, $goods, $bads);
+    }
+    
+    public function testIPv6Field()
+    {
+        $field = new field\IPv6();
+        $goods = array('::1',          // localhost   
+                        'fe80::',       // link-local prefix 
+                        '2001::',       // global unicast prefix 
+                        'fe80:0000:0000:0000:0204:61ff:fe9d:f156',              // full
+                        'fe80:0:0:0:204:61ff:fe9d:f156',                        // drop leading zeroes
+                        'fe80::204:61ff:fe9d:f156',                             // collapse multiple zeroes to ::
+                        'fe80:0000:0000:0000:0204:61ff:254.157.241.86',         // IPv4 dotted quad at the end
+                        'fe80:0:0:0:0204:61ff:254.157.241.86',                  // drop leading zeroes, IPv4 dotted quad at the end
+                        'fe80::204:61ff:254.157.241.86',                        // dotted quad at the end, multiple zeroes collapsed
+        );
+        $bads = array('1234::11::11', '127.0.0.1');
+        $this->validateSeries($field, $goods, $bads);
+    }
+    
+    public function testIPv4v6Field()
+    {
+        $field = new field\IPv4v6();
+        $goods = array('fe80:0000:0000:0000:0204:61ff:fe9d:f156',
+                        '127.0.0.1');
+        $bads = array('1234::11::11', '127.300.0.1');
+        $this->validateSeries($field, $goods, $bads);
+    }
+  
+    public function testMacAddressField()
+    {
+        $field = new field\MacAddress();
+        $goods = array('00:00:00:00:00:00',
+                        'ff:ff:ff:ff:ff:ff',
+                        '12:34:56:78:9a:bc');
+        $bads = array('00:00:00:00:00:0h',
+                       '127.300.0.1');
+        $this->validateSeries($field, $goods, $bads);
     }
 }

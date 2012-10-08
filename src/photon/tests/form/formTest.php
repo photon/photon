@@ -107,6 +107,14 @@ class HiddenAnd extends Form
     }
 }
 
+class NotRequired extends Form
+{
+    public function initFields($extra=array())
+    {
+        $this->fields['i'] = new field\Integer();
+    }
+}
+
 class FormTest extends \PHPUnit_Framework_TestCase
 {
     public function testNotImplemented()
@@ -132,9 +140,9 @@ class FormTest extends \PHPUnit_Framework_TestCase
     public function testMinimalRender()
     {
         $form = new Minimal();
-        $this->assertEquals('<p><label for="id_login">Login:</label> <input maxlength="15" size="10" name="login" type="text" id="id_login" /></p>', (string) $form->render_p());
-        $this->assertEquals('<li><label for="id_login">Login:</label> <input maxlength="15" size="10" name="login" type="text" id="id_login" /></li>', (string) $form->render_ul());
-        $this->assertEquals('<tr><th><label for="id_login">Login:</label></th><td><input maxlength="15" size="10" name="login" type="text" id="id_login" /></td></tr>', (string) $form->render_table());
+        $this->assertEquals('<p><label for="id_login">Login:</label> <input maxlength="15" size="10" required="required" name="login" type="text" id="id_login" /></p>', (string) $form->render_p());
+        $this->assertEquals('<li><label for="id_login">Login:</label> <input maxlength="15" size="10" required="required" name="login" type="text" id="id_login" /></li>', (string) $form->render_ul());
+        $this->assertEquals('<tr><th><label for="id_login">Login:</label></th><td><input maxlength="15" size="10" required="required" name="login" type="text" id="id_login" /></td></tr>', (string) $form->render_table());
         foreach ($form as $name => $field) {
             $this->assertEquals('login', $name);
         }
@@ -176,9 +184,9 @@ class FormTest extends \PHPUnit_Framework_TestCase
 
         $form = new HiddenAnd();
         $bf = new \photon\form\BoundField($form, $form['login'], 'login');
-        $this->assertEquals('<input maxlength="15" size="10" name="login" type="text" id="id_login" />',
+        $this->assertEquals('<input maxlength="15" size="10" required="required" name="login" type="text" id="id_login" />',
                             (string) $bf);
-        $this->assertEquals('<input maxlength="15" size="10" name="login" type="text" id="id_login" />',
+        $this->assertEquals('<input maxlength="15" size="10" required="required" name="login" type="text" id="id_login" />',
                             (string) $bf->render_w);
         // forced empty list
         $this->assertEquals('<ul class="errorlist"></ul>', 
@@ -190,9 +198,9 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $form = new Minimal(array('login' => '12'));
         $this->assertSame(false, $form->isValid());
         $this->assertEquals('<ul class="errorlist"><li>Ensure this value has at least 3 characters (it has 2).</li></ul>
-<p><label for="id_login">Login:</label> <input maxlength="15" size="10" name="login" type="text" id="id_login" value="12" /></p>', (string) $form->render_p());
-        $this->assertEquals('<li><ul class="errorlist"><li>Ensure this value has at least 3 characters (it has 2).</li></ul><label for="id_login">Login:</label> <input maxlength="15" size="10" name="login" type="text" id="id_login" value="12" /></li>', (string) $form->render_ul());
-        $this->assertEquals('<tr><th><label for="id_login">Login:</label></th><td><ul class="errorlist"><li>Ensure this value has at least 3 characters (it has 2).</li></ul><input maxlength="15" size="10" name="login" type="text" id="id_login" value="12" /></td></tr>', (string) $form->render_table);
+<p><label for="id_login">Login:</label> <input maxlength="15" size="10" required="required" name="login" type="text" id="id_login" value="12" /></p>', (string) $form->render_p());
+        $this->assertEquals('<li><ul class="errorlist"><li>Ensure this value has at least 3 characters (it has 2).</li></ul><label for="id_login">Login:</label> <input maxlength="15" size="10" required="required" name="login" type="text" id="id_login" value="12" /></li>', (string) $form->render_ul());
+        $this->assertEquals('<tr><th><label for="id_login">Login:</label></th><td><ul class="errorlist"><li>Ensure this value has at least 3 characters (it has 2).</li></ul><input maxlength="15" size="10" required="required" name="login" type="text" id="id_login" value="12" /></td></tr>', (string) $form->render_table);
     }
 
     public function testTopErrors()
@@ -206,7 +214,7 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('<ul class="errorlist"><li>Invalid login: hello</li></ul>', 
                             (string) $form->render_top_errors);
         $this->assertEquals('<ul class="errorlist"><li>Invalid login: hello</li></ul>
-<p><label for="id_login">Your login:</label> <input maxlength="15" size="10" name="login" type="text" id="id_login" value="hello" /> The login must...</p>', (string) $form->render_p());
+<p><label for="id_login">Your login:</label> <input maxlength="15" size="10" required="required" name="login" type="text" id="id_login" value="hello" /> The login must...</p>', (string) $form->render_p());
         
     }
 
@@ -234,7 +242,7 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $form = new Hidden(array('hidden' => 'abc'));
         $this->assertSame(false, $form->isValid());
         $this->assertEquals('<ul class="errorlist"><li>(Hidden field hidden) Enter a whole number.</li></ul>
-<input name="hidden" type="hidden" id="id_hidden" value="abc" />', (string) $form->render_p());
+<input required="required" name="hidden" type="hidden" id="id_hidden" value="abc" />', (string) $form->render_p());
     }
 
     public function testHiddenAnd()
@@ -245,6 +253,12 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $this->assertSame(false, $form->isValid());
         $this->assertEquals('<ul class="errorlist"><li>(Hidden field hidden) Enter a whole number.</li></ul>
 <ul class="errorlist"><li>This field is required.</li></ul>
-<p><label for="id_login">Login:</label> <input maxlength="15" size="10" name="login" type="text" id="id_login" /><input name="hidden" type="hidden" id="id_hidden" value="abc" /></p>', (string) $form->render_p());
+<p><label for="id_login">Login:</label> <input maxlength="15" size="10" required="required" name="login" type="text" id="id_login" /><input required="required" name="hidden" type="hidden" id="id_hidden" value="abc" /></p>', (string) $form->render_p());
+    }
+    
+    public function testNotRequiredField()
+    {
+        $form = new NotRequired();
+        $this->assertEquals('<p><label for="id_i">I:</label> <input name="i" type="number" id="id_i" /></p>', (string) $form->render_p());
     }
 }
