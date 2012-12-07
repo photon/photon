@@ -30,6 +30,7 @@ namespace photon\core;
 use photon\config\Container as Conf;
 use photon\log\Timer as Timer;
 use photon\log\Log as Log;
+use photon\event\Event;
 
 class Exception extends \Exception {}
 class NotImplemented extends \Exception {}
