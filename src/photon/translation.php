@@ -85,6 +85,18 @@ class Translation
     }
     
     /**
+     * Context preprocessor for template engine
+     *
+     * Setup the currentLang variable to the current language used by the Translation engine
+     *
+     * @param Request Request object
+     */
+    public static function context($request)
+    {
+        return array('currentLang' => self::$current_lang);
+    }
+
+    /**
      * Load the locales of a lang.
      *
      * It does not activate the locale.
@@ -315,6 +327,7 @@ class Translation
         return $hash;
     }
 }
+
 
 // /**
 //  * Translation middleware.
