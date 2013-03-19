@@ -256,7 +256,7 @@ class Request
                         add_file_to_post($this->FILES, $part['name'], $part);
                     }
                 }
-            } elseif ('application/x-www-form-urlencoded' === $this->mess->headers->{'content-type'}) {
+            } elseif (false !== mb_strstr($this->mess->headers->{'content-type'}, 'application/x-www-form-urlencoded')) {
                 $this->POST = parse_str(substr(stream_get_contents($mess->body), 0, -1));
             } else {
                 $this->BODY =& $mess->body;
