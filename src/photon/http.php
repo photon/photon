@@ -151,7 +151,9 @@ class Response
         if (200 <= $this->status_code &&
             204 != $this->status_code &&
             304 != $this->status_code) {
-            $this->headers['Content-Length'] = strlen($this->content);
+            if (!isset($this->headers['Transfer-Encoding']) || $this->headers['Transfer-Encoding'] !== "chunked") {
+                $this->headers['Content-Length'] = strlen($this->content);
+            }
         }
         $headers = $this->getHeaders();
 
