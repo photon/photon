@@ -20,12 +20,15 @@
 - Add a event sytem
 - Add some common HTTP answer: 303, 405
 - Add support of PHAR packing
+- Add hook before generate an error 500
 
 ## Bugfixes
 
 - Avoid recompression when not needed. (Gz middleware)
 - Do not try to load empty cookies
 - Fix some API changes of ZMQ
+- Avoid send Content-Length if the answer is chunked encoded
+- Form not parsed if content-type have a charset field
 
 # Photon 0.1 - Fri, 11 Mar 2011 17:35:58 UTC
 
