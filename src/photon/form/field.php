@@ -439,6 +439,7 @@ class Float extends Integer
     {
         $this->error_messages['invalid'] = __('Enter a number.');
         parent::__construct($params);
+        $this->widget->attrs['step'] = 'any';
     }
 
 

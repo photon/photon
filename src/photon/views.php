@@ -31,6 +31,7 @@ namespace photon\views;
 use \photon\shortcuts;
 use \photon\core\URL as URL;
 use \photon\http\response\Redirect as Redirect;
+use \photon\translation\Translation;
 
 /**
  * Render a template.
@@ -42,6 +43,19 @@ class Template
      */
     public function simple($request, $match, $template)
     {
+        return shortcuts\Template::RenderToResponse($template, array(), $request);
+    }
+
+    /**
+     * Like previous function, but with i18n support.
+     * It's allow to serve static content build with the template engine.
+     * The first variable part of the url must be the language code.
+     * /[en|fr|de]/home
+     * /[en|fr|de]/contacts
+     */
+    public function simpleWithLocale($request, $match, $template)
+    {
+        Translation::setLocale(strtolower($match[1]));
         return shortcuts\Template::RenderToResponse($template, array(), $request);
     }
 }

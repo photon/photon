@@ -80,10 +80,22 @@ class Translation
 
             return; // We consider that it was already loaded.
         }
-        self::loadLocale($lang, Conf::f('installed_apps', array()), 
+        self::loadLocale($lang, Conf::f('locale_folders', array()), 
                          explode(PATH_SEPARATOR, get_include_path()));
     }
     
+    /**
+     * Context preprocessor for template engine
+     *
+     * Setup the currentLang variable to the current language used by the Translation engine
+     *
+     * @param Request Request object
+     */
+    public static function context($request)
+    {
+        return array('currentLang' => self::$current_lang);
+    }
+
     /**
      * Load the locales of a lang.
      *
@@ -109,8 +121,8 @@ class Translation
         }
         foreach ($apps as $app) {
             foreach ($apps_paths as $apps_path) {
-                $pofile = sprintf('%s/%s/locale/%s/%s.po', 
-                                  $apps_path, $app, $lang, strtolower($app));
+                $pofile = sprintf('%s/%s/%s.po', 
+                                  $apps_path, $app, $lang);
                 if (file_exists($pofile)) {
                     self::$loaded[$lang] += self::readPoFile($pofile);
                     $loaded[] = $pofile;
@@ -315,6 +327,7 @@ class Translation
         return $hash;
     }
 }
+
 
 // /**
 //  * Translation middleware.
