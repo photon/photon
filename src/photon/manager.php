@@ -841,3 +841,49 @@ class %s
                                count($already_compiled)));
     }
 }
+
+
+class PotGenerator extends Base
+{
+    public $potfile;
+
+    public function run()
+    {
+        $this->loadConfig();
+        $folders = Conf::f('template_folders', array());
+        $tmp_folder = sys_get_temp_dir() . '/' . uniqid('photon', true);
+        @mkdir($tmp_folder);
+        @touch($this->potfile);
+
+        // Compile all template to generate PHP Code
+        $already_compiled = array();
+        foreach ($folders as $folder) {
+            foreach (\photon\path\Dir::listFiles($folder) as $tpl) {
+                if (!in_array($tpl, $already_compiled)) {
+                    // Compile the template
+                    $compiler = new compiler\Compiler($tpl, $folders);
+                    $content = $compiler->compile();
+
+                    // save it
+                    $output = $tmp_folder . '/' . $tpl;
+                    @mkdir(dirname($output), 0777, true);
+                    file_put_contents($output, $content);
+
+                    $already_compiled[] = $tpl;
+                }
+            }
+        }
+
+        $return_var = 0;
+
+        // Run xgettext on PHP project source
+        $cmd = 'cd ' . $this->cwd . ' && find . -type f -iname "*.php" | sed -e \'s/^\\.\\///\' | xargs xgettext -o ' . $this->potfile . ' -p ' . $this->cwd . ' --from-code=UTF-8 -j --keyword --keyword=__ --keyword=_n:1,2 -L PHP';
+        passthru($cmd, &$return_var);
+
+        // Run xgettext on PHP project compiled template source
+        $cmd = 'cd ' . $tmp_folder . ' && find . -type f | sed -e \'s/^\\.\\///\' | xargs xgettext -o ' . $this->potfile . ' -p ' . $this->cwd . ' --from-code=UTF-8 -j --keyword --keyword=__ --keyword=_n:1,2 -L PHP';
+        passthru($cmd, &$return_var);
+
+        @rmdir($tmp_folder);
+    }
+}
