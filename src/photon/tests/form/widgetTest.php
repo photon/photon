@@ -191,8 +191,8 @@ class WidgetTest extends \PHPUnit_Framework_TestCase
     {
         $field = new field\Float();
         $widget = $field->widget;
-        $this->assertEquals('<input name="e1" type="number" />', (string) $widget->render('e1', null));
-        $this->assertEquals('<input name="e1" type="number" value="123" />', (string) $widget->render('e1', 123));
+        $this->assertEquals('<input step="any" name="e1" type="number" />', (string) $widget->render('e1', null));
+        $this->assertEquals('<input step="any" name="e1" type="number" value="123" />', (string) $widget->render('e1', 123));
     }
 
     public function testIntegerBoundedInput()
