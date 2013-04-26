@@ -1,13 +1,18 @@
-
-# Photon 0.2 - xxxxxx LANG="en_EN.UTF-8" date -u -R xxxxxxxx
+# Photon 0.3 - xxxxxx LANG="en_EN.UTF-8" date -u -R xxxxxxxx
 
 ## Changes
 
+## New Features
+
+## Bugfixes
+
+# Photon 0.2 - Mon, 11 Apr 2011 13:10:23 +0000
+
+## Changes
 - Added underscore as authorized file path (Asset view)
 - Renamed the installed_apps key to tested_components
 
 ## New Features
-
 - Add form fields and validators: IPv4, IPv6, MacAddress
 - Add support of PostgreSQL with PDO
 - Add support of closures for the clean_FIELD methods (Form)
@@ -24,16 +29,17 @@
 - Add hnu pot command
 
 ## Bugfixes
-
 - Avoid recompression when not needed. (Gz middleware)
 - Do not try to load empty cookies
 - Fix some API changes of ZMQ
 - Avoid send Content-Length if the answer is chunked encoded
 - Form not parsed if content-type have a charset field
 
+
 # Photon 0.1 - Fri, 11 Mar 2011 17:35:58 UTC
 
 First public release (Beta)
+
 
 # Photon 0.0.1 - Fri, 17 Feb 2011 12:00:00 UTC
 
