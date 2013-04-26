@@ -23,10 +23,16 @@
 
 namespace photon\tests\translations\translate;
 use \photon\translation\Translation;
+use photon\config\Container as Conf;
 include_once __DIR__ . '/../../translation.php';
 
 class TranslateTest extends \PHPUnit_Framework_TestCase
 {
+    public function setUp()
+    {
+        set_include_path(realpath(__DIR__ . '/../data/') . PATH_SEPARATOR . get_include_path());
+    }
+
     public function testGetPluralForm()
     {
         $po = file_get_contents(__DIR__ . '/../data/fr.po');
@@ -110,14 +116,15 @@ msgstr "stats de l\'index"';
 
     public function testLoadLocale()
     {
-        $pos = Translation::loadLocale('fr', array(), array('/doesnotexist'), false);
+        Conf::set('locale_folders', array());
+        $pos = Translation::loadLocale('fr', false);
         $this->assertEquals(0, count($pos));
     }
 
     public function testLoadLocaleWithPhoton()
     {
-        $pos = Translation::loadLocale('fr', array('dummyapp'), 
-                                       array(realpath(__DIR__ . '/../data/')), true);
+        Conf::set('locale_folders', array('locale_dummyapp'));
+        $pos = Translation::loadLocale('fr', true);
         $this->assertEquals(2, count($pos));
     }
 

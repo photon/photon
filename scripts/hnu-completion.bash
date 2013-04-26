@@ -130,35 +130,34 @@ _hnu ()
 
     # The hnu command
     if [[ $COMP_CWORD -eq 1 ]]; then
-        if [[ "$cur" == --* ]] ; then
+        if [[ "$cur" == -* ]] ; then
             __hnucomp "--help --version --verbose --conf="
         else
-            __hnucomp "init testserver runtests selftest server taskstart secretkey"
+            __hnucomp "init pot serve worker test selftest package makekey"
         fi
     fi
 
     case "$prev" in
-        secretkey)
+        makekey)
             [[ "$cur" == --* ]] && __hnucomp "--length= --help"
             ;;
-        runtests)
-            [[ "$cur" == --* ]] && __hnucomp "--coverage-html= --bootstrap= --help"
+        package)
+            [[ "$cur" == --* ]] && __hnucomp "--include-conf= --exclude-files= --help"
             ;;
         selftest)
             [[ "$cur" == --* ]] && __hnucomp "--coverage-html= --help"
             ;;
-        server|--all|--server-id=|--wait=)
-            if [[ "$cur" == --* ]]; then
-                __hnucomp "--all --server-id= --wait= --help"
-            else
-                __hnucomp "start stop less list childstart"
-            fi
+        test)
+            [[ "$cur" == --* ]] && __hnucomp "--coverage-html= --bootstrap= --help"
             ;;
-        list) # a server subcommand
-            [[ "$cur" == --* ]] && __hnucomp "--json --help"
+        worker|serve)
+            [[ "$cur" == --* ]] && __hnucomp "--daemonize --server_id= --help"
             ;;
-        start) # a server subcommand
-            [[ "$cur" == --* ]] && __hnucomp "--children= --help"
+        pot)
+            [[ "$cur" == --* ]] && __hnucomp "--pot-file= --help"
+            ;;
+        init)
+            [[ "$cur" == --* ]] && __hnucomp "--help"
             ;;
     esac
 } # _hnu ()

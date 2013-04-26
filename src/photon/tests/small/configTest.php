@@ -56,5 +56,18 @@ class configTest extends \PHPUnit_Framework_TestCase
         $this->assertequals(true, Conf::f('debug'));        
     }
 
+    public function testPf()
+    {
+        Conf::set('mail_host', '127.0.0.1');
+        $mail = Conf::pf('mail_', true);
+        $this->assertArrayHasKey('host', $mail);
+        $this->assertequals($mail['host'], '127.0.0.1');
+        
+        Conf::set('mail_port', 1234);
+        $mail = Conf::pf('mail_', false);
+        $this->assertequals(count($mail), 2);
+        $this->assertArrayHasKey('mail_host', $mail);
+        $this->assertArrayHasKey('mail_port', $mail);
+    }
 }
 

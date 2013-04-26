@@ -76,7 +76,7 @@ class cookiesTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Set-Cookie: foo=czozOiJiYXIiOw.6o_2mL7ZL4HgcezUZT4Nn9VcIuM; '."\r\n", $headers);
         $cookies['bar'] = 'foo';
         $headers = CookieHandler::build($cookies, 'my-key');
-        $this->assertEquals('Set-Cookie: foo=czozOiJiYXIiOw.6o_2mL7ZL4HgcezUZT4Nn9VcIuM; bar=czozOiJmb28iOw.pa7EFOZK0OkBpqpaS_P2Qo1Zccw; '."\r\n", $headers);
+        $this->assertEquals("Set-Cookie: foo=czozOiJiYXIiOw.6o_2mL7ZL4HgcezUZT4Nn9VcIuM; \r\nSet-Cookie: bar=czozOiJmb28iOw.pa7EFOZK0OkBpqpaS_P2Qo1Zccw; \r\n", $headers);
     }
 
     public function testParseSimpleCookie()

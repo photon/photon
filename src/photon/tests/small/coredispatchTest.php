@@ -251,8 +251,8 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         Conf::set('template_force_compilation', true);
         $req = new \photon\http\Request($msg);
         list($req, $resp) = Dispatcher::dispatch($req);
-        $this->assertNotEquals(false, strpos($resp->content, 'we will correct'));
-
+        // Ensure the answer contains a string in the 500.html template
+        $this->assertTrue(false !== strpos($resp->content, 'Server Error!'));
     }
 
     public function testViewNotFound()

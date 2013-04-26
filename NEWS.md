@@ -21,6 +21,7 @@
 - Add some common HTTP answer: 303, 405
 - Add support of PHAR packing
 - Add hook before generate an error 500
+- Add hnu pot command
 
 ## Bugfixes
 

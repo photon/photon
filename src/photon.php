@@ -79,6 +79,13 @@ namespace photon
            array('desc' => 'generate the skeleton of a new Photon project in the current folder',
                  'args' => array('project' =>
                                  array('description' => 'the name of the project'))),
+                      'pot' =>
+           array('desc' => 'generate a standard gettext template file for the project (.pot)',
+                 'opts' => array('potfile' =>
+                                 array('long_name'   => '--pot-file',
+                                       'action'      => 'StoreString',
+                                       'help_name'   => 'myproject.pot',
+                                       'description' => 'Output filename for the gettext template'))),
                       'serve' =>
            array('desc' => 'start a Photon handler server',
                  'opts' => array('server_id' =>
@@ -201,6 +208,11 @@ namespace
                 $params['project'] = $result->command->args['project'];
                 $m = new \photon\manager\Init($params);
                 $m->run();
+                break;
+            case 'pot':
+                $params['potfile'] = isset($result->command->args['potfile']) ? $result->command->args['potfile'] : 'myproject.pot';
+                $m = new \photon\manager\PotGenerator($params);
+                exit($m->run());
                 break;
             case 'test':
                 $params['directory'] = $result->command->options['directory'];

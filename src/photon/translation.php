@@ -80,8 +80,7 @@ class Translation
 
             return; // We consider that it was already loaded.
         }
-        self::loadLocale($lang, Conf::f('locale_folders', array()), 
-                         explode(PATH_SEPARATOR, get_include_path()));
+        self::loadLocale($lang);
     }
     
     /**
@@ -102,16 +101,17 @@ class Translation
      * It does not activate the locale.
      *
      * @param $lang Language to load
-     * @param $apps Array of application to load the language for
-     * @param $apps_paths Paths in which are the applications
      * @param $photon Load the Photon translations (true)
      * @return array Path to loaded file
      */
-    public static function loadLocale($lang, $apps, $apps_paths, $photon=true)
+    public static function loadLocale($lang, $photon=true)
     {
-        self::$loaded[$lang] = array();
-        $tmpl = '%s/%s/locale/%s/%s.po';
+        $locale_folders = Conf::f('locale_folders', array());
+        $path_folders = explode(PATH_SEPARATOR, get_include_path());
         $loaded = array();
+
+        self::$loaded[$lang] = array();
+
         if ($photon) {
             $pofile = sprintf('%s/locale/%s/photon.po', __DIR__, $lang); 
             if (file_exists($pofile)) {
@@ -119,10 +119,11 @@ class Translation
                 $loaded[] = $pofile;
             }
         }
-        foreach ($apps as $app) {
-            foreach ($apps_paths as $apps_path) {
+
+        foreach ($locale_folders as $locale_folder) {
+            foreach ($path_folders as $path_folder) {
                 $pofile = sprintf('%s/%s/%s.po', 
-                                  $apps_path, $app, $lang);
+                                  $path_folder, $locale_folder, $lang);
                 if (file_exists($pofile)) {
                     self::$loaded[$lang] += self::readPoFile($pofile);
                     $loaded[] = $pofile;
