@@ -28,8 +28,9 @@
  */
 namespace photon\server;
 
-use photon\log\Timer as Timer;
-use photon\log\Log as Log;
+use photon\log\Timer;
+use photon\log\Log;
+use photon\event\Event;
 
 /**
  * Generate a uuid for each incoming request.
@@ -99,18 +100,11 @@ class Server
      */
     public $ctx = null; 
 
-
-
     public $stats = array('start_time' => 0,
                           'requests' => 0,
                           'memory_current' => 0,
                           'poll_avg' => array(),
                           'memory_peak' => 0);
-
-    /**
-     * Store the necessary information to update the poll_avg stats.
-     */
-    public $poll_stats = array('avg' => 0.0, 'total' => 0, 'count' => 0);
 
     public function __construct($conf=array())
     {
@@ -209,27 +203,36 @@ class Server
     public function processRequest($socket)
     {
         Timer::start('photon.process_request');
+        $uuid = request_uuid($this->server_id); 
         $conn = new \photon\mongrel2\Connection($socket, $this->pub_socket);
         $mess = $conn->recv();
-        // This could be converted to use server_id + listener
-        // connection id, it will wrap but should provide enough
-        // uniqueness to track the effect of a request in the app.
-        $uuid = request_uuid($this->server_id); 
-        $req = new \photon\http\Request($mess);
-        $req->uuid = $uuid;
-        $req->conn = $conn;
-        list($req, $response) = \photon\core\Dispatcher::dispatch($req);
-        // If the response is false, the view is simply not
-        // sending an answer, most likely the work was pushed to
-        // another backend. Yes, you do not need to reply after a
-        // recv().
-        if (false !== $response) {
-            if (is_string($response->content)) {
-                $conn->reply($mess, $response->render());
-            } else {
-                Log::debug(array('photon.process_request', $uuid, 
-                                 'SendIterable'));
-                $response->sendIterable($mess, $conn);
+        
+        if ($mess->is_disconnect()) {
+            // A client disconnect from mongrel2 before a answer was send
+            // Use this event to cleanup your context (long polling socket, task queue, ...)
+            $event_params = array('conn_id' => $mess->conn_id);
+            Event::send('\photon\server\Server\processRequest::disconnect', null, $event_params);
+        } else {
+            // This could be converted to use server_id + listener
+            // connection id, it will wrap but should provide enough
+            // uniqueness to track the effect of a request in the app.
+            $req = new \photon\http\Request($mess);
+            $req->uuid = $uuid;
+            $req->conn = $conn;
+            
+            list($req, $response) = \photon\core\Dispatcher::dispatch($req);
+            // If the response is false, the view is simply not
+            // sending an answer, most likely the work was pushed to
+            // another backend. Yes, you do not need to reply after a
+            // recv().
+            if (false !== $response) {
+                if (is_string($response->content)) {
+                    $conn->reply($mess, $response->render());
+                } else {
+                    Log::debug(array('photon.process_request', $uuid,
+                                     'SendIterable'));
+                    $response->sendIterable($mess, $conn);
+                }
             }
         }
         unset($mess); // Cleans the memory with the __destruct call.
