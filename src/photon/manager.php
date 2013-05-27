@@ -168,6 +168,17 @@ class Base
     }
 }
 
+class ShowConfig extends Base
+{
+    public function run()
+    {
+        $this->loadConfig();
+        $conf = Conf::dump();
+        unset($conf['cmd_params']);
+        var_export($conf);
+    }
+}
+
 /**
  * Initialisation of a new project.
  *

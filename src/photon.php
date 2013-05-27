@@ -86,6 +86,8 @@ namespace photon
                                        'action'      => 'StoreString',
                                        'help_name'   => 'myproject.pot',
                                        'description' => 'Output filename for the gettext template'))),
+                      'show-config' =>
+           array('desc' => 'Dump the config file on the standard output, usefull to show phar packaged configuration'),
                       'serve' =>
            array('desc' => 'start a Photon handler server',
                  'opts' => array('server_id' =>
@@ -207,6 +209,10 @@ namespace
                 // $result->command instance:
                 $params['project'] = $result->command->args['project'];
                 $m = new \photon\manager\Init($params);
+                $m->run();
+                break;
+            case 'show-config':
+                $m = new \photon\manager\ShowConfig($params);
                 $m->run();
                 break;
             case 'pot':
