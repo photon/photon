@@ -744,6 +744,9 @@ class Packager extends Base
             if (substr($fileInfo->getFilename(), -5) == '.phar') {
                 continue;
             }
+            if ($fileInfo->getFilename() == '.pharignore') {
+                continue;
+            }
             if (preg_match('/^config\.(\w+\.)*php/', $fileInfo->getFilename())) {
                 continue;
             }
