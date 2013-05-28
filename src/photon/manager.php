@@ -720,6 +720,7 @@ class Packager extends Base
         }
         array_shift($photon); // Remove shebang
         $phar->addFromString('photon.php', implode('', $photon));
+        $phar['photon.php']->compress(\Phar::GZ);
         $auto = file($this->photon_path . '/photon/autoload.php');
         foreach ($photon as &$line) {
             if (0 === strpos(trim($line), 'set_include_path')) {
@@ -727,6 +728,7 @@ class Packager extends Base
             }
         }
         $phar->addFromString('photon/autoload.php', implode('', $auto));
+        $phar['photon/autoload.php']->compress(\Phar::GZ);
     }
 
 
