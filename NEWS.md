@@ -1,10 +1,17 @@
 # Photon 0.3 - xxxxxx LANG="en_EN.UTF-8" date -u -R xxxxxxxx
 
 ## Changes
+- Handle mongrel2 disconnect message earlier to avoid Middleware
+  execution. An event is emitted.
 
 ## New Features
+- Add hnu command "show-config" to show the config file on the
+  standard output, usefull to show phar packaged configuration.
+- Set photon version to the current commit id, when create phar
+  from a photon version not installed by PEAR.
 
 ## Bugfixes
+- #845 : there is no reference sign on a function call
 
 # Photon 0.2 - Mon, 11 Apr 2011 13:10:23 +0000
 

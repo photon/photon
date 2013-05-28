@@ -712,15 +712,29 @@ class Packager extends Base
             $phar->addFile($path, $file);
             $phar[$file]->compress(\Phar::GZ);
         }
+
         $photon = file($this->photon_path . '/photon.php');
         foreach ($photon as &$line) {
             if (trim($line) == 'include_once __DIR__ . \'/photon/autoload.php\';') {
                 $line = '    include_once \'photon/autoload.php\';'."\n";
+            } else
+            if (false !== mb_strstr($line, '@version@')) {
+                $this->info("Photon run from source, not a PEAR install");
+                $output = '';
+                $return_var = 0;
+                $command = 'git --git-dir="'. $this->photon_path .'/../.git" log -1 --format="%h"';
+                exec($command, $output, $return_var);
+                if ($return_var !== 0) {
+                    throw new Exception('Can\'t get the last commit id.');
+                }
+                $this->info('Photon version is ' . \end($output));
+                $line = str_replace('@version@', 'commit ' . \end($output), $line);
             }
         }
         array_shift($photon); // Remove shebang
         $phar->addFromString('photon.php', implode('', $photon));
         $phar['photon.php']->compress(\Phar::GZ);
+
         $auto = file($this->photon_path . '/photon/autoload.php');
         foreach ($photon as &$line) {
             if (0 === strpos(trim($line), 'set_include_path')) {
@@ -800,6 +814,9 @@ class Packager extends Base
                 continue;
             }
             if ($phar_path == 'photon/autoload.php') {
+                continue;
+            }
+            if ($phar_path == 'photon.php') {
                 continue;
             }
             $out[$phar_path] = $disk_path;
