@@ -54,35 +54,49 @@ class Runner
      */
     public function __construct($connect=true)
     {
-        $this->id = 'NOT-USED-YET'; 
-        if ($connect) {
-            $this->connect();
-        }
+        $this->id = 'NOT-USED-YET';
+        self::$ctx = new \ZMQContext(); 
     }
 
-    public function connect()
+    private function connectTask($name, $class=null)
     {
-        if (null !== self::$ctx) {
-            return;
+        if (null === self::$ctx) {
+            return false;
         }
-        self::$ctx = new \ZMQContext(); 
-        foreach (Conf::f('installed_tasks', array()) as $name => $class) {
-            // We need to know if this is an async or sync task
-            // We need to get the bind socket.
-            $conf = Conf::f('photon_task_' . $name, array());
-            $bind = (isset($conf['sub_addr'])) ? $conf['sub_addr'] : SUB_ADDR;
-            $type = (isset($conf['type'])) ? $conf['type'] : $class::$type;
-            if ('async' === $type) {
-                self::$sockets[$name] = new \ZMQSocket(self::$ctx, 
-                                                       \ZMQ::SOCKET_DOWNSTREAM);
-                self::$sockets[$name]->connect($bind);
-            } else {
-                self::$sockets[$name] = new \ZMQSocket(self::$ctx, 
-                                                       \ZMQ::SOCKET_REQ);
-                self::$sockets[$name]->connect($bind);
-            }
-            self::$types[$name] = $type;
+        
+        if (isset(self::$sockets[$name])) {
+            return true;
         }
+        
+        if ($class === null) {
+            $tasks = Conf::f('installed_tasks', array());
+            $class = $tasks[$name];
+        }
+    
+        // We need to know if this is an async or sync task
+        // We need to get the bind socket.
+        $conf = Conf::f('photon_task_' . $name, array());
+        $bind = (isset($conf['sub_addr'])) ? $conf['sub_addr'] : SUB_ADDR;
+        $type = (isset($conf['type'])) ? $conf['type'] : $class::$type;
+        
+        if ('async' === $type) {
+            self::$sockets[$name] = new \ZMQSocket(self::$ctx, 
+                                                   \ZMQ::SOCKET_DOWNSTREAM);
+            self::$sockets[$name]->connect($bind);
+        } else {
+            self::$sockets[$name] = new \ZMQSocket(self::$ctx, 
+                                                   \ZMQ::SOCKET_REQ);
+            self::$sockets[$name]->connect($bind);
+        }
+        self::$types[$name] = $type;
+        
+        return true;
+    }
+    
+    private function disconnectTask($name)
+    {
+        unset(self::$sockets[$name]);
+        unset(self::$types[$name]);
     }
 
     /*
@@ -91,6 +105,11 @@ class Runner
      */
     public function run($task, $payload, $encode=true, $timeout=-1)
     {
+        // Ensure a valid socket exist for this task
+        if ($this->connectTask($task) === false) {
+            return null;
+        }
+    
         if ($encode) {
             $payload = json_encode($payload);
         }
@@ -100,10 +119,11 @@ class Runner
         try {
             self::$sockets[$task]->send($mess, \ZMQ::MODE_NOBLOCK);
         } catch (\ZMQSocketException $e) {
+            $this->disconnectTask($task);
             return null;
         }
         if ('async' === self::$types[$task]) {
-            return;
+            return true;
         }
 
         // Wait the answer
@@ -123,7 +143,8 @@ class Runner
             }
         } catch (\ZMQPollException $e) {
             Log::fatal('Poll failed: ' . $e->getMessage());
-            return;
+            $this->disconnectTask($task);
+            return null;
         }
         
         // An answer has been received
