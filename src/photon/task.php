@@ -85,19 +85,54 @@ class Runner
         }
     }
 
-    public function run($task, $payload, $encode=true)
+    /*
+     *  Timeout allow the serve thread which call Runner::run, to
+     *  return if the Task don't answer or are offline.
+     */
+    public function run($task, $payload, $encode=true, $timeout=-1)
     {
         if ($encode) {
             $payload = json_encode($payload);
         }
-        $mess = sprintf('%s %s %s', $task, $this->id, $payload);
-        self::$sockets[$task]->send($mess);
-        if ('async' === self::$types[$task]) {
 
+        // Send the message to the Task        
+        $mess = sprintf('%s %s %s', $task, $this->id, $payload);
+        try {
+            self::$sockets[$task]->send($mess, \ZMQ::MODE_NOBLOCK);
+        } catch (\ZMQSocketException $e) {
+            return null;
+        }
+        if ('async' === self::$types[$task]) {
             return;
         }
-        list( , , $res) = explode(' ', self::$sockets[$task]->recv(), 3);
-        return ($encode) ? json_decode($res) : $res;
+
+        // Wait the answer
+        $poll = new \ZMQPoll();
+        $poll->add(self::$sockets[$task], \ZMQ::POLL_IN);
+        if ($timeout !== -1) {
+            $timeout = $timeout * 1000; // Convert timeout from seconds to ms
+        }
+        $to_read = $to_write = array();
+        try {
+            $events = $poll->poll($to_read, $to_write, $timeout);
+            $errors = $poll->getLastErrors();
+            if (count($errors) > 0) {
+                foreach ($errors as $error) {
+                    Log::error('Error polling object: ' . $error);
+                }
+            }
+        } catch (\ZMQPollException $e) {
+            Log::fatal('Poll failed: ' . $e->getMessage());
+            return;
+        }
+        
+        // An answer has been received
+        if ($events > 0) {  
+            list( , , $res) = explode(' ', self::$sockets[$task]->recv(), 3);
+            return ($encode) ? json_decode($res) : $res;
+        }
+        
+        return null;
     }
 }
 
