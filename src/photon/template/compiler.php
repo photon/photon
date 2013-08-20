@@ -110,39 +110,25 @@ class Compiler
      * These default filters are merged with the 'template_modifiers' defined
      * in the configuration of the application.
      */
-    protected $_modifier = array('upper' => '\\mb_strtoupper', 
-                                 'lower' => '\\mb_strtolower',
-                                 'count' => '\\count',
-                                 'md5' => '\\md5',
-                                 'sha1' => '\\sha1',
-                                 'escxml' => '\\htmlspecialchars', 
-                                 'strip_tags' => '\\strip_tags', 
-                                 'escurl' => '\\rawurlencode',
-                                 'capitalize' => '\\ucwords',
-                                 'debug' => '\\print_r', 
-                                 'fulldebug' => '\\var_export',
-                                 'trim' => '\\trim',
-                                 'ltrim' => '\\ltrim',
-                                 'rtrim' => '\\rtrim',
-                                 'safe' => '\\photon\\template\\Modifier::safe',
-                                 'date' => '\\photon\\template\\Modifier::dateFormat',
-                                 'ftime' => '\\photon\\template\\Modifier::strftime',
-
-                                 /*
-                                 'nl2br' => '\\todo',
-                                 'dump' => '\\todo_Template_varExport', 
-                                 'escape' => '\\Photon_Template_htmlspecialchars',
-                                 'unsafe' => '\\Photon_Template_unsafe',
-
-
-                                 'time' => '\\Photon_Template_timeFormat',
-                                 'dateago' => '\\Photon_Template_dateAgo',
-                                 'timeago' => '\\Photon_Template_timeAgo',
-                                 'email' => '\\Photon_Template_safeEmail',
-                                 'first' => '\\Photon_Template_first',
-                                 'last' => '\\Photon_Template_last',
-                                 */
-                                 );
+    protected $_modifier = array(
+        'upper' => '\\mb_strtoupper',
+        'lower' => '\\mb_strtolower',
+        'count' => '\\count',
+        'md5' => '\\md5',
+        'sha1' => '\\sha1',
+        'escxml' => '\\htmlspecialchars',
+        'strip_tags' => '\\strip_tags',
+        'escurl' => '\\rawurlencode',
+        'capitalize' => '\\ucwords',
+        'debug' => '\\print_r',
+        'fulldebug' => '\\var_export',
+        'trim' => '\\trim',
+        'ltrim' => '\\ltrim',
+        'rtrim' => '\\rtrim',
+        'safe' => '\\photon\\template\\Modifier::safe',
+        'date' => '\\photon\\template\\Modifier::dateFormat',
+        'ftime' => '\\photon\\template\\Modifier::strftime',
+    );
 
     /**
      * After the compilation is completed, this contains the list of
@@ -159,16 +145,11 @@ class Compiler
      * in the configuration of the application.
      */
     protected $_allowedTags = array(
-                                    'url' => '\\photon\\template\\tag\\Url',
-                                    'getmsgs' => '\\photon\\template\\tag\\Messages',
-                                    /*
-                                    'aurl' => '\\Photon_Template_Tag_Rurl',
-                                    'media' => '\\Photon_Template_Tag_MediaUrl',
-                                    'amedia' => '\\Photon_Template_Tag_RmediaUrl',
-                                    'aperm' => '\\Photon_Template_Tag_APerm',
-                                    'getmsgs' => '\\Photon_Template_Tag_Messages',
-                                    */
-                                    );
+        'url' => '\\photon\\template\\tag\\Url',
+        'getmsgs' => '\\photon\\template\\tag\\Messages',
+        'event' => '\\photon\\template\\tag\\Event',
+    );
+    
     /**
      * During compilation, all the tags are created once so to query
      * their interface easily.
