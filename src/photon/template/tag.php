@@ -168,9 +168,16 @@ class Messages extends Tag
  */
 class Event extends \photon\template\tag\Tag
 {
-    function start($eventName, $sender=null)
+    function start($eventName, $params=array())
     {
-        \photon\event\Event::send($eventName, $sender);
+        $request = $this->context->get('request');
+        if ('' == $request) {
+            return;
+        }
+        
+        $sender = isset($request->view[0]['name']) ? $request->view[0]['name'] : null;
+        $ctx = array_merge($params, array('request' => $request));
+        \photon\event\Event::send($eventName, $sender, $ctx);
     }
 }
 

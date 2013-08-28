@@ -3,15 +3,20 @@
 ## Changes
 - Handle mongrel2 disconnect message earlier to avoid Middleware
   execution. An event is emitted.
+- Rewrite Runner class to detect when worker are away, ans don't block
+  the handler.
 
 ## New Features
 - Add hnu command "show-config" to show the config file on the
   standard output, usefull to show phar packaged configuration.
 - Set photon version to the current commit id, when create phar
   from a photon version not installed by PEAR.
+- Add template tag to emit a event
 
 ## Bugfixes
 - #845 : there is no reference sign on a function call
+- Ensure all photon source are compressed in the PHAR
+- Don't add .pharignore in the PHAR, related to PHP bug https://bugs.php.net/bug.php?id=64931
 
 # Photon 0.2 - Mon, 11 Apr 2011 13:10:23 +0000
 
