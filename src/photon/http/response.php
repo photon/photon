@@ -31,6 +31,17 @@ use \photon\http\Response as Response;
 use \photon\mail\EMail as Mail;
 use \photon\template as template;
 
+class BadRequest extends Response
+{
+    public function __construct($request)
+    {
+        $content = 'The request could not be understood by the server due to malformed syntax.'
+            . "\n\n" . '400 - BadRequest';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 400;
+    }
+}
+
 class Forbidden extends Response
 {
     public function __construct($request)
