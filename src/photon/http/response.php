@@ -51,9 +51,6 @@ class Redirect extends Response
     }
 }
 
-/**
- * A response to redirect after POSTing a form.
- */
 class FormRedirect extends Redirect
 {
     /**
@@ -71,6 +68,13 @@ class FormRedirect extends Redirect
 
 class NotModified extends Response
 {
+    /**
+     * Indicates that the resource has not been modified since the version specified by
+     * the request headers If-Modified-Since or If-Match. This means that there is no need
+     * to retransmit the resource, since the client still has a previously-downloaded copy.
+     *
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.5
+     */
     public function __construct($content='', $mimetype='text/html; charset=utf-8')
     {
         parent::__construct('', $mimetype);
@@ -80,6 +84,13 @@ class NotModified extends Response
 
 class BadRequest extends Response
 {
+    /**
+     * The request could not be understood by the server due to malformed syntax.
+     * The client SHOULD NOT repeat the request without modifications.
+     *
+     * @param Request The request object of the current page.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.1
+     */
     public function __construct($request)
     {
         $content = 'The request could not be understood by the server due to malformed syntax.'
@@ -91,6 +102,12 @@ class BadRequest extends Response
 
 class Forbidden extends Response
 {
+    /**
+     * The server understood the request, but is refusing to fulfill it.
+     *
+     * @param Request The request object of the current page.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4
+     */
     public function __construct($request)
     {
         $content = 'You are not authorized to view this page. You do not have permission' . "\n"
@@ -103,6 +120,13 @@ class Forbidden extends Response
 
 class NotFound extends Response
 {
+    /**
+     * The server has not found anything matching the Request-URI.
+     * No indication is given of whether the condition is temporary or permanent.
+     *
+     * @param Request The request object of the current page.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.5
+     */
     public function __construct($request)
     {
         $content = sprintf('The requested URL %s was not found on this server.' . "\n" .
@@ -117,6 +141,15 @@ class NotFound extends Response
 
 class NotSupported extends Response
 {
+    /**
+     * The method specified in the Request-Line is not allowed for the resource
+     * identified by the Request-URI. The response MUST include an Allow header containing
+     * a list of valid methods for the requested resource.
+     *
+     * @param Request The request object of the current page.
+     * @param Allow The list of HTTP method allow for this URI.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.6
+     */
     public function __construct($request, $allow=array('GET'))
     {
         $content = sprintf('HTTP method %s is not supported for the URL %s.' 
@@ -137,6 +170,14 @@ class NotSupported extends Response
 
 class NotImplemented extends Response
 {
+    /**
+     * The server does not support the functionality required to fulfill the request.
+     * This is the appropriate response when the server does not recognize the request
+     * method and is not capable of supporting it for any resource.
+     *
+     * @param Request The request object of the current page.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.2
+     */
     public function __construct($request)
     {
         $content = 'The server either does not recognize the request method, or it lacks the ability to fulfill the request' . "\n\n"
@@ -179,7 +220,6 @@ class RedirectToLogin extends Response
         $this->status_code = 302;
     }
 }
-
 
 
 class Json extends Response
