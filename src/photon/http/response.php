@@ -31,9 +31,51 @@ use \photon\http\Response as Response;
 use \photon\mail\EMail as Mail;
 use \photon\template as template;
 
-/**
- * A HTTP response doing a redirect.
- */
+class Created extends Response
+{
+    /**
+     * The request has been fulfilled and resulted in a new resource being created.
+     *
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.2
+     */
+    function __construct($content='')
+    {
+        parent::__construct($content);
+        $this->status_code = 201;
+    }
+}
+
+class Accepted extends Response
+{
+    /**
+     * The request has been accepted for processing, but the processing has not been completed.
+     * The request might or might not eventually be acted upon,
+     * as it might be disallowed when processing actually takes place.
+     *
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.3
+     */
+    function __construct($content='')
+    {
+        parent::__construct($content);
+        $this->status_code = 202;
+    }
+}
+
+class NoContent extends Response
+{
+    /**
+     * The server successfully processed the request, but is not returning any content.
+     * Usually used as a response to a successful delete request.
+     *
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.5
+     */
+    function __construct()
+    {
+        parent::__construct();
+        $this->status_code = 204;
+    }
+}
+
 class Redirect extends Response
 {
     /**
@@ -91,7 +133,7 @@ class BadRequest extends Response
      * @param Request The request object of the current page.
      * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.1
      */
-    public function __construct($request)
+    public function __construct($request=null)
     {
         $content = 'The request could not be understood by the server due to malformed syntax.'
             . "\n\n" . '400 - BadRequest';
@@ -108,7 +150,7 @@ class Forbidden extends Response
      * @param Request The request object of the current page.
      * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4
      */
-    public function __construct($request)
+    public function __construct($request=null)
     {
         $content = 'You are not authorized to view this page. You do not have permission' . "\n"
             . 'to view the requested directory or page using the credentials supplied.' . "\n\n"

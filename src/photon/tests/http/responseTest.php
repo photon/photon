@@ -92,12 +92,30 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
         $socket->setNextRecv(file_get_contents(__DIR__ . '/../data/example.payload'));
         $conn = new mongrel2\Connection($socket, $socket);
         $mess = $conn->recv();
-        
+
         $res = new http\Response($iter);
         $res->sendIterable($mess, $conn);
         $res->sendIterable($mess, $conn, false);
     }
-    
+
+    public function testCreatedRequest()
+    {
+        $res = new response\Created();
+        $this->assertSame(201, $res->status_code);
+    }
+
+    public function testAcceptedRequest()
+    {
+        $res = new response\Accepted();
+        $this->assertSame(202, $res->status_code);
+    }
+
+    public function testNoContentRequest()
+    {
+        $res = new response\NoContent();
+        $this->assertSame(204, $res->status_code);
+    }
+
     public function testBadRequest()
     {
         $res = new response\BadRequest('/');
@@ -109,7 +127,7 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
         $res = new response\NotImplemented('/');
         $this->assertSame(501, $res->status_code);
     }
-    
+
     public function testServiceUnavailable()
     {
         $res = new response\ServiceUnavailable('/');
