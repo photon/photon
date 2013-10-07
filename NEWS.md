@@ -1,20 +1,28 @@
 # Photon 0.3 - xxxxxx LANG="en_EN.UTF-8" date -u -R xxxxxxxx
 
 ## Changes
-- Handle mongrel2 disconnect message earlier to avoid Middleware
-  execution. An event is emitted.
-- Rewrite Runner class to detect when worker are away, ans don't block
-  the handler.
+- Handle mongrel2 disconnect message earlier to avoid Middleware execution.  
+  An event is emitted.
+- Rewrite Runner class to detect when worker are away, ans don't block the handler.
+- Increase code coverage of unit tests
 
 ## New Features
-- Add hnu command "show-config" to show the config file on the
-  standard output, usefull to show phar packaged configuration.
-- Set photon version to the current commit id, when create phar
-  from a photon version not installed by PEAR.
+- Add hnu command "show-config" to show the config file on the standard output. Usefull to show phar packaged configuration.
+- Set photon version to the current commit id, when create phar from a photon version not installed by PEAR.
 - Add template tag to emit a event
-
+- Check each generated template for syntax error.  
+  Phar can't be build if a template have a syntax error.
+- Add other common HTTP answers:
+    - 201 Created
+    - 202 Accepted
+    - 204 No Content
+    - 400 Bad Request
+    - 501 Not Implemented
+    - 503 Service Unavailable
+ 
+ 
 ## Bugfixes
-- #845 : there is no reference sign on a function call
+- Issue 845: there is no reference sign on a function call
 - Ensure all photon source are compressed in the PHAR
 - Don't add .pharignore in the PHAR, related to PHP bug https://bugs.php.net/bug.php?id=64931
 
