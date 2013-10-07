@@ -170,14 +170,14 @@ class Event extends \photon\template\tag\Tag
 {
     function start($eventName, $params=array())
     {
+        $sender = null;
         $request = $this->context->get('request');
-        if ('' == $request) {
-            return;
+        if ('' !== $request) {
+            $sender = isset($request->view[0]['name']) ? $request->view[0]['name'] : null;
+            $params = array_merge($params, array('request' => $request));
         }
         
-        $sender = isset($request->view[0]['name']) ? $request->view[0]['name'] : null;
-        $ctx = array_merge($params, array('request' => $request));
-        \photon\event\Event::send($eventName, $sender, $ctx);
+        \photon\event\Event::send($eventName, $sender, $params);
     }
 }
 
