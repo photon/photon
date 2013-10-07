@@ -187,6 +187,29 @@ class NotImplemented extends Response
     }
 }
 
+
+class ServiceUnavailable extends Response
+{
+    /**
+     * The server is currently unable to handle the request due to a temporary overloading
+     * or maintenance of the server. The implication is that this is a temporary condition
+     * which will be alleviated after some delay. If known, the length of the delay MAY
+     * be indicated in a Retry-After header.
+     *
+     * @param Request The request object of the current page.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.4
+     */
+    public function __construct($request, $retryAfter=300)
+    {
+        $content = 'The server is currently unable to handle the request' . "\n\n"
+                   . '501 - Service Unavailable';
+        parent::__construct($content, 'text/plain');
+        $this->headers['Retry-After'] = $retryAfter;
+        $this->status_code = 503;
+    }
+}
+
+
 class RedirectToLogin extends Response
 {
     /**

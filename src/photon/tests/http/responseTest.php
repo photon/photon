@@ -97,4 +97,22 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
         $res->sendIterable($mess, $conn);
         $res->sendIterable($mess, $conn, false);
     }
+    
+    public function testBadRequest()
+    {
+        $res = new response\BadRequest('/');
+        $this->assertSame(400, $res->status_code);
+    }
+
+    public function testNotImplemented()
+    {
+        $res = new response\NotImplemented('/');
+        $this->assertSame(501, $res->status_code);
+    }
+    
+    public function testServiceUnavailable()
+    {
+        $res = new response\ServiceUnavailable('/');
+        $this->assertSame(503, $res->status_code);
+    }
 }
