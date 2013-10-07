@@ -39,7 +39,7 @@ class Exception extends \Exception {}
 
 /**
  * Compile a template file to PHP.
- * 
+ *
  * The important elements of the compiler are the include extends
  * block and superblock directives. They cannot be handled in a linear
  * way like the rest of the elements, they are more like nodes.
@@ -49,42 +49,42 @@ class Exception extends \Exception {}
  * also fast and robust at runtime.
  *
  * @see http://php.net/manual/en/tokens.php
- * 
+ *
  * @credit Copyright (C) 2006 Laurent Jouanneau.
  */
 class Compiler
 {
-    /** 
-     * Store the literal blocks. 
+    /**
+     * Store the literal blocks.
      **/
     protected $_literals;
-    
-    /** 
-     * Variables. 
+
+    /**
+     * Variables.
      *
      * Authorized names for the variables. For example, as a designer
      * could put something like: {$class} in a template, you need to
      * have the T_CLASS token as authorized variable.
      */
-    protected $_vartype = array(T_CHARACTER, T_CONSTANT_ENCAPSED_STRING, 
-                                T_DNUMBER, T_ENCAPSED_AND_WHITESPACE, 
-                                T_LNUMBER, T_OBJECT_OPERATOR, T_STRING, 
-                                T_WHITESPACE, T_ARRAY, T_CLASS, T_PRIVATE, 
+    protected $_vartype = array(T_CHARACTER, T_CONSTANT_ENCAPSED_STRING,
+                                T_DNUMBER, T_ENCAPSED_AND_WHITESPACE,
+                                T_LNUMBER, T_OBJECT_OPERATOR, T_STRING,
+                                T_WHITESPACE, T_ARRAY, T_CLASS, T_PRIVATE,
                                 T_LIST);
 
-    /** 
-     * Assignation operators. 
+    /**
+     * Assignation operators.
      */
-    protected $_assignOp = array(T_AND_EQUAL, T_DIV_EQUAL, T_MINUS_EQUAL, 
-                                 T_MOD_EQUAL, T_MUL_EQUAL, T_OR_EQUAL, 
-                                 T_PLUS_EQUAL, T_PLUS_EQUAL, T_SL_EQUAL, 
+    protected $_assignOp = array(T_AND_EQUAL, T_DIV_EQUAL, T_MINUS_EQUAL,
+                                 T_MOD_EQUAL, T_MUL_EQUAL, T_OR_EQUAL,
+                                 T_PLUS_EQUAL, T_PLUS_EQUAL, T_SL_EQUAL,
                                  T_SR_EQUAL, T_XOR_EQUAL);
 
-    /** 
-     * Operators. 
+    /**
+     * Operators.
      */
-    protected  $_op = array(T_BOOLEAN_AND, T_BOOLEAN_OR, T_EMPTY, T_INC, 
-                            T_ISSET, T_IS_EQUAL, T_IS_GREATER_OR_EQUAL, 
+    protected  $_op = array(T_BOOLEAN_AND, T_BOOLEAN_OR, T_EMPTY, T_INC,
+                            T_ISSET, T_IS_EQUAL, T_IS_GREATER_OR_EQUAL,
                             T_IS_IDENTICAL, T_IS_NOT_EQUAL, T_IS_NOT_IDENTICAL,
                             T_IS_SMALLER_OR_EQUAL, T_LOGICAL_AND, T_LOGICAL_OR,
                             T_LOGICAL_XOR, T_SR, T_SL, T_DOUBLE_ARROW);
@@ -139,7 +139,7 @@ class Compiler
     public $_usedModifiers = array();
 
     /**
-     * Default allowed extra tags/functions. 
+     * Default allowed extra tags/functions.
      *
      * These default tags are merged with the 'template_tags' defined
      * in the configuration of the application.
@@ -149,7 +149,7 @@ class Compiler
         'getmsgs' => '\\photon\\template\\tag\\Messages',
         'event' => '\\photon\\template\\tag\\Event',
     );
-    
+
     /**
      * During compilation, all the tags are created once so to query
      * their interface easily.
@@ -207,7 +207,7 @@ class Compiler
      *
      * @param $template_file string Basename of the template file
      * @param $folders array Source folders of the templates
-     * @param $options array 
+     * @param $options array
      */
     function __construct($template_file, $folders, $options=array())
     {
@@ -224,7 +224,7 @@ class Compiler
                                           Conf::f('template_tags', array()));
         Event::send('\photon\template\compiler\Compiler::construct_load_tags', null, $this->_allowedTags);
 
-        $this->_modifier = array_merge($this->_modifier, 
+        $this->_modifier = array_merge($this->_modifier,
                                        $options['modifiers'],
                                        Conf::f('template_modifiers', array()));
         Event::send('\photon\template\compiler\Compiler::construct_load_modifiers', null, $this->_modifier);
@@ -235,7 +235,7 @@ class Compiler
 
         $this->_allowedInVar = array_merge($this->_vartype, $this->_op);
         $this->_allowedInExpr = array_merge($this->_vartype, $this->_op);
-        $this->_allowedAssign = array_merge($this->_vartype, $this->_assignOp, 
+        $this->_allowedAssign = array_merge($this->_vartype, $this->_assignOp,
                                             $this->_op);
 
         if ($options['load']) {
@@ -248,7 +248,7 @@ class Compiler
      *
      * @return string PHP code of the compiled template.
      */
-    function compile() 
+    function compile()
     {
         $this->compileBlocks();
         $tplcontent = $this->templateContent;
@@ -262,18 +262,35 @@ class Compiler
         $this->_literals = $_match[1];
         $tplcontent = preg_replace("!{literal}(.*?){/literal}!s", '{literal}', $tplcontent);
         // Core regex to parse the template
-        $result = preg_replace_callback('/{((.).*?)}/s', 
-                                        array($this, '_callback'), 
+        $result = preg_replace_callback('/{((.).*?)}/s',
+                                        array($this, '_callback'),
                                         $tplcontent);
         if (count($this->_blockStack)) {
             throw new Exception(sprintf(__('End tag of a block missing: %s'), end($this->_blockStack)));
         }
         // Clean the output
-        $result = str_replace(array('?><?php', '<?php ?>', '<?php  ?>'), 
-                              '', 
-                              $result);  
+        $result = str_replace(array('?><?php', '<?php ?>', '<?php  ?>'),
+                              '',
+                              $result);
         // To avoid the triming of the \n after a php closing tag.
-        return str_replace("?>\n", "?>\n\n", $result);
+        $result = str_replace("?>\n", "?>\n\n", $result);
+
+        // Check the PHP syntax of the result
+        $tmpFile = tempnam(sys_get_temp_dir(), 'photonSyntaxTester');
+        \file_put_contents($tmpFile, $result);
+        $phpBinary = 'php';
+        if ('WIN' === substr(PHP_OS, 0, 3)) {
+            $phpBinary = 'php.exe';
+        }
+
+        $retval = 0;
+        system($phpBinary . ' -l ' . $tmpFile . ' > /dev/null', $retval);
+        @unlink($tmpFile);
+        if ($retval !== 0) {
+            throw new Exception(sprintf(__('The compiled template contains PHP syntax : %s'), $this->_sourceFile));
+        }
+
+        return $result;
     }
 
     /**
@@ -283,18 +300,17 @@ class Compiler
     function getCompiledTemplate()
     {
         $result = $this->compile();
-        $code = array();
-        foreach ($this->_usedModifiers as $modifier) {
-            $code[] = '\photonLoadFunction(\''.$modifier.'\'); ';
-        }
-        if (count($code)) {
 
-            return '<?php ' . implode("\n", $code) . '?>' 
-                .$result;
-        } else {
+        if (count($this->_usedModifiers)) {
+            $code = array();
+            foreach ($this->_usedModifiers as $modifier) {
+                $code[] = '\photonLoadFunction(\''.$modifier.'\'); ';
+            }
 
-            return $result;
+            $result = '<?php ' . implode("\n", $code) . '?>' . $result;
         }
+
+        return $result;
     }
 
     /**
@@ -315,7 +331,7 @@ class Compiler
         $cnt = preg_match_all("!{block\s(\S+?)}(.*?){/block}!s", $tplcontent, $_match);
         // Compile the blocks
         for ($i=0; $i<$cnt; $i++) {
-            if (!isset($this->_extendBlocks[$_match[1][$i]]) 
+            if (!isset($this->_extendBlocks[$_match[1][$i]])
                 or false !== strpos($this->_extendBlocks[$_match[1][$i]], '~~{~~superblock~~}~~')) {
                 $compiler = clone($this);
                 $compiler->templateContent = $_match[2][$i];
@@ -337,7 +353,7 @@ class Compiler
         } else {
             // Replace the current blocks by a place holder
             if ($cnt) {
-                $this->templateContent = preg_replace("!{block\s(\S+?)}(.*?){/block}!s", "{block $1}", $tplcontent, -1); 
+                $this->templateContent = preg_replace("!{block\s(\S+?)}(.*?){/block}!s", "{block $1}", $tplcontent, -1);
             }
         }
     }
@@ -366,7 +382,7 @@ class Compiler
         throw new Exception(sprintf(__('Template file not found: %s.'), $file));
     }
 
-    function _callback($matches) 
+    function _callback($matches)
     {
         list(,$tag, $firstcar) = $matches;
         if (!preg_match('/^\$|[\'"]|[a-zA-Z\/]$/', $firstcar)) {
@@ -497,7 +513,7 @@ class Compiler
             $res = '?>~~{~~superblock~~}~~<?php ';
             break;
         case 'trans':
-            $argfct = $this->_parseFinal($args, $this->_allowedAssign); 
+            $argfct = $this->_parseFinal($args, $this->_allowedAssign);
             $res = 'echo(__(' . $argfct . '));';
             break;
         case 'blocktrans':
@@ -508,7 +524,7 @@ class Compiler
                 $this->_transPlural = true;
                 $_args = $this->_parseFinal($args, $this->_allowedAssign,
                                              array(';', '[', ']'), true);
-                $res .= '$_btc='.trim(array_shift($_args)).'; '; 
+                $res .= '$_btc='.trim(array_shift($_args)).'; ';
             }
             $res .= 'ob_start(); ';
             break;
@@ -615,7 +631,7 @@ class Compiler
 
     */
 
-    function _parseFinal($string, $allowed=array(), 
+    function _parseFinal($string, $allowed=array(),
                          $exceptchar=array(';'), $getAsArray=false)
     {
         $tokens = token_get_all('<?php '.$string.'?>');
