@@ -40,7 +40,15 @@ function photonAutoLoad($class)
     // require_once will prevent double loading a file and will result
     // in non confusing error messages.
     // printf("Class: %s, file: %s\n", $class, $file);    
-    require_once $file;
+    
+    $paths = explode(PATH_SEPARATOR, get_include_path());
+    foreach($paths as $path) {
+        $fullpath = $path . DIRECTORY_SEPARATOR . $file;
+        if (is_readable($fullpath)) {
+            require_once $fullpath;
+            break;
+        }
+    } 
 }
 
 /**
