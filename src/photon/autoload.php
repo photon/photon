@@ -41,6 +41,11 @@ function photonAutoLoad($class)
     // in non confusing error messages.
     // printf("Class: %s, file: %s\n", $class, $file);    
     
+    if (Phar::running() !== false) {
+        require_once $file;
+        return;
+    }
+    
     $paths = explode(PATH_SEPARATOR, get_include_path());
     foreach($paths as $path) {
         $fullpath = $path . DIRECTORY_SEPARATOR . $file;
