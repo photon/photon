@@ -697,6 +697,7 @@ class Packager extends Base
     {
         foreach ($this->getProjectFiles() as $file => $path) {
             $phar->addFile($path, $file);
+            $this->verbose("[PROJECT ADD] " . $file);
             if (substr($file, -4) == '.php') {
                 $phar[$file]->compress(\Phar::GZ);
             }
@@ -734,6 +735,7 @@ class Packager extends Base
         array_shift($photon); // Remove shebang
         $phar->addFromString('photon.php', implode('', $photon));
         $phar['photon.php']->compress(\Phar::GZ);
+        $this->verbose('[PHOTON GENERATE] photon.php');
 
         $auto = file($this->photon_path . '/photon/autoload.php');
         foreach ($photon as &$line) {
@@ -743,6 +745,7 @@ class Packager extends Base
         }
         $phar->addFromString('photon/autoload.php', implode('', $auto));
         $phar['photon/autoload.php']->compress(\Phar::GZ);
+        $this->verbose('[PHOTON GENERATE] photon/autoload.php');
     }
 
 
@@ -768,13 +771,17 @@ class Packager extends Base
             if (!$fileInfo->isFile()) {
                 continue;
             }
-            if (substr($fileInfo->getFilename(), -5) == '.phar') {
+            $filename = $fileInfo->getFilename();
+            if (substr($filename, -5) == '.phar') {
+                $this->verbose("[PROJECT IGNORE] " . $filename);
                 continue;
             }
-            if ($fileInfo->getFilename() == '.pharignore') {
+            if ($filename == '.pharignore') {
+                $this->verbose("[PROJECT IGNORE] " . $filename);
                 continue;
             }
-            if (preg_match('/^config\.(\w+\.)*php/', $fileInfo->getFilename())) {
+            if (preg_match('/^config[\.-](\w+\.)*php/', $filename)) {
+                $this->verbose("[PROJECT IGNORE] " . $filename);
                 continue;
             }
 
@@ -808,18 +815,23 @@ class Packager extends Base
             }
             $phar_path = substr($disk_path, strlen($this->photon_path) + 1);
             if (false !== strpos($phar_path, 'photon/tests/')) {
+                $this->verbose("[PHOTON IGNORE] " . $phar_path);
                 continue;
             }
             if (false !== strpos($phar_path, 'photon/data/project_template')) {
+                $this->verbose("[PHOTON IGNORE] " . $phar_path);
                 continue;
             }
             if ($phar_path == 'photon/autoload.php') {
+                $this->verbose("[PHOTON IGNORE] " . $phar_path);
                 continue;
             }
             if ($phar_path == 'photon.php') {
+                $this->verbose("[PHOTON IGNORE] " . $phar_path);
                 continue;
             }
             $out[$phar_path] = $disk_path;
+            $this->verbose("[PHOTON ADD] " . $phar_path);
         }        
 
         return $out;
@@ -856,6 +868,7 @@ class %s
             foreach (\photon\path\Dir::listFiles($folder) as $tpl) {
                 if (!in_array($tpl, $already_compiled)) {
                     // Compile the template
+                    $this->verbose("[PROJECT COMPILE] " . $tpl);
                     $compiler = new compiler\Compiler($tpl, $folders);
                     $content = $compiler->compile();
                     $class = 'Template_' . md5($tpl);
@@ -867,6 +880,7 @@ class %s
                 }
             }
         }
+        file_put_contents('/tmp/test.php', $compiled);
         $phar->addFromString('photon/template/compiled.php', $compiled);
         //$phar['photon/template/compiled.php']->compress(\Phar::GZ);
 

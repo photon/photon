@@ -181,8 +181,15 @@ class IgnoreFilterIterator extends \RecursiveFilterIterator
             if (0 === strlen($pattern) || '#' === $pattern[0]) {
                 continue;
             }
+            
+            // Ignore all files and subfolders if the pattern is a folder
+            $folder = "";
+            if (substr($pattern, -1) === '/') {
+                $folder = ".*";
+            }
+            
             $pattern = str_replace($from, $to, $pattern);
-            $patterns[] = '#^' . $pattern . '$#';
+            $patterns[] = '#^/' . $pattern . $folder . '$#';
         }
 
         return $patterns;
