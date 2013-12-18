@@ -868,7 +868,7 @@ class %s
             }
         }
         $phar->addFromString('photon/template/compiled.php', $compiled);
-        $phar['photon/template/compiled.php']->compress(\Phar::GZ);
+        //$phar['photon/template/compiled.php']->compress(\Phar::GZ);
 
         $this->verbose(sprintf('Added %d compiled templates.', 
                                count($already_compiled)));
