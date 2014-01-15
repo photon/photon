@@ -38,7 +38,7 @@ class Exception extends \Exception {}
  * It is a bit different than normal exception as it can store an
  * array of messages.
  */
-class Invalid extends \Exception 
+class Invalid extends \Exception
 {
     public $messages = array();
 
@@ -59,19 +59,35 @@ class Invalid extends \Exception
 }
 
 /**
- * Form generation and validation class. 
+ * Form generation and validation class.
  *
  * The form handling is heavily inspired by the Django form handling.
  */
 class Form implements \Iterator, \ArrayAccess
 {
     /**
-     * The fields of the form. 
+     * The fields of the form.
      *
-     * They are the fully populated \photon\form\field\* of the form. You
-     * define them in the initFields method.
+     * They are the fully populated \photon\form\field\* of the form.
+     * You define them in the initFields method.
      */
     public $fields = array();
+
+    /**
+     * The fieldsets of the form.
+     *
+     * Fieldsets allow to organize the form in sections.
+     * They are the fully populated \photon\form\field\* of the form.
+     * You define them in the initFields method.
+     */
+    public $fieldsets = array();
+
+    /*
+     *  Internal list of fields of the Form
+     *  We merge fields & fieldsets into a single array
+     *  to easilly implement \Iterator, \ArrayAccess interfaces
+     */
+    public $_fields = array();
 
     /**
      * Prefix for the names of the fields.
@@ -96,7 +112,23 @@ class Form implements \Iterator, \ArrayAccess
         if ($label_suffix !== null) $this->label_suffix = $label_suffix;
 
         $this->initFields($extra);
+        $this->initInternalList();
         $this->f = new FieldProxy($this);
+    }
+
+    private function initInternalList()
+    {
+        foreach ($this->fields as $name => &$field) {
+            $this->_fields[$name] = $field;
+        }
+        unset($field);
+
+        foreach ($this->fieldsets as $title => $fieldsets) {
+            foreach ($fieldsets as $name => &$field) {
+                $this->_fields[$name] = $field;
+            }
+        }
+        unset($field);
     }
 
     function initFields($extra=array())
@@ -112,7 +144,7 @@ class Form implements \Iterator, \ArrayAccess
      */
     function addPrefix($field_name)
     {
-        return ('' !== $this->prefix) 
+        return ('' !== $this->prefix)
             ? $this->prefix . '-' . $field_name
             : $field_name;
     }
@@ -138,15 +170,17 @@ class Form implements \Iterator, \ArrayAccess
         $this->cleaned_data = array();
         $this->errors = array();
         $form_methods = get_class_methods($this);
-        foreach ($this->fields as $name=>$field) {
+
+        // Check fields
+        foreach ($this->fields as $name => $field) {
             $value = $field->widget->valueFromFormData($this->addPrefix($name),
-                                                       $this->data); 
+                                                       $this->data);
             try {
                 $this->cleaned_data[$name] = $field->clean($value);
                 $m = 'clean_' . $name;
                 if (in_array($m, $form_methods) || isset($this->$m)) {
                     $this->cleaned_data[$name] = $this->$m();
-                }                        
+                }
             } catch (Invalid $e) {
                 if (!isset($this->errors[$name])) {
                     $this->errors[$name] = array();
@@ -158,6 +192,31 @@ class Form implements \Iterator, \ArrayAccess
                 }
             }
         }
+
+        // Check each fieldsets
+        foreach ($this->fieldsets as $title => $fieldsets) {
+            foreach ($fieldsets as $name => $field) {
+                $value = $field->widget->valueFromFormData($this->addPrefix($name),
+                                                           $this->data);
+                try {
+                    $this->cleaned_data[$name] = $field->clean($value);
+                    $m = 'clean_' . $name;
+                    if (in_array($m, $form_methods) || isset($this->$m)) {
+                        $this->cleaned_data[$name] = $this->$m();
+                    }
+                } catch (Invalid $e) {
+                    if (!isset($this->errors[$name])) {
+                        $this->errors[$name] = array();
+                    }
+                    $this->errors[$name] = array_merge($this->errors[$name],
+                                                       $e->messages);
+                    if (isset($this->cleaned_data[$name])) {
+                        unset($this->cleaned_data[$name]);
+                    }
+                }
+            }
+        }
+
         if (empty($this->errors)) {
             try {
                 $this->cleaned_data = $this->clean();
@@ -173,7 +232,7 @@ class Form implements \Iterator, \ArrayAccess
             $this->is_valid = true;
 
             return true;
-        } 
+        }
         // as some errors, we do not have cleaned data available.
         $this->failed();
         $this->cleaned_data = array();
@@ -214,9 +273,11 @@ class Form implements \Iterator, \ArrayAccess
      */
     public function initial($name)
     {
-        return (isset($this->fields[$name])) 
-            ? $this->fields[$name]->initial
-            : '';
+        if (isset($this->_fields[$name])) {
+            return $this->_fields[$name]->initial;
+        }
+
+        return '';
     }
 
     /**
@@ -224,8 +285,8 @@ class Form implements \Iterator, \ArrayAccess
      */
     public function render_top_errors()
     {
-        $top_errors = (isset($this->errors['__all__'])) 
-            ? $this->errors['__all__'] 
+        $top_errors = (isset($this->errors['__all__']))
+            ? $this->errors['__all__']
             : array();
         array_walk($top_errors, '\photon\form\htmlspecialchars_array');
 
@@ -237,8 +298,8 @@ class Form implements \Iterator, \ArrayAccess
      */
     public function get_top_errors()
     {
-        return (isset($this->errors['__all__'])) 
-            ? $this->errors['__all__'] 
+        return (isset($this->errors['__all__']))
+            ? $this->errors['__all__']
             : array();
     }
 
@@ -251,18 +312,78 @@ class Form implements \Iterator, \ArrayAccess
      * @param string Normal row.
      * @param string Error row.
      * @param string Row ender.
+     * @param string Fieldset starter
+     * @param string Fieldset ender
      * @param string Help text HTML.
      * @param bool Should we display errors on a separate row.
      * @return string HTML of the form.
      */
-    protected function htmlOutput($normal_row, $error_row, $row_ender, 
+    protected function htmlOutput($normal_row, $error_row, $row_ender,
+                                  $fieldsetsStart, $fieldsetsEnd,
                                   $help_text_html, $errors_on_separate_row)
     {
         $top_errors = (isset($this->errors['__all__'])) ? $this->errors['__all__'] : array();
         array_walk($top_errors, '\photon\form\htmlspecialchars_array');
         $output = array();
         $hidden_fields = array();
-        foreach ($this->fields as $name=>$field) {
+
+        foreach ($this->fields as $name => &$field) {
+            $this->fieldOutput($output, $top_errors, $hidden_fields, $field, $name,
+                               $normal_row, $error_row, $row_ender, $help_text_html, $errors_on_separate_row);
+        }
+        unset($field);
+
+        foreach ($this->fieldsets as $title => $fieldsets) {
+            $output[] = sprintf($fieldsetsStart, $title);
+            foreach ($fieldsets as $name => &$field) {
+                $this->fieldOutput($output, $top_errors, $hidden_fields, $field, $name,
+                                   $normal_row, $error_row, $row_ender, $help_text_html, $errors_on_separate_row);
+            }
+            $output[] = sprintf($fieldsetsEnd, $title);
+        }
+        unset($field);
+
+        $output = array_filter($output, function($entry) {
+            if ($entry == '') {
+                return false;
+            }
+            return true;
+        });
+
+        if (count($top_errors)) {
+            $errors = sprintf($error_row,
+                              render_errors_as_html($top_errors));
+            array_unshift($output, $errors);
+        }
+        if (count($hidden_fields)) {
+            $_tmp = '';
+            foreach ($hidden_fields as $hd) {
+                $_tmp .= $hd->render_w();
+            }
+            if (count($output) > count($hidden_fields)) {
+                $last_row = array_pop($output);
+                $last_row = substr($last_row, 0, -strlen($row_ender))
+                    . $_tmp . $row_ender;
+                $output[] = $last_row;
+            } else {
+                $output[] = $_tmp;
+            }
+
+        }
+
+        return new SafeString(implode("\n", $output), true);
+    }
+
+    /**
+     * Helper function to render a field.
+     *
+     * @return string HTML of the field.
+     */
+    protected function fieldOutput(&$output, &$top_errors, &$hidden_fields,
+                                   &$field, $name,
+                                   $normal_row, $error_row, $row_ender,
+                                   $help_text_html, $errors_on_separate_row)
+    {
             $bf = new BoundField($this, $field, $name);
             $bf_errors = $bf->errors;
             array_walk($bf_errors, '\photon\form\htmlspecialchars_array');
@@ -278,7 +399,7 @@ class Form implements \Iterator, \ArrayAccess
                 }
                 $label = htmlspecialchars($bf->label, ENT_COMPAT, 'UTF-8');
                 if ($this->label_suffix) {
-                    if (!in_array(mb_substr($label, -1, 1), 
+                    if (!in_array(mb_substr($label, -1, 1),
                                   array(':','?','.','!'))) {
                         $label .= $this->label_suffix;
                     }
@@ -295,32 +416,9 @@ class Form implements \Iterator, \ArrayAccess
                 if (!$errors_on_separate_row && count($bf_errors)) {
                     $errors = render_errors_as_html($bf_errors);
                 }
-                $output[] = sprintf($normal_row, $errors, $label, 
+                $output[] = sprintf($normal_row, $errors, $label,
                                     $bf->render_w(), $help_text);
             }
-        }
-        if (count($top_errors)) {
-            $errors = sprintf($error_row, 
-                              render_errors_as_html($top_errors));
-            array_unshift($output, $errors);
-        }
-        if (count($hidden_fields)) {
-            $_tmp = '';
-            foreach ($hidden_fields as $hd) {
-                $_tmp .= $hd->render_w();
-            }
-            if (count($output) > count($hidden_fields)) {
-                $last_row = array_pop($output);
-                $last_row = substr($last_row, 0, -strlen($row_ender)) 
-                    . $_tmp . $row_ender;
-                $output[] = $last_row;
-            } else {
-                $output[] = $_tmp;
-            }
-
-        }
-
-        return new SafeString(implode("\n", $output), true);
     }
 
     /**
@@ -328,27 +426,76 @@ class Form implements \Iterator, \ArrayAccess
      */
     public function render_p()
     {
-        return $this->htmlOutput('<p>%1$s%2$s %3$s%4$s</p>', '%s', '</p>', 
-                                 ' %s', true);
+        return $this->htmlOutput('<p>%1$s%2$s %3$s%4$s</p>',
+                                 '%s',
+                                 '</p>',
+                                 '<fieldset><legend>%s</legend>',
+                                 '</fieldset>',
+                                 ' %s',
+                                 true);
     }
 
     /**
      * Render the form as a list without the <ul></ul>.
      */
-    public function render_ul()
+    public function render_ul($fieldsetTitleClass='photonFieldsetTitle')
     {
-        return $this->htmlOutput('<li>%1$s%2$s %3$s%4$s</li>', '<li>%s</li>', 
-                                 '</li>', ' %s', false);
+        return $this->htmlOutput('<li>%1$s%2$s %3$s%4$s</li>',
+                                 '<li>%s</li>',
+                                 '</li>',
+                                 '<li><span class="' . $fieldsetTitleClass . '">%s</span></li>',
+                                 '',
+                                 ' %s',
+                                 false);
     }
 
     /**
      * Render the form as a table without <table></table>.
      */
-    public function render_table()
+    public function render_table($fieldsetTitleClass='photonFieldsetTitle')
     {
         return $this->htmlOutput('<tr><th>%2$s</th><td>%1$s%3$s%4$s</td></tr>',
-                                 '<tr><td colspan="2">%s</td></tr>', 
-                                 '</td></tr>', '<br /><span class="helptext">%s</span>', false);
+                                 '<tr><td colspan="2">%s</td></tr>',
+                                 '</td></tr>',
+                                 '<tr><td colspan="2"><span class="' . $fieldsetTitleClass . '">%s</span></td></tr>',
+                                 '',
+                                 '<br /><span class="helptext">%s</span>',
+                                 false);
+    }
+
+    /**
+     * Render the form as a list a div, using bootstrap class.
+     */
+    public function render_bootstrap($leftSize='col-lg-2',
+                                     $rightSize='col-lg-10',
+                                     $fieldsetTitleClass='photonFieldsetTitle')
+    {
+        // Automatic add form-control class on each input
+        $in = array(
+            'photon\form\field\Varchar',
+            'photon\form\field\Date',
+            'photon\form\field\Datetime',
+            'photon\form\field\Email',
+            'photon\form\field\Integer',
+            'photon\form\field\Float',
+            'photon\form\field\IPv4',
+            'photon\form\field\IPv6',
+            'photon\form\field\IPv4v6',
+            'photon\form\field\MacAddress',
+        );
+        foreach($this->_fields as $k => $v) {
+            if (in_array(get_class($v), $in) === true) {
+                $v->widget->attrs = array_merge($v->widget->attrs, array('class' => 'form-control'));
+            }
+        }
+
+        return $this->htmlOutput('<div class="form-group clearfix"><label class="' . $leftSize . ' control-label">%2$s</label><div class="' . $rightSize . '">%3$s%4$s</div></div>',
+                                 '<div class="clearfix"></div><div class="form-group"><div class="alert alert-danger">%s</div></div>',
+                                 '</div>',
+                                 '<div><span class="' . $fieldsetTitleClass . '">%s</span>',
+                                 '</div>',
+                                 '<span class="help-block">%s</span>',
+                                 true);
     }
 
     /**
@@ -368,9 +515,9 @@ class Form implements \Iterator, \ArrayAccess
      */
     public function __call($method, $args)
     {
-        if ( $this->$method instanceof \Closure) {
+        if ($this->$method instanceof \Closure) {
             return call_user_func_array($this->$method, $args);
-        }        
+        }
         throw new \Exception($method . ' is undefined.');
     }
 
@@ -379,7 +526,7 @@ class Form implements \Iterator, \ArrayAccess
      */
     public function field($key)
     {
-        return new BoundField($this, $this->fields[$key], $key);
+        return new BoundField($this, $this->_fields[$key], $key);
     }
 
     /**
@@ -389,25 +536,25 @@ class Form implements \Iterator, \ArrayAccess
      */
  	public function current()
     {
-        $field = current($this->fields);
-        $name = key($this->fields);
+        $field = current($this->_fields);
+        $name = key($this->_fields);
 
         return new BoundField($this, $field, $name);
     }
 
  	public function key()
     {
-        return key($this->fields);
+        return key($this->_fields);
     }
 
  	public function next()
     {
-        next($this->fields);
+        next($this->_fields);
     }
 
  	public function rewind()
     {
-        reset($this->fields);
+        reset($this->_fields);
     }
 
  	public function valid()
@@ -415,31 +562,31 @@ class Form implements \Iterator, \ArrayAccess
         // We know that the boolean false will not be stored as a
         // field, so we can test against false to check if valid or
         // not.
-        return (false !== current($this->fields));
+        return (false !== current($this->_fields));
     }
 
-    public function offsetUnset($index) 
+    public function offsetUnset($index)
     {
-        unset($this->fields[$index]);
-    }
- 
-    public function offsetSet($index, $value) 
-    {
-        $this->fields[$index] = $value;
+        unset($this->_fields[$index]);
     }
 
-    public function offsetGet($index) 
+    public function offsetSet($index, $value)
     {
-        if (!isset($this->fields[$index])) {
+        $this->_fields[$index] = $value;
+    }
+
+    public function offsetGet($index)
+    {
+        if (!isset($this->_fields[$index])) {
             throw new Exception(sprintf('Undefined index: %s.', $index));
         }
 
-        return $this->fields[$index];
+        return $this->_fields[$index];
     }
 
-    public function offsetExists($index) 
+    public function offsetExists($index)
     {
-        return (isset($this->fields[$index]));
+        return (isset($this->_fields[$index]));
     }
 }
 
@@ -481,7 +628,7 @@ class BoundField
             $widget = $this->field->widget;
         }
         $id = $this->autoId();
-        if ($id && !array_key_exists('id', $attrs) 
+        if ($id && !array_key_exists('id', $attrs)
             && !array_key_exists('id', $widget->attrs)) {
             $attrs['id'] = $id;
         }
@@ -507,12 +654,12 @@ class BoundField
      */
     public function labelTag($contents=null, $attrs=array())
     {
-        $contents = ($contents) 
-            ? $contents 
+        $contents = ($contents)
+            ? $contents
             : htmlspecialchars($this->label);
         $widget = $this->field->widget;
-        $id = (isset($widget->attrs['id'])) 
-            ? $widget->attrs['id'] 
+        $id = (isset($widget->attrs['id']))
+            ? $widget->attrs['id']
             : $this->autoId();
         $_tmp = array();
         foreach ($attrs as $attr=>$val) {
@@ -522,7 +669,7 @@ class BoundField
             $attrs = ' ' . implode(' ', $_tmp);
         } else {
             $attrs = '';
-        } 
+        }
 
         return new SafeString(sprintf('<label for="%s"%s>%s</label>',
                                       $widget->idForLabel($id), $attrs, $contents), true);
@@ -599,19 +746,17 @@ class FieldProxy
      */
     public function __get($field)
     {
-        return new BoundField($this->form, $this->form->fields[$field], $field);
+        return new BoundField($this->form, $this->form->_fields[$field], $field);
     }
 }
 
 
 
 
-function mb_ucfirst($str) 
+function mb_ucfirst($str)
 {
     return mb_strtoupper(mb_substr($str, 0, 1)) . mb_substr($str, 1);
 }
-
-
 
 function htmlspecialchars_array(&$item, $key)
 {

@@ -115,11 +115,49 @@ class NotRequired extends Form
     }
 }
 
+class WithFieldsets extends Form
+{
+    public function initFields($extra=array())
+    {
+        $this->fields['a'] = new field\Integer(array(
+            'required' => true,
+            'min_value' => 1,
+            'max_value' => 1,
+        ));
+
+        $this->fieldsets['Section 1'] = array(
+            'i' => new field\Integer(array(
+                'required' => true,
+                'min_value' => 2,
+                'max_value' => 2,
+            )),
+            'j' => new field\Integer(array(
+                'required' => false,
+                'min_value' => 3,
+                'max_value' => 3,
+            )),
+        );
+
+        $this->fieldsets['Section 2'] = array(
+            'k' => new field\Integer(array(
+                'required' => true,
+                'min_value' => 4,
+                'max_value' => 4,
+            )),
+            'l' => new field\Integer(array(
+                'required' => false,
+                'min_value' => 5,
+                'max_value' => 5,
+            )),
+        );
+    }
+}
+
 class FormTest extends \PHPUnit_Framework_TestCase
 {
     public function testNotImplemented()
     {
-        $this->setExpectedException('\photon\form\Exception');        
+        $this->setExpectedException('\photon\form\Exception');
         $form = new Form();
     }
 
@@ -159,7 +197,7 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(false, isset($form['login']));
         $form['login'] = $foo;
         $this->assertEquals(true, isset($form['login']));
-        $this->setExpectedException('\photon\form\Exception');        
+        $this->setExpectedException('\photon\form\Exception');
         $foo = $form['badone'];
     }
 
@@ -189,7 +227,7 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('<input maxlength="15" size="10" required="required" name="login" type="text" id="id_login" />',
                             (string) $bf->render_w);
         // forced empty list
-        $this->assertEquals('<ul class="errorlist"></ul>', 
+        $this->assertEquals('<ul class="errorlist"></ul>',
                             (string) $bf->fieldErrors());
     }
 
@@ -211,11 +249,11 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $form = new Simple(array('login' => 'hello'));
         $this->assertSame(false, $form->isValid());
         $this->assertSame(1, count($form->get_top_errors()));
-        $this->assertEquals('<ul class="errorlist"><li>Invalid login: hello</li></ul>', 
+        $this->assertEquals('<ul class="errorlist"><li>Invalid login: hello</li></ul>',
                             (string) $form->render_top_errors);
         $this->assertEquals('<ul class="errorlist"><li>Invalid login: hello</li></ul>
 <p><label for="id_login">Your login:</label> <input maxlength="15" size="10" required="required" name="login" type="text" id="id_login" value="hello" /> The login must...</p>', (string) $form->render_p());
-        
+
     }
 
     public function testSimpleForm()
@@ -255,10 +293,83 @@ class FormTest extends \PHPUnit_Framework_TestCase
 <ul class="errorlist"><li>This field is required.</li></ul>
 <p><label for="id_login">Login:</label> <input maxlength="15" size="10" required="required" name="login" type="text" id="id_login" /><input required="required" name="hidden" type="hidden" id="id_hidden" value="abc" /></p>', (string) $form->render_p());
     }
-    
+
     public function testNotRequiredField()
     {
         $form = new NotRequired();
         $this->assertEquals('<p><label for="id_i">I:</label> <input name="i" type="number" id="id_i" /></p>', (string) $form->render_p());
+    }
+
+    public function testWithFieldsets()
+    {
+        // Ensure Array interfaces works with fieldsets
+        $form = new WithFieldsets();
+        $this->assertArrayHasKey('a', $form);
+        $this->assertArrayHasKey('i', $form);
+        $this->assertArrayHasKey('j', $form);
+        $this->assertArrayHasKey('k', $form);
+        $this->assertArrayHasKey('l', $form);
+        $this->assertArrayNotHasKey('kk', $form);
+
+        // Ensure required fields in fieldsets are checked
+        $this->assertSame(false, $form->isValid());
+
+        // Filled with corrects values
+        $form = new WithFieldsets(array(
+            'a' => 1,
+            'i' => 2,
+            'j' => 3,
+            'k' => 4,
+            'l' => 5,
+        ));
+        $this->assertSame(true, $form->isValid());
+
+        // Filled with bad values
+        $form = new WithFieldsets(array(
+            'a' => 1,
+            'i' => 2,
+            'j' => 3,
+            'k' => 4,
+            'l' => 55,
+        ));
+        $this->assertSame(false, $form->isValid());
+    }
+
+    public function testWithFieldsetsRender()
+    {
+        $form = new WithFieldsets();
+        $html = (string) $form->render_p();
+        $valid = '<p><label for="id_a">A:</label> <input required="required" min="1" max="1" name="a" type="number" id="id_a" /></p>
+<fieldset><legend>Section 1</legend>
+<p><label for="id_i">I:</label> <input required="required" min="2" max="2" name="i" type="number" id="id_i" /></p>
+<p><label for="id_j">J:</label> <input min="3" max="3" name="j" type="number" id="id_j" /></p>
+</fieldset>
+<fieldset><legend>Section 2</legend>
+<p><label for="id_k">K:</label> <input required="required" min="4" max="4" name="k" type="number" id="id_k" /></p>
+<p><label for="id_l">L:</label> <input min="5" max="5" name="l" type="number" id="id_l" /></p>
+</fieldset>';
+        $this->assertSame($html, $valid);
+        
+        $html = (string) $form->render_ul();
+        $valid = '<li><label for="id_a">A:</label> <input required="required" min="1" max="1" name="a" type="number" id="id_a" /></li>
+<li><span class="photonFieldsetTitle">Section 1</span></li>
+<li><label for="id_i">I:</label> <input required="required" min="2" max="2" name="i" type="number" id="id_i" /></li>
+<li><label for="id_j">J:</label> <input min="3" max="3" name="j" type="number" id="id_j" /></li>
+<li><span class="photonFieldsetTitle">Section 2</span></li>
+<li><label for="id_k">K:</label> <input required="required" min="4" max="4" name="k" type="number" id="id_k" /></li>
+<li><label for="id_l">L:</label> <input min="5" max="5" name="l" type="number" id="id_l" /></li>';
+        $this->assertSame($html, $valid);
+        
+        $html = (string) $form->render_table();
+        $valid = '<tr><th><label for="id_a">A:</label></th><td><input required="required" min="1" max="1" name="a" type="number" id="id_a" /></td></tr>
+<tr><td colspan="2"><span class="photonFieldsetTitle">Section 1</span></td></tr>
+<tr><th><label for="id_i">I:</label></th><td><input required="required" min="2" max="2" name="i" type="number" id="id_i" /></td></tr>
+<tr><th><label for="id_j">J:</label></th><td><input min="3" max="3" name="j" type="number" id="id_j" /></td></tr>
+<tr><td colspan="2"><span class="photonFieldsetTitle">Section 2</span></td></tr>
+<tr><th><label for="id_k">K:</label></th><td><input required="required" min="4" max="4" name="k" type="number" id="id_k" /></td></tr>
+<tr><th><label for="id_l">L:</label></th><td><input min="5" max="5" name="l" type="number" id="id_l" /></td></tr>';
+        $this->assertSame($html, $valid);
+
+        $html = (string) $form->render_bootstrap();
     }
 }
