@@ -587,12 +587,17 @@ class SelfTest extends Base
 
             $this->verbose($cmd);
             passthru($cmd, $rvar);
-            $xml = simplexml_load_string(file_get_contents($xmlout));
-            unlink($xmlout);
-            $this->info(sprintf('Code coverage %s/%s (%s%%)',
-                                $xml->project->metrics['coveredstatements'],
-                                $xml->project->metrics['statements'],
-                                round(($xml->project->metrics['coveredstatements']/(float)$xml->project->metrics['statements']) * 100.0, 2)));
+            
+            if(file_exists($xmlout) === false) {
+                $this->info('Code coverage output file not found. Ensure the Xdebug module is loaded with "php --re xdebug"');
+            } else {
+                $xml = simplexml_load_string(file_get_contents($xmlout));
+                unlink($xmlout);
+                $this->info(sprintf('Code coverage %s/%s (%s%%)',
+                                    $xml->project->metrics['coveredstatements'],
+                                    $xml->project->metrics['statements'],
+                                    round(($xml->project->metrics['coveredstatements']/(float)$xml->project->metrics['statements']) * 100.0, 2)));
+            }
         }
 
         return $rvar;
