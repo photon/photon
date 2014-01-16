@@ -327,21 +327,19 @@ class Form implements \Iterator, \ArrayAccess
         $output = array();
         $hidden_fields = array();
 
-        foreach ($this->fields as $name => &$field) {
+        foreach ($this->fields as $name => $field) {
             $this->fieldOutput($output, $top_errors, $hidden_fields, $field, $name,
                                $normal_row, $error_row, $row_ender, $help_text_html, $errors_on_separate_row);
         }
-        unset($field);
 
         foreach ($this->fieldsets as $title => $fieldsets) {
             $output[] = sprintf($fieldsetsStart, $title);
-            foreach ($fieldsets as $name => &$field) {
+            foreach ($fieldsets as $name => $field) {
                 $this->fieldOutput($output, $top_errors, $hidden_fields, $field, $name,
                                    $normal_row, $error_row, $row_ender, $help_text_html, $errors_on_separate_row);
             }
             $output[] = sprintf($fieldsetsEnd, $title);
         }
-        unset($field);
 
         $output = array_filter($output, function($entry) {
             if ($entry == '') {
