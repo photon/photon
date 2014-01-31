@@ -255,26 +255,12 @@ class FileStreamWrapper
         if ($this->end_offset <= $this->start_offset) {
             return '';
         }
-        $current_offset = ftell($this->body);
-        fseek($this->body, $this->start_offset, SEEK_SET);
-        $len = $this->end_offset - $this->start_offset;
-        if (8193 > $len) {
-            $data = fread($this->body, $len);
-            fseek($this->body, $current_offset, SEEK_SET);
-
-            return $data;
+        
+        $content = stream_get_contents($this->body,$this->end_offset - $this->start_offset, $this->start_offset);
+        if ($content === false) {
+            return '';
         }
-        $nchunks = (int) floor($len / 8192.0);
-        $lchunk = $len % 8192;
-        $i = 0;
-        $content = '';
-        while ($i < $nchunks) {
-            $content .= fread($this->body, 8192);
-            ++$i;
-        }
-        $content .= fread($this->body, $lchunk);
-        fseek($this->body, $current_offset, SEEK_SET);
-
+        
         return $content;
     }
 }
