@@ -256,7 +256,10 @@ class FileStreamWrapper
             return '';
         }
         
+        $current_offset = ftell($this->body);
         $content = stream_get_contents($this->body,$this->end_offset - $this->start_offset, $this->start_offset);
+        fseek($this->body, $current_offset, SEEK_SET);
+        
         if ($content === false) {
             return '';
         }
