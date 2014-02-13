@@ -207,7 +207,9 @@ class EMail
                                 $params);
         if (Conf::f('send_emails', true)) {
             $ret = $mail->send($this->to_address, $hdrs, $body);
-            if (\PEAR::isError($ret) === true) {
+            
+            // Mail return true on success and a PEAR_Error object on failure
+            if ($ret !== true) {
                 throw new Exception($ret->getMessage());
             }
         }
