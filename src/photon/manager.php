@@ -918,7 +918,10 @@ class PotGenerator extends Base
 
                     // save it
                     $output = $tmp_folder . '/' . $tpl;
-                    @mkdir(dirname($output), 0777, true);
+                    $directory = dirname($output);
+                    if (is_dir($directory) === false) {
+                        mkdir($directory, 0777, true);
+                    }
                     file_put_contents($output, $content);
 
                     $already_compiled[] = $tpl;
