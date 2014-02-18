@@ -248,8 +248,10 @@ class Request
             \mb_parse_str($this->mess->headers->QUERY, $this->GET);
             $this->query = $this->mess->headers->QUERY;
         }
-        if ('POST' === $this->mess->headers->METHOD) {
-            if (0 === strpos($this->mess->headers->{'content-type'}, 'multipart/form-data; boundary=')) {
+        if ('POST' === $this->mess->headers->METHOD || 'PUT' === $this->mess->headers->METHOD) {
+            if (isset($this->mess->headers->{'content-type'}) === false) {
+                $this->BODY =& $mess->body;
+            } else if (0 === strpos($this->mess->headers->{'content-type'}, 'multipart/form-data; boundary=')) {
                 $parser = new \photon\http\multipartparser\MultiPartParser($mess->headers, $mess->body);
                 foreach ($parser->parse() as $part) {
                     if ('FIELD' === $part['of_type']) {
@@ -258,7 +260,7 @@ class Request
                         add_file_to_post($this->FILES, $part['name'], $part);
                     }
                 }
-            } elseif (false !== mb_strstr($this->mess->headers->{'content-type'}, 'application/x-www-form-urlencoded')) {
+            } else if (false !== mb_strstr($this->mess->headers->{'content-type'}, 'application/x-www-form-urlencoded')) {
                 $this->POST = parse_str(substr(stream_get_contents($mess->body), 0, -1));
             } else {
                 $this->BODY =& $mess->body;
