@@ -142,6 +142,19 @@ class BadRequest extends Response
     }
 }
 
+class AuthorizationRequired extends Response
+{
+    public function __construct()
+    {
+        $content = 'This server could not verify that you are authorized to access the document requested.' . "\n" .
+                   'Either you supplied the wrong credentials (e.g., bad password), or your browser ' . 
+                   'doesn\'t understand how to supply the credentials required.' . "\n\n" .
+                   '401 - Authorization Required';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 401;
+    }
+}
+
 class Forbidden extends Response
 {
     /**
