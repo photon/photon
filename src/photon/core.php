@@ -116,6 +116,9 @@ class Dispatcher
         } else {
             $to_match = $req->path;
         }
+        
+        $url = '';
+        $matchs = array();
         try {
             $n = count($views);
             $i = 0;
@@ -123,14 +126,19 @@ class Dispatcher
                 $ctl = $views[$i];
                 $checked[] = $ctl;
                 if (preg_match($ctl['regex'], $to_match, $match)) {
+                    $match0 = array_shift($match);
+                    $url .= $match0;
+                    $matchs = array_merge($matchs, $match);
+                
                     if (!isset($ctl['sub'])) {
-                        return self::send($req, $ctl, $match);
+                        array_unshift($matchs, $url);
+                        return self::send($req, $ctl, $matchs);
                     } else {
                         // Go in the subtree
                         $views = $ctl['sub'];
                         $i = 0;
                         $n = count($views);
-                        $to_match = substr($to_match, strlen($match[0]));
+                        $to_match = substr($to_match, strlen($match0));
                         continue;
                     }
                 }
