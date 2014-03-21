@@ -471,7 +471,8 @@ class File extends Field
         $this->error_messages['invalid'] = __('No file was submitted. Check the encoding type on the form.');
         $this->error_messages['required'] = __('No file was submitted.');
         $this->error_messages['empty'] = __('The submitted file is empty.');
-        $this->error_messages['max_length'] = __('Ensure this filename has at most %1$d characters (it has %1$d).');
+        $this->error_messages['big'] = __('The submitted file is too big, limit is %1$d octets.');
+        $this->error_messages['max_length'] = __('Ensure this filename has at most %1$d characters (it has %2$d).');
         parent::__construct($params);
     }
 
@@ -497,6 +498,10 @@ class File extends Field
         if (0 === $size) {
             throw new Invalid($this->error_messages['empty']);
         }
+        if ($size > $this->max_size) {
+            throw new Invalid(sprintf($this->error_messages['big'], $this->max_size));
+        }
+        
         return $value;
     }
 }
