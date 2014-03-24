@@ -487,6 +487,7 @@ class File extends Field
         $filename = $value['filename'];
         $size = $value['size'];
 
+        // Test the filename size
         if (null !== $this->max_length 
             && strlen($filename) > $this->max_length) {
             throw new Invalid(sprintf($this->error_messages['max_length'],
@@ -498,7 +499,9 @@ class File extends Field
         if (0 === $size) {
             throw new Invalid($this->error_messages['empty']);
         }
-        if ($size > $this->max_size) {
+        
+        // Test the content size
+        if (null !== $this->max_size && $size > $this->max_size) {
             throw new Invalid(sprintf($this->error_messages['big'], $this->max_size));
         }
         
