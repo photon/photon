@@ -268,11 +268,22 @@ class Varchar extends Field
         // evaluating if a value is required or not. So, we take the
         // step to trim them. We trim only space, tabs, nul byte and
         // vertical tab, not the carriage return and new lines.
-        $value = rtrim($value, " \t\x0B\0");
-        if (in_array($value, $this->empty_values, true)) {
-            return '';
+        if (is_array($value) === false) {
+            $value = rtrim($value, " \t\x0B\0");
+            if (in_array($value, $this->empty_values, true)) {
+                return '';
+            }
+            return $value;
+        } else {
+            foreach($value as $key => &$val) {
+                $val = rtrim($val, " \t\x0B\0");
+                if (in_array($val, $this->empty_values, true)) {
+                    unset($value[$key]);
+                }
+            }
+
+            return $value;
         }
-        return $value;
     }
 }
 
