@@ -223,6 +223,27 @@ class NotSupported extends Response
     }
 }
 
+class RequestEntityTooLarge extends Response
+{
+    /**
+     * @param Request The request object of the current page.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.14
+     */
+    public function __construct($request, $body=null)
+    {
+        if ($body === null) {
+            $content = sprintf('The request is larger than the server is willing or able to process.' . "\n" .
+                               '413 - Request Entity Too Large');
+                               
+            parent::__construct($content, 'text/plain');
+        } else {
+            parent::__construct($body, 'text/plain');
+        }
+        
+        $this->status_code = 413;
+    }
+}
+
 class NotImplemented extends Response
 {
     /**
