@@ -354,6 +354,8 @@ class SelectMultipleInput extends Widget
         $output = array();
         if ($value === null) {
             $value = array();
+        } else if (is_array($value) === false) {
+            $value = array($value);
         }
         $final_attrs = $this->buildAttrs(array('name' => $name/*.'[]'*/), 
                                          $extra_attrs);
@@ -368,7 +370,7 @@ class SelectMultipleInput extends Widget
                 $subchoices = $c;
             }
             foreach ($subchoices as $option_label=>$option_value) {
-                $selected = ($option_value == $value) ? ' selected="selected"':'';
+                $selected = in_array($option_value, $value) ? ' selected="selected"':'';
                 $output[] = sprintf('<option value="%s"%s>%s</option>',
                                     htmlspecialchars($option_value, ENT_COMPAT, 'UTF-8'),
                                     $selected, 
