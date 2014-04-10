@@ -216,7 +216,7 @@ namespace
                 $m->run();
                 break;
             case 'pot':
-                $params['potfile'] = isset($result->command->args['potfile']) ? $result->command->args['potfile'] : 'myproject.pot';
+                $params['potfile'] = isset($result->command->options['potfile']) ? $result->command->options['potfile'] : 'myproject.pot';
                 $m = new \photon\manager\PotGenerator($params);
                 exit($m->run());
                 break;
