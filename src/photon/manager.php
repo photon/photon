@@ -939,6 +939,6 @@ class PotGenerator extends Base
         $cmd = 'cd ' . $tmp_folder . ' && find . -type f | sed -e \'s/^\\.\\///\' | xargs xgettext -o ' . $this->potfile . ' -p ' . $this->cwd . ' --from-code=UTF-8 -j --keyword --keyword=__ --keyword=_n:1,2 -L PHP';
         passthru($cmd, $return_var);
 
-        @rmdir($tmp_folder);
+        \photon\path\Dir::remove($tmp_folder);
     }
 }

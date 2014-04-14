@@ -62,6 +62,29 @@ class Dir
 
          return $files;
     }
+
+    /**
+     * Remove recursively all the files of a directory, and finally the directory itself.
+     *
+     * @param $dir string Directory to delete
+     */
+    public static function remove($dir)
+    {
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($files as $fileinfo) {
+            if ($fileinfo->isDir() === true) {
+                rmdir($fileinfo->getRealPath());
+            } else {
+                unlink($fileinfo->getRealPath());
+            }
+        }
+
+        rmdir($dir);
+    }
 }
 
 
