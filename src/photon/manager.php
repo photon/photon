@@ -885,7 +885,7 @@ class %s
                 }
             }
         }
-        file_put_contents('/tmp/test.php', $compiled);
+
         $phar->addFromString('photon/template/compiled.php', $compiled);
         //$phar['photon/template/compiled.php']->compress(\Phar::GZ);
 
