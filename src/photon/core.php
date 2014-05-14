@@ -263,10 +263,10 @@ class URL
         if (false === $regbase) {
             throw new Exception(sprintf('Error, the view: %s has not been found.', $view_name));
         }
-        $url = '';
-        foreach ($regbase as $regex) {
-            $url .= self::buildReverse($regex, $params);
-        }
+
+        $regex = implode('', $regbase);
+        $regex = str_replace(array('$##^', '##^', '##'), '', $regex);
+        $url = self::buildReverse($regex, $params);
 
         return $url;
     }
