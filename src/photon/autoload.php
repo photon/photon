@@ -20,7 +20,7 @@
 #
 # ***** END LICENSE BLOCK ***** */
 
-
+require_once('path.php');
 
 /**
  * Autoloader for Photon.
@@ -41,10 +41,8 @@ function photonAutoLoad($class)
     // in non confusing error messages.
     // printf("Class: %s, file: %s\n", $class, $file);    
 
-    $includePath = str_replace('phar://', "phar#//", get_include_path());
-    $includePath = explode(PATH_SEPARATOR, $includePath);
+    $includePath = \photon\path\Dir::getIncludePath();
     foreach($includePath as $path) {
-        $path = str_replace('phar#//', "phar://", $path);
         $fullpath = $path . DIRECTORY_SEPARATOR . $file;
         if (is_readable($fullpath)) {
             require_once $fullpath;

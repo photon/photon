@@ -28,6 +28,7 @@ namespace photon\manager;
 use photon\config\Container as Conf;
 use photon\log\Log as Log;
 use photon\template\compiler as compiler;
+use photon\path\Dir;
 
 class Exception extends \Exception {}
 
@@ -445,7 +446,7 @@ class RunTests extends Base
         // for each app, the corresponding tests folder.
         $test_dirs = array();
         $test_files = array();
-        $inc_dirs = explode(PATH_SEPARATOR,  get_include_path());
+        $inc_dirs = Dir::getIncludePath();
         foreach ($apps as $app) {
             foreach ($inc_dirs as $dir) {
                 if (file_exists($dir . '/' . $app . '/tests')) {
