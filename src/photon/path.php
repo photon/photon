@@ -40,7 +40,7 @@ class Dir
      * example, if you give the directory '/home/login' and you have
      * the files '.profile' and '.ssh/authorized_keys' into the
      * directory, you will get array('.profile',
-     * '.ssh/authorized_keys') a returned value. 
+     * '.ssh/authorized_keys') a returned value.
      *
      * @param $dir string Directory to get the files from without trailing slash
      * @param $regex Regular expression to exclude some files/folders (array())
@@ -50,7 +50,7 @@ class Dir
     {
          $dirItr = new \RecursiveDirectoryIterator($dir);
          $filterItr = new RecursiveDotDirsFilterIterator($dirItr, null, $regex);
-         $itr = new \RecursiveIteratorIterator($filterItr, 
+         $itr = new \RecursiveIteratorIterator($filterItr,
                                       \RecursiveIteratorIterator::SELF_FIRST);
          $files = array();
          $dirl = strlen($dir) + 1;
@@ -85,6 +85,24 @@ class Dir
 
         rmdir($dir);
     }
+
+    /**
+     *  Get the list of include path,
+     *  We need a smart explode here bacause some path contains the path separator
+     *  like: phar:// or http://
+     *
+     *  @param $path string A path string to explode
+     */
+    public static function getIncludePath($path=null)
+    {
+        $path = ($path === null) ? get_include_path() : $path;
+
+        if (PATH_SEPARATOR !== ':') {
+            return explode(PATH_SEPARATOR, $path);
+        }
+
+        return preg_split('#:(?!//)#', $path);
+    }
 }
 
 
@@ -96,14 +114,14 @@ class Dir
  * <pre>
  * $dirItr = new \RecursiveDirectoryIterator('/sample/path');
  * $filterItr = new RecursiveDotDirsFilterIterator($dirItr);
- * $itr = new \RecursiveIteratorIterator($filterItr, 
+ * $itr = new \RecursiveIteratorIterator($filterItr,
  *                                      \RecursiveIteratorIterator::SELF_FIRST);
  * foreach ($itr as $filePath => $fileInfo) {
  *     echo $fileInfo->getFilename() . PHP_EOL;
  * }
  *</pre>
  */
-class RecursiveDotDirsFilterIterator extends \RecursiveFilterIterator 
+class RecursiveDotDirsFilterIterator extends \RecursiveFilterIterator
 {
     public static $filters = array('.', '..', '.svn', '.git', '.DS_Store');
     public static $regex = array();
@@ -115,7 +133,7 @@ class RecursiveDotDirsFilterIterator extends \RecursiveFilterIterator
         self::$regex = (null !== $regex) ? $regex : self::$regex;
     }
 
-    public function accept() 
+    public function accept()
     {
         if (in_array($this->current()->getFilename(), self::$filters, true)) {
 
@@ -140,16 +158,16 @@ class RecursiveDotDirsFilterIterator extends \RecursiveFilterIterator
  *
  * <pre>
  * $dirItr = new \RecursiveDirectoryIterator('/sample/path');
- * $filterItr = new IgnoreFilterIterator($dirItr, '/sample/path', 
+ * $filterItr = new IgnoreFilterIterator($dirItr, '/sample/path',
  *                                       '/path/to/.ignoredef');
- * $itr = new \RecursiveIteratorIterator($filterItr, 
+ * $itr = new \RecursiveIteratorIterator($filterItr,
  *                                      \RecursiveIteratorIterator::SELF_FIRST);
  * foreach ($itr as $filePath => $fileInfo) {
  *     echo $fileInfo->getFilename() . PHP_EOL;
  * }
  *</pre>
  */
-class IgnoreFilterIterator extends \RecursiveFilterIterator 
+class IgnoreFilterIterator extends \RecursiveFilterIterator
 {
     public static $base_path = '';
     public static $regex = array();
@@ -164,7 +182,7 @@ class IgnoreFilterIterator extends \RecursiveFilterIterator
     public function __construct($iterator, $base_path=null, $ignore_file=null)
     {
         parent::__construct($iterator);
-        
+
         if (null !== $base_path) {
             self::$base_path = $base_path;
         }
@@ -173,9 +191,9 @@ class IgnoreFilterIterator extends \RecursiveFilterIterator
         }
     }
 
-    public function accept() 
+    public function accept()
     {
-        $path = substr($this->current()->getRealPath(), 
+        $path = substr($this->current()->getRealPath(),
                        strlen(self::$base_path),
                        strlen($this->current()->getRealPath()));
         foreach (self::$regex as $regex) {
@@ -204,13 +222,13 @@ class IgnoreFilterIterator extends \RecursiveFilterIterator
             if (0 === strlen($pattern) || '#' === $pattern[0]) {
                 continue;
             }
-            
+
             // Ignore all files and subfolders if the pattern is a folder
             $folder = "";
             if (substr($pattern, -1) === '/') {
                 $folder = ".*";
             }
-            
+
             $pattern = str_replace($from, $to, $pattern);
             $patterns[] = '#^/' . $pattern . $folder . '$#';
         }

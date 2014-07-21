@@ -41,6 +41,7 @@
 namespace photon\translation;
 
 use photon\config\Container as Conf;
+use photon\path\Dir;
 
 class Translation
 {
@@ -107,7 +108,7 @@ class Translation
     public static function loadLocale($lang, $photon=true)
     {
         $locale_folders = Conf::f('locale_folders', array());
-        $path_folders = explode(PATH_SEPARATOR, get_include_path());
+        $path_folders = Dir::getIncludePath();
         $loaded = array();
 
         self::$loaded[$lang] = array();
