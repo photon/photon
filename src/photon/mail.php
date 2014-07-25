@@ -102,7 +102,74 @@ class Exception extends \Exception {}
  * If you are doing some testing, you should use the smtp backend 
  * together with fakemail: http://www.lastcraft.com/fakemail.php
  */
-class EMail
+ 
+ 
+/**
+ *  Generic EMail interface for internal photon use.
+ */
+interface EMailInterface
+{
+    /**
+     * Construct the base email.
+     *
+     * @param string The email of the sender.
+     * @param string The destination email.
+     * @param string The subject of the message.
+     * @param string Encoding of the message ('UTF-8')
+     * @param string End of line type ("\n")
+     */
+    function __construct($src, $dest, $subject, $encoding='UTF-8', $crlf="\n");
+
+    /**
+     * Add the base plain text message to the email.
+     *
+     * @param string The message
+     */
+    function addTextMessage($msg);
+
+    /**
+     * Set the return path for the email.
+     *
+     * @param string Email
+     */
+    function setReturnPath($email);
+
+    /**
+     * Add headers to an email.
+     *
+     * @param array Array of headers
+     */
+    function addHeaders($hdrs);
+
+    /**
+     * Add the alternate HTML message to the email.
+     *
+     * @param string The HTML message
+     */
+    function addHtmlMessage($msg);
+
+    /**
+     * Add an attachment to the message.
+     *
+     * The file to attach must be available on disk and you need to
+     * provide the mimetype of the attachment manually.
+     *
+     * @param string Path to the file to be added.
+     * @param string Mimetype of the file to be added ('text/plain').
+     * @return bool True.
+     */
+    function addAttachment($file, $ctype='text/plain');
+
+    /**
+     * Effectively sends the email.
+     */
+    function sendMail();
+}
+
+/**
+ *  Historical EMail backend based on PEAR\Mail and PEAR\Mail_Mime, keep it for compatibility
+ */
+class PearMailBackend implements EMailInterface
 {
     public $headers = array();
     public $message;
@@ -215,3 +282,14 @@ class EMail
         }
     }
 }
+
+/*
+ *  Create the EMail class by extending the desired backend
+ */
+$backend = Conf::f('email_backend', '\photon\mail\PearMailBackend');
+$itf = class_implements($backend);
+if (isset($itf['photon\mail\EMailInterface']) === false) {
+    die('The email backend do not implements the mail interface');
+}
+class_alias($backend, 'photon\mail\Email');
+
