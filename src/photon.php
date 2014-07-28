@@ -161,6 +161,10 @@ namespace photon
                                        'action'      => 'StoreString',
                                        'help_name'   => 'path/config.prod.php',
                                        'description' => 'path to the configuration file used in production'),
+                                 'composer' =>
+                                 array('long_name'   => '--composer',
+                                       'action'      => 'StoreTrue',
+                                       'description' => 'Build a phar for the composer version of photon'),
                                  'exclude_files' =>
                                  array('long_name'   => '--exclude-files',
                                        'action'      => 'StoreString',
@@ -255,6 +259,7 @@ namespace
                 $params['project'] = $result->command->args['project'];
                 $params['conf_file'] = $result->command->options['conf_file'];
                 $params['exclude_files'] = $result->command->options['exclude_files'];
+                $params['composer'] = $result->command->options['composer'];
                 $m = new \photon\manager\Packager($params);
                 $m->run();
                 break;

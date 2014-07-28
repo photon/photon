@@ -669,7 +669,8 @@ class Packager extends Base
     public $project; /**< Name of the phar archive without the extension */
     public $conf_file; /**< Configuration file loaded in the phar */
     public $exclude_files = ''; /**< Exclude files from the packaging */
-
+    public $composer = false; /**< Build a phar for the composer version of photon */
+    
     public function run()
     {
         $this->loadConfig(); 
@@ -679,7 +680,11 @@ class Packager extends Base
         @unlink($phar_name);
         $phar = new \Phar($phar_name, 0, $phar_name);
         $phar->startBuffering();
-        $this->addPhotonFiles($phar);
+        
+        if ($this->composer === false) {
+            // Old style PEAR Mode
+            $this->addPhotonFiles($phar);
+        }
         $this->addProjectFiles($phar);
         
         $this->CompileAddTemplates($phar, 
@@ -688,9 +693,12 @@ class Packager extends Base
             $phar->addFile($this->conf_file, 'config.php');
             $phar['config.php']->compress(\Phar::GZ);
         }
-        $stub = file_get_contents($this->photon_path . '/photon/data/pharstub.php');
+        
+        $stubFilename = ($this->composer === true) ? 'pharstub-composer.php' : 'pharstub.php';
+        $stub = file_get_contents($this->photon_path . '/photon/data/' . $stubFilename);
         $phar->setStub(sprintf($stub, 
                                $phar_name, $phar_name, $phar_name, $phar_name));
+        
         $phar->stopBuffering();
     }
 

@@ -117,3 +117,11 @@ function _n($sing, $plur, $n)
 set_include_path(realpath(__DIR__ . '/../') . PATH_SEPARATOR . get_include_path());
 spl_autoload_register('photonAutoLoad', true, true);
 
+/*
+ *  Detect composer autoloader
+ */
+$composerAutoloaderPath = __DIR__ . '/../../../../../vendor/autoload.php';
+if (file_exists($composerAutoloaderPath)) {
+    require_once($composerAutoloaderPath);
+}
+

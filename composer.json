@@ -1,0 +1,39 @@
+{
+    "name": "photon/photon-core",
+    "version": "0.3.0",
+    "type": "library",
+    "description": "Photon is a high performance micro PHP framework.",
+    "keywords": ["photon","mongrel2","zmq"],
+    "homepage": "http://www.photon-project.com/",
+    "license": "LGPL-2.1",
+    "authors": [
+        {
+            "name": "Loïc d'Anterroches",
+            "email": "open@danterroches.org",
+            "role": "Developer"
+        },
+        {
+            "name": "William MARTIN",
+            "email": "wysman@gmail.com",
+            "role": "Developer"
+        },
+        {
+            "name": "Community",
+            "homepage": "http://projects.ceondo.com/p/photon/source/tree/master/CONTRIBUTORS.md"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=5.3.0",
+        "ext-zmq": ">=1.1.2",
+        "ext-http": ">=1.7.6",
+        "ext-xdebug": ">=2.1.0"
+    },
+    "suggest": {
+        "pear/Mail": "Send mail in photon project",
+        "pear/Mail_Mime": "Send mail in photon project"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "4.1.*"
+    }
+}
