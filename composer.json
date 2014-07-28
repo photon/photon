@@ -1,5 +1,5 @@
 {
-    "name": "photon/photon-core",
+    "name": "photon/photon",
     "version": "0.3.0",
     "type": "library",
     "description": "Photon is a high performance micro PHP framework.",
