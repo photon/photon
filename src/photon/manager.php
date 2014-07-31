@@ -669,7 +669,7 @@ class Packager extends Base
     public $project; /**< Name of the phar archive without the extension */
     public $conf_file; /**< Configuration file loaded in the phar */
     public $exclude_files = ''; /**< Exclude files from the packaging */
-    public $composer = false; /**< Build a phar for the composer version of photon */
+    public $composer = null; /**< Build a phar for the composer version of photon */
     
     public function run()
     {
@@ -681,7 +681,9 @@ class Packager extends Base
         $phar = new \Phar($phar_name, 0, $phar_name);
         $phar->startBuffering();
         
-        if ($this->composer === false) {
+        $this->verbose("Use composer : " . (($this->composer) ? "Yes" : "No"));
+        
+        if ($this->composer !== true) {
             // Old style PEAR Mode
             $this->addPhotonFiles($phar);
         }
