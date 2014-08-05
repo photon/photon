@@ -19,6 +19,7 @@
     - 400 Bad Request
     - 501 Not Implemented
     - 503 Service Unavailable
+- Add composer support, and publish it on packagist under "photon/photon"
  
  
 ## Bugfixes
