@@ -1,0 +1,17 @@
+language: php
+
+php:
+  - 5.5
+
+before_script:
+  - echo "extension = zmq.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - printf "yes\nyes\nno\nyes\n" | pecl install pecl_http-1.7.6
+  - composer self-update
+  - mkdir test
+  - cd test
+  - echo "eyJtaW5pbXVtLXN0YWJpbGl0eSI6ICJkZXYifQo=" | base64 -d  > composer.json
+  - composer require "photon/photon:dev-develop"
+  - composer install
+  
+script: php vendor/photon/photon/src/photon.php selftest
+
