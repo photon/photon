@@ -1,6 +1,8 @@
 language: php
 
 php:
+  - 5.3
+  - 5.4
   - 5.5
 
 before_script:
@@ -15,3 +17,5 @@ before_script:
   
 script: php vendor/photon/photon/src/photon.php selftest
 
+matrix:
+  fast_finish: true
