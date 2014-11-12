@@ -249,6 +249,7 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         $this->assertNotEquals(false, strpos($resp->content, 'coredispatchTest'));
         Conf::set('debug', false);
         Conf::set('template_force_compilation', true);
+        Conf::set('template_folders', array(dirname(__FILE__)));
         $req = new \photon\http\Request($msg);
         list($req, $resp) = Dispatcher::dispatch($req);
         // Ensure the answer contains a string in the 500.html template
