@@ -497,8 +497,11 @@ class RunTests extends Base
                                 realpath($this->params['directory'])));
         } else {
             $xmlout = tempnam(Conf::f('tmp_folder', sys_get_temp_dir()), 'phpunit').'.xml';
-            $this->verbose('phpunit --bootstrap '.realpath(__DIR__).'/autoload.php --coverage-clover '.$xmlout.' --configuration '.$tmpfname);
-            passthru('phpunit --bootstrap '.realpath(__DIR__).'/testbootstrap.php --coverage-clover '.$xmlout.' --configuration '.$tmpfname, $rvar);
+
+            $cmd = 'phpunit --verbose --bootstrap ' . realpath(__DIR__) . 
+                   '/testbootstrap.php --coverage-clover ' . $xmlout . ' --configuration ' . $tmpfname;
+            $this->verbose($cmd);
+            passthru($cmd, $rvar);
             unlink($tmpfname);
             if (!file_exists($xmlout)) {
 
@@ -573,7 +576,7 @@ class SelfTest extends Base
             if (!file_exists($this->directory)) {
                 mkdir($this->directory);
             }
-            $cmd = 'phpunit --bootstrap ' . $this->photon_path . '/photon/testbootstrap.php ' 
+            $cmd = 'phpunit --verbose --bootstrap ' . $this->photon_path . '/photon/testbootstrap.php ' 
                 . '--coverage-html ' . realpath($this->directory) . ' '
                 . $this->photon_path . '/photon/tests/';
             $this->verbose($cmd);
@@ -582,7 +585,7 @@ class SelfTest extends Base
                                 realpath($this->directory)));
         } else {
             $xmlout = tempnam(Conf::f('tmp_folder', sys_get_temp_dir()), 'phpunit').'.xml';
-            $cmd = 'phpunit --bootstrap ' . $this->photon_path . '/photon/testbootstrap.php '
+            $cmd = 'phpunit --verbose --bootstrap ' . $this->photon_path . '/photon/testbootstrap.php '
                 . '--coverage-clover ' . $xmlout . ' '
                 . $this->photon_path . '/photon/tests/';
 
