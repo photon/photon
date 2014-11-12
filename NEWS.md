@@ -5,6 +5,8 @@
   An event is emitted.
 - Rewrite Runner class to detect when worker are away, ans don't block the handler.
 - Increase code coverage of unit tests
+- Source code are mirrored on Github under the organizsation "photon"
+- Units tests are executed by Travis CI for all branch, and pull request on Github
 
 ## New Features
 - Add hnu command "show-config" to show the config file on the standard output. Usefull to show phar packaged configuration.
@@ -20,7 +22,6 @@
     - 501 Not Implemented
     - 503 Service Unavailable
 - Add composer support, and publish it on packagist under "photon/photon"
- 
  
 ## Bugfixes
 - Issue 845: there is no reference sign on a function call
