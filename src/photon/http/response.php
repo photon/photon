@@ -392,7 +392,7 @@ function pretty_server_error($e, $req)
                }
                return $loc;');
     $src2lines = create_function('$file',
-               '$src = nl2br(highlight_file($file, TRUE));
+               '$src = nl2br(@highlight_file($file, TRUE));
                return explode("<br />", $src);');
     $clean = create_function('$line',
                'return html_entity_decode(str_replace("&nbsp;", " ", $line));');
@@ -493,6 +493,7 @@ function html_pretty_server_error($e, $req)
     $o = function ($in) {
         return htmlspecialchars($in);
     };
+
     $sub = function($f) {
         $loc = '';
         if (isset($f['class'])) {
@@ -507,6 +508,7 @@ function html_pretty_server_error($e, $req)
         }
         return $loc;
     };
+
     $parms = function ($f) {
         $params = array();
         if (isset($f['function'])) {
@@ -524,8 +526,9 @@ function html_pretty_server_error($e, $req)
         }
         return $params;
     };
+
     $src2lines = function ($file) {
-        $src = nl2br(highlight_file($file, true));
+        $src = nl2br(@highlight_file($file, true));
         return explode('<br />', $src);
     };
 
