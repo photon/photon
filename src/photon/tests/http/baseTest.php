@@ -145,8 +145,6 @@ class baseTest extends \PHPUnit_Framework_TestCase
 
     public function testServerError()
     {
-        $this->markTestIncomplete('To review');
-        
         $mess = (object) array('headers' => (object) array('QUERY' => 'a=b&c=d',
                                                            'METHOD' => 'GET'),
                                'path' => '/home',
@@ -164,8 +162,6 @@ class baseTest extends \PHPUnit_Framework_TestCase
 
     public function testServerErrorWithTemplate()
     {
-        $this->markTestIncomplete('To review');
-        
         $mess = (object) array('headers' => (object) array('QUERY' => 'a=b&c=d',
                                                            'METHOD' => 'GET'),
                                'path' => '/home',
