@@ -72,7 +72,11 @@ class MongoDB
                                  'database' => 'test'),
                            $def
                            );
-        $conn = new \Mongo($cfg['server'], $cfg['options']);
+
+        // On mongo extension >= 1.3.0, Mongo class is rename MongoClient creating a compatibility break
+        $class = class_exists('\MongoClient') ? '\MongoClient' : '\Mongo';
+
+        $conn = new $class($cfg['server'], $cfg['options']);
         
         return $conn->selectDB($cfg['database']);
     }
