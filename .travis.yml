@@ -6,7 +6,7 @@ php:
   - 5.5
 
 before_script:
-  - sudo locale-gen fr_FR
+  - sudo locale-gen fr_FR fr_FR.UTF-8
   - locale -a  
   - echo "extension = zmq.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - printf "yes\nyes\nno\nyes\n" | pecl install pecl_http-1.7.6
