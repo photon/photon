@@ -116,6 +116,12 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
         $this->assertSame(204, $res->status_code);
     }
 
+    public function testMultiStatus()
+    {
+        $res = new response\MultiStatus('<i love xml/>');
+        $this->assertSame(207, $res->status_code);
+    }
+
     public function testBadRequest()
     {
         $res = new response\BadRequest('/');

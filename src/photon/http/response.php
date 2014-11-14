@@ -76,6 +76,22 @@ class NoContent extends Response
     }
 }
 
+class MultiStatus extends Response
+{
+    /**
+     * Define in WebDav HTTP Extensions
+     * A Multi-Status response conveys information about multiple resources.
+     * The default Multi-Status response body is a text/xml or application/xml HTTP entity with a 'multistatus' root element.
+     *
+     * @see http://www.webdav.org/specs/rfc4918.html#STATUS_207
+     */
+    public function __construct($content, $mimetype='application/xml; charset=utf-8')
+    {
+        parent::__construct($content, $mimetype);
+        $this->status_code = 207;
+    }
+}
+
 class Redirect extends Response
 {
     /**
