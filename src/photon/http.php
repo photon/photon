@@ -83,6 +83,7 @@ class Response
      * Status code list.
      *
      * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
+     * @see http://tools.ietf.org/html/rfc4918#section-21.4
      */
     public $status_code_list = array(100 => 'Continue',
                                      101 => 'Switching Protocols',
@@ -93,6 +94,7 @@ class Response
                                      204 => 'No Content',
                                      205 => 'Reset Content',
                                      206 => 'Partial Content',
+                                     207 => 'Multi-Status',
                                      300 => 'Multiple Choices',
                                      301 => 'Moved Permanently',
                                      302 => 'Found',
@@ -119,12 +121,16 @@ class Response
                                      415 => 'Unsupported Media Type',
                                      416 => 'Requested Range Not Satisfiable',
                                      417 => 'Expectation Failed',
+                                     422 => 'Unprocessable Entity',
+                                     423 => 'Locked',
+                                     424 => 'Failed Dependency',
                                      500 => 'Internal Server Error',
                                      501 => 'Not Implemented',
                                      502 => 'Bad Gateway',
                                      503 => 'Service Unavailable',
                                      504 => 'Gateway Timeout',
-                                     505 => 'HTTP Version Not Supported'
+                                     505 => 'HTTP Version Not Supported',
+                                     507 => 'Insufficient Storage',
                                      );
 
     /**
