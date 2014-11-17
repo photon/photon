@@ -201,6 +201,15 @@ namespace
     // Photon autoloader to the SPL autoload stack.
     include_once __DIR__ . '/photon/autoload.php';
 
+    /*
+     *  Includes fallback support
+     */
+    include_once 'photon/fallback/http_build_cookie.php';
+    include_once 'photon/fallback/http_parse_cookie.php';
+    include_once 'photon/fallback/http_parse_headers.php';
+    include_once 'photon/fallback/http_parse_params.php';
+
+    // Let's its go
     try {
         $parser = \photon\getParser();
         $result = $parser->parse();
