@@ -24,6 +24,14 @@ use \photon\translation\Translation;
 
 require_once('path.php');
 
+/*
+ *  Includes fallback support
+ */
+require_once 'fallback/http_build_cookie.php';
+require_once 'fallback/http_parse_cookie.php';
+require_once 'fallback/http_parse_headers.php';
+require_once 'fallback/http_parse_params.php';
+
 /**
  * Autoloader for Photon.
  */
