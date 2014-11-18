@@ -33,6 +33,10 @@ if (function_exists('http_build_cookie') === false && class_exists('http\Cookie'
      */
     function http_build_cookie($cookie)
     {
+        if (isset($cookie['expires']) && $cookie['expires'] === 0) {
+            unset($cookie['expires']);
+        }
+
         return (string) new \http\Cookie($cookie);
     }
 }

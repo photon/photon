@@ -34,7 +34,7 @@ if (function_exists('http_parse_cookie') === false && class_exists('http\Cookie'
     function http_parse_cookie($cookieString)
     {
         $cookie = new \http\Cookie($cookieString);
-        return array(
+        return (object) array(
             'cookies' => $cookie->getCookies(),
             'expires' => $cookie->getExpires(),
             'domain' => $cookie->getDomain(),

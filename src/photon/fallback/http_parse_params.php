@@ -34,7 +34,21 @@ if (function_exists('http_parse_params') === false && class_exists('http\Params'
     function http_parse_params($params)
     {
         $p = new \http\Params($params);
-        return $p->params;
+        $params = array();
+
+        foreach($p->params as $param) {
+            foreach($param['arguments'] as $k => $v) {
+                if ($v === true) {
+                    $params[] = array($k => null);
+                } else {
+                    $params[] = array($k => $v);
+                }
+            }
+        }
+
+        return (object) array(
+            'params' => $params,
+        );
     }
 }
 
