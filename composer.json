@@ -14,7 +14,7 @@
         },
         {
             "name": "William MARTIN",
-            "email": "wysman@gmail.com",
+            "email": "william.martin@power-lan.com",
             "role": "Developer"
         },
         {
@@ -22,7 +22,6 @@
             "homepage": "http://projects.ceondo.com/p/photon/source/tree/master/CONTRIBUTORS.md"
         }
     ],
-    "minimum-stability": "dev",
     "require": {
         "php": ">=5.3.0",
         "pear/console_commandline": "dev-trunk",
