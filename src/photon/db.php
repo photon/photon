@@ -47,16 +47,15 @@ class Connection
 
     public static function get($db='default')
     {
-        if (isset(self::$conns[$db])) {
+        if (isset(self::$conns[$db]) === false) {
+            $defs = Conf::f('databases', array());
+            if (!isset($defs[$db])) {
+                throw new UndefinedConnection(sprintf('The connection "%s" is not defined in the configuration.', $db));
+            }
 
-            return self::$conns[$db];
+            $engine = $defs[$db]['engine'];
+            self::$conns[$db] = $engine::get($defs[$db]);
         }
-        $defs = Conf::f('databases', array());
-        if (!isset($defs[$db])) {
-            throw new UndefinedConnection(sprintf('The connection "%s" is not defined in the configuration.', $db));
-        }
-        $engine = $defs[$db]['engine'];
-        self::$conns[$db] = $engine::get($defs[$db]);
 
         return self::$conns[$db];
     }
@@ -149,5 +148,29 @@ class PostgreSQL
 
         return new \PDO('pgsql:' . implode(';', $cfgs), 
                         $user, $password, $opts); 
+    }
+}
+
+class Memcached
+{
+    public static function get($def)
+    {
+        $cfgDefault = array(
+            'host' => array('localhost:11211'),
+            'id' => null,
+        );
+        $cfg = array_merge($cfgDefault, $def);
+
+        if (is_array($cfg['host']) === false) {
+            $cfg['host'] = array($cfg['host']);
+        }
+        
+        $srv = ($cfg['id'] === null) ? new \Memcached : new \Memcached($cfg['id']);
+        foreach($cfg['host'] as $host) {
+            list($ip, $port) = explode(':', $host, 2);
+            $srv->addServer($ip, $port);
+        }
+
+        return $srv;
     }
 }
