@@ -82,7 +82,7 @@ class SessionTest extends \PHPUnit_Framework_TestCase
 
     public function testMiddleware()
     {
-        Conf::set('session_storage', '\photon\tests\sessionTest\DummyStore');
+        Conf::set('session_storage', '\photon\tests\session\sessionTest\DummyStore');
         $mid = new \photon\session\Middleware();
         $req = \photon\test\HTTP::baseRequest();
         $this->assertEquals(false, $mid->process_request($req));
