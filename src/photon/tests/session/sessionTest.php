@@ -21,7 +21,7 @@
 # ***** END LICENSE BLOCK ***** */
 
 
-namespace photon\tests\sessionTest;
+namespace photon\tests\session\sessionTest;
 
 use \photon\config\Container as Conf;
 
