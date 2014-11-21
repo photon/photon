@@ -41,7 +41,10 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase
     public function setup()
     {
         $this->conf = Conf::dump();
-        Conf::load(include $_ENV['photon.config']);
+
+        if (isset($_ENV['photon.config'])) {
+            Conf::load(include $_ENV['photon.config']);
+        }
     }
 
     public function tearDown()
