@@ -183,3 +183,119 @@ class SessionTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(array(), $req->session->store->data);
     }
 }
+
+abstract class SessionHighLevelTestCase extends \photon\test\TestCase
+{
+    /*
+     *  Simple page which do not used session
+     */
+    public function testEmptySession()
+    {
+        $req = \photon\test\HTTP::baseRequest();
+        $mid = new \photon\session\Middleware();
+        $this->assertEquals(false, $mid->process_request($req));
+
+        $res = new \photon\http\Response('Hello!');
+        $mid->process_response($req, $res);
+        $this->assertEquals(false, isset($res->COOKIE['sid']));
+        $this->assertEquals(false, isset($res->headers['Vary']));
+    }
+
+    /*
+     *  Ensure a unknown session cookie do not throw exception or errors
+     */
+    public function testUnknownSession()
+    {
+        $req = \photon\test\HTTP::baseRequest('GET', '/', '', '', array(), array('cookie' => 'sid=42'));
+        $mid = new \photon\session\Middleware();
+        $this->assertEquals(false, $mid->process_request($req));
+        $res = new \photon\http\Response('Hello!');
+        $mid->process_response($req, $res);
+    }
+
+    public function testSimpleExchange()
+    {
+        /*
+         * Request 1 :  Receive a request without session cookie
+         *              Create a session and store a counter into it
+         */
+        $req = \photon\test\HTTP::baseRequest();
+        $mid = new \photon\session\Middleware();
+        $this->assertEquals(false, $mid->process_request($req));
+
+        $req->session['cpt'] = 1234;
+        $res = new \photon\http\Response('Hello!');
+        $mid->process_response($req, $res);
+        $this->assertEquals(true, isset($res->COOKIE['sid']));
+        $sid = $this->getSessionId($res);
+        unset($req);
+        unset($res);
+        unset($mid);
+
+        /*
+         * Request 2 :  Receive a request with the previous session cookie
+         *              Access to the counter
+         */
+        $req = \photon\test\HTTP::baseRequest('GET', '/', '', '', array(), array('cookie' => 'sid=' . $sid));
+        $mid = new \photon\session\Middleware();
+        $this->assertEquals(false, $mid->process_request($req));
+        $cpt = $req->session['cpt'];
+        $this->assertEquals(1234, $cpt);
+        $res = new \photon\http\Response('Hello!');
+        $mid->process_response($req, $res);
+        $this->assertEquals(true, isset($res->headers['Vary']));
+        unset($req);
+        unset($res);
+        unset($mid);
+
+        /*
+         * Request 3 :  Receive a request with the previous session cookie
+         *              Access to the counter and edit it
+         */
+        $req = \photon\test\HTTP::baseRequest('GET', '/', '', '', array(), array('cookie' => 'sid=' . $sid));
+        $mid = new \photon\session\Middleware();
+        $this->assertEquals(false, $mid->process_request($req));
+        $cpt = $req->session['cpt'];
+        $this->assertEquals(1234, $cpt);
+        $req->session['cpt'] = 5678;
+        $res = new \photon\http\Response('Hello!');
+        $mid->process_response($req, $res);
+        $this->assertEquals(true, isset($res->headers['Vary']));
+        unset($req);
+        unset($res);
+        unset($mid);
+
+        /*
+         * Request 4 :  Receive a request with the previous session cookie
+         *              Access to the new value of the counter
+         */
+        $req = \photon\test\HTTP::baseRequest('GET', '/', '', '', array(), array('cookie' => 'sid=' . $sid));
+        $mid = new \photon\session\Middleware();
+        $this->assertEquals(false, $mid->process_request($req));
+        $cpt = $req->session['cpt'];
+        $this->assertEquals(5678, $cpt);
+        $res = new \photon\http\Response('Hello!');
+        $mid->process_response($req, $res);
+        $this->assertEquals(true, isset($res->headers['Vary']));
+        unset($req);
+        unset($res);
+        unset($mid);
+    }
+
+    private function getSessionId($res)
+    {
+        $headers = $res->getHeaders();
+        $rc = preg_match('/Set-Cookie: sid=([\w\.\-_]+);/', $headers, $sid);
+        $this->assertEquals($rc, 1);
+        return $sid[1];   
+    }
+}
+
+class SessionFileTest extends SessionHighLevelTestCase
+{
+    public function setup()
+    {
+        parent::setup();
+        Conf::set('session_storage', '\photon\session\storage\File');
+    }
+}
