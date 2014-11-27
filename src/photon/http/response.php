@@ -346,6 +346,22 @@ class Json extends Response
 }
 
 /**
+ * Display a simple server error page.
+ */
+class InternalServerError extends Response
+{
+    function __construct($exception, $mimetype=null)
+    {
+        $content = 'The server encountered an unexpected condition which prevented it from fulfilling your request.'."\n\n"
+                .'An email has been sent to the administrators, we will correct this error as soon as possible. Thank you for your comprehension.'
+                ."\n\n".'500 - Internal Server Error';
+
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 500;
+    }
+}
+
+/**
  * Display a server error page.
  *
  * If a 500.html template is available it will try to render it to
