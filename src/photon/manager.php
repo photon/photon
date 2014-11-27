@@ -716,8 +716,17 @@ class Packager extends Base
     {
         foreach ($this->getProjectFiles() as $file => $path) {
             $this->verbose("[PROJECT ADD] " . $file);
-            $phar->addFile($path, $file);
-            if (substr($file, -4) == '.php') {
+
+            // Remove shebang 
+            if ($file === 'vendor/photon/photon/src/photon.php') {
+                $photon = file($file);
+                array_shift($photon); // Remove shebang
+                $phar->addFromString($file, implode('', $photon));
+            } else {
+                $phar->addFile($path, $file);
+            }
+
+            if (substr($file, -4) === '.php') {
                 $phar[$file]->compress(\Phar::GZ);
             }
         }
