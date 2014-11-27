@@ -191,7 +191,6 @@ class IgnoreFilterIterator extends \RecursiveFilterIterator
                     $base = realpath($base);
                     self::$regex = array_merge(self::$regex, self::parsePatterns(file($base . '/' . $file), $base));
                 }
-                var_dump(self::$regex);
             } else if (file_exists($ignore_file)) {
                 self::$regex = self::parsePatterns(file($ignore_file), realpath($base_path));
             }
