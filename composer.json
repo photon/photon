@@ -36,6 +36,9 @@
     "require-dev": {
         "phpunit/phpunit": "4.1.*"
     },
+    "bin": [
+        "scripts/hnu"
+    ],
     "extra": {
         "branch-alias": {
             "dev-develop": "0.3.x-dev"

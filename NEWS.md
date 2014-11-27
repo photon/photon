@@ -3,14 +3,15 @@
 ## Changes
 - Handle mongrel2 disconnect message earlier to avoid Middleware execution.  
   An event is emitted.
-- Rewrite Runner class to detect when worker are away, ans don't block the handler.
+- Rewrite Runner class to detect when worker are away, ans don't block the handler
 - Increase code coverage of unit tests
 - Source code are mirrored on Github under the organizsation "photon"
 - Units tests are executed by Travis CI for all branch, and pull request on Github
+- Add phpunit configuration file to avoid to use the "hnu selftest" command
 
 ## New Features
-- Add hnu command "show-config" to show the config file on the standard output. Usefull to show phar packaged configuration.
-- Set photon version to the current commit id, when create phar from a photon version not installed by PEAR.
+- Add hnu command "show-config" to show the config file on the standard output. Usefull to show phar packaged configuration
+- Set photon version to the current commit id, when create phar from a photon version not installed by PEAR
 - Add template tag to emit a event
 - Check each generated template for syntax error.  
   Phar can't be build if a template have a syntax error.
@@ -21,12 +22,21 @@
     - 400 Bad Request
     - 501 Not Implemented
     - 503 Service Unavailable
+- Add WebDav MultiStatus answer (HTTP code 207)
 - Add composer support, and publish it on packagist under "photon/photon"
- 
+- Add support of PECL HTTP serie 2.x
+- Add doxygen configuration file to produce some technicals documentations
+- Add Database helper to create Memcached client
+
 ## Bugfixes
 - Issue 845: there is no reference sign on a function call
 - Ensure all photon source are compressed in the PHAR
 - Don't add .pharignore in the PHAR, related to PHP bug https://bugs.php.net/bug.php?id=64931
+
+## Particules
+- Add MongoDB session storage (https://github.com/photon/session-mongodb)
+- Add Memcached session storage (https://github.com/photon/session-memcached)
+- Add Markdown support for template (https://github.com/photon/template-markdown)
 
 # Photon 0.2 - Mon, 11 Apr 2011 13:10:23 +0000
 
