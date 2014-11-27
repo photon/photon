@@ -811,23 +811,22 @@ class Packager extends Base
             if (!$fileInfo->isFile()) {
                 continue;
             }
+
             $filename = $fileInfo->getFilename();
-            if (substr($filename, -5) == '.phar') {
-                $this->verbose("[PROJECT IGNORE] " . $filename);
-                continue;
-            }
-            if ($filename == '.pharignore') {
-                $this->verbose("[PROJECT IGNORE] " . $filename);
-                continue;
-            }
-            if (preg_match('/^config[\.-](\w+\.)*php/', $filename)) {
+            $pharpath = substr($fileInfo->getRealPath(),
+                               strlen($this->cwd) + 1,
+                               strlen($fileInfo->getRealPath()));
+
+            if (substr($pharpath, 0, 5) === '.phar') {
                 $this->verbose("[PROJECT IGNORE] " . $filename);
                 continue;
             }
 
-            $pharpath = substr($fileInfo->getRealPath(),
-                               strlen($this->cwd) + 1,
-                               strlen($fileInfo->getRealPath()));
+            if (preg_match('/^config[\.-](\w+\.)*php/', $pharpath)) {
+                $this->verbose("[PROJECT IGNORE] " . $filename);
+                continue;
+            }
+
             $files[$pharpath] = $fileInfo->getRealPath();
         }
 
