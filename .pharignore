@@ -1,0 +1,17 @@
+build/
+doc/
+scripts/
+src/photon/data/
+src/photon/tests/
+
+.gitignore
+.pharignore
+.travis.yml
+
+composer.json
+CONTRIBUTORS.md
+doxygen.config
+NEWS.md
+phpunit.xml
+README.md
+
