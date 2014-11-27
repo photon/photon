@@ -8,6 +8,7 @@
 - Source code are mirrored on Github under the organizsation "photon"
 - Units tests are executed by Travis CI for all branch, and pull request on Github
 - Add phpunit configuration file to avoid to use the "hnu selftest" command
+- Allow multiple .pharignore in subfolder, rules can be local to package installed by composer
 
 ## New Features
 - Add hnu command "show-config" to show the config file on the standard output. Usefull to show phar packaged configuration
