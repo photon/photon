@@ -169,7 +169,6 @@ class RecursiveDotDirsFilterIterator extends \RecursiveFilterIterator
  */
 class IgnoreFilterIterator extends \RecursiveFilterIterator
 {
-    public static $base_path = '';
     public static $regex = array();
 
     /**
@@ -177,28 +176,34 @@ class IgnoreFilterIterator extends \RecursiveFilterIterator
      *
      * @param $iterator Iterator object
      * @param $base_path Directory without trailing slash
-     * @param $ignore_file File with patterns to ignore
+     * @param $ignore_file File with patterns to ignore, or
+     *                     Array of File with patterns to ignore, where array keys are base path
+     *                     All files must be in the base path, or un sub-folders
      */
     public function __construct($iterator, $base_path=null, $ignore_file=null)
     {
         parent::__construct($iterator);
 
-        if (null !== $base_path) {
-            self::$base_path = $base_path;
-        }
-        if (null !== $ignore_file && file_exists($ignore_file)) {
-            self::$regex = self::parsePatterns(file($ignore_file));
+        if (null !== $ignore_file) {
+            if (is_array($ignore_file)) {
+                self::$regex = array();
+                foreach($ignore_file as $base => $file) {
+                    $base = realpath($base);
+                    self::$regex = array_merge(self::$regex, self::parsePatterns(file($base . '/' . $file), $base));
+                }
+                var_dump(self::$regex);
+            } else if (file_exists($ignore_file)) {
+                self::$regex = self::parsePatterns(file($ignore_file), realpath($base_path));
+            }
         }
     }
 
     public function accept()
     {
-        $path = substr($this->current()->getRealPath(),
-                       strlen(self::$base_path),
-                       strlen($this->current()->getRealPath()));
+        $path = $this->current()->getRealPath();
+
         foreach (self::$regex as $regex) {
             if (preg_match($regex, $path)) {
-
                 return false;
             }
         }
@@ -212,15 +217,22 @@ class IgnoreFilterIterator extends \RecursiveFilterIterator
      * @param $lines Array of raw patterns
      * @return array Array of patterns
      */
-    public static function parsePatterns($lines)
+    public static function parsePatterns($lines, $prefix=null)
     {
         $patterns = array();
         $from = array('.',  '*');
         $to =   array('\.', '.+');
         foreach ($lines as $pattern) {
             $pattern = trim($pattern);
+
+            // Ignore comment & empty lines
             if (0 === strlen($pattern) || '#' === $pattern[0]) {
                 continue;
+            }
+
+            // Add prefix to handle ignore files in subfolders
+            if ($prefix !== null) {
+                $pattern = $prefix . '/' . $pattern;
             }
 
             // Ignore all files and subfolders if the pattern is a folder
@@ -230,7 +242,7 @@ class IgnoreFilterIterator extends \RecursiveFilterIterator
             }
 
             $pattern = str_replace($from, $to, $pattern);
-            $patterns[] = '#^/' . $pattern . $folder . '$#';
+            $patterns[] = '#^' . $pattern . $folder . '$#';
         }
 
         return $patterns;

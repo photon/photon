@@ -715,8 +715,8 @@ class Packager extends Base
     public function addProjectFiles(&$phar)
     {
         foreach ($this->getProjectFiles() as $file => $path) {
-            $phar->addFile($path, $file);
             $this->verbose("[PROJECT ADD] " . $file);
+            $phar->addFile($path, $file);
             if (substr($file, -4) == '.php') {
                 $phar[$file]->compress(\Phar::GZ);
             }
@@ -781,8 +781,20 @@ class Packager extends Base
     public function getProjectFiles()
     {
         $dirItr = new \RecursiveDirectoryIterator($this->cwd);
-        $filterItr = new \photon\path\IgnoreFilterIterator($dirItr, 
-                                                           $this->cwd, $this->cwd . '/.pharignore');
+
+        if ($this->composer === true) {
+            $files = glob('vendor/*/*/.pharignore');        // Pharignore of particules (including photon)
+            $filter = array($this->cwd => '.pharignore');   // Pharignore of the project
+            foreach($files as $f) {
+                $filter[substr($f, 0, strlen($f) - strlen('/.pharignore'))] = '.pharignore';
+            }
+            $filterItr = new \photon\path\IgnoreFilterIterator($dirItr, 
+                                                               $this->cwd, $filter);
+        } else {
+            $filterItr = new \photon\path\IgnoreFilterIterator($dirItr, 
+                                                               $this->cwd, $this->cwd . '/.pharignore');
+        }
+    
         $itr = new \RecursiveIteratorIterator($filterItr, 
                                               \RecursiveIteratorIterator::SELF_FIRST);
         $files = array();
