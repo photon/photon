@@ -1,6 +1,5 @@
 {
     "name": "photon/photon",
-    "version": "0.3.0-dev",
     "type": "library",
     "description": "Photon is a high performance micro PHP framework.",
     "keywords": ["photon","mongrel2","zmq"],
