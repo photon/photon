@@ -100,14 +100,17 @@ class Log
     /**
      * Used to reverse the log level to the string.
      */
-    public static $reverse = array(1 => 'ALL',
-                                   3 => 'DEBUG',
-                                   4 => 'INFO',
-                                   5 => 'PERF',
-                                   6 => 'EVENT',
-                                   7 => 'WARN',
-                                   8 => 'ERROR',
-                                   9 => 'FATAL');
+    public static $reverse = array(
+        1 => 'ALL',
+        3 => 'DEBUG',
+        4 => 'INFO',
+        5 => 'PERF',
+        6 => 'EVENT',
+        7 => 'WARN',
+        8 => 'ERROR',
+        9 => 'FATAL',
+        10 => 'OFF',
+    );
 
     /**
      * Current log level.
