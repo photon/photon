@@ -13,7 +13,7 @@ before_script:
   - composer self-update
   - mkdir test
   - cd test
-  - echo "eyJtaW5pbXVtLXN0YWJpbGl0eSI6ICJkZXYifQo=" | base64 -d  > composer.json
+  - composer init --no-interaction --stability=dev
   - composer require "photon/photon:dev-develop"
   
 script: php vendor/photon/photon/src/photon.php selftest
