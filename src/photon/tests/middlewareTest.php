@@ -103,7 +103,6 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         list($req, $resp) = Dispatcher::dispatch($req);
         $this->assertEquals(200, $resp->status_code);
         $this->assertArrayHasKey('Strict-Transport-Security', $resp->headers);
-        var_export($resp->headers);
     }
 
     // HTTP Public Key Pinning disable (default)
@@ -129,9 +128,8 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         ));
 
         $req = HTTP::baseRequest('GET', '/');
-        list($req, $resp) = Dispatcher::dispatch($req);// var_export($resp->headers); var_export($resp->content);
+        list($req, $resp) = Dispatcher::dispatch($req);
         $this->assertEquals(200, $resp->status_code);
         $this->assertArrayHasKey('Public-Key-Pins', $resp->headers);
-        var_export($resp->headers);
     }
 }
