@@ -24,9 +24,9 @@
  * Collection of middleware.
  */
 namespace photon\middleware;
-
-use \photon\http\response\Forbidden as Forbidden;
 use \photon\config\Container as Conf;
+use \photon\http\response\Forbidden;
+use \photon\http\response\Redirect;
 
 /**
  * Compress the rendered page.
@@ -174,4 +174,118 @@ class Csrf
         $response->content = preg_replace('/(<form\W[^>]*\bmethod=(\'|"|)POST(\'|"|)\b[^>]*>)/i', '$1'.$extra, $response->content);
         return $response;
     }
+}
+
+/**
+ * Security Middleware.
+ *
+ * Various collection of security feature.
+ * - HTTP Strict Transport Security (IETF RFC 6797)
+ * - HTTP Public Key Pinning (IETF Draft)
+ * - SSL Redirect
+ */
+class Security
+{
+    private static $config = null;
+
+    /*
+     *  For unit-tests only
+     */
+    static public function clearConfig()
+    {
+        self::$config = null;
+    }
+
+    /*
+     *  Returns the middleware configuration
+     */
+    static private function getConfig()
+    {
+        // Cache the config
+        if (self::$config !== null) {
+            return self::$config;
+        }
+
+        // Build the config
+        $config = Conf::f('middleware_security', array());
+        $default = array(
+            'hsts' => false,
+            'hsts_options' => array(
+                'max-age' => 31536000, /* 365 days */
+                'includeSubDomains' => true,
+                'preload' => true,
+            ),
+            'hpkp' => false,
+            'hpkp_options' => array(
+                'pin-sha256' => array(/* Active Key and Backup Key as base64 string */),
+                'max-age' => 31536000, /* 365 days */
+                'includeSubDomains' => true,
+                'report-uri' => false
+            ),
+            'ssl_redirect' => false,
+        );
+
+        self::$config = array_replace_recursive($default, $config);
+        return self::$config;
+    }
+
+    function process_request(&$request)
+    {
+        $config = self::getConfig();
+
+        // SSL Redirect
+        if ($config['ssl_redirect'] === true && isset($request->headers->URL_SCHEME) && isset($request->headers->host)) {
+            if ($request->headers->URL_SCHEME === 'http') {
+                return new Redirect('https://' . $request->headers->host);
+            }
+        }
+        
+        return false;
+    }
+
+    function process_response($request, $response)
+    {
+        $config = self::getConfig();
+
+        // HTTP Strict Transport Security
+        if ($config['hsts'] === true) {
+            $opts = $config['hsts_options'];
+            
+            $value = array(
+                'max-age=' . $opts['max-age']
+            );
+            if ($opts['includeSubDomains'] === true) {
+                $value[] = 'includeSubDomains';
+            }
+            if ($opts['preload'] === true) {
+                $value[] = 'preload';
+            }
+
+            $response->headers['Strict-Transport-Security'] = implode('; ', $value);
+        }
+
+        // HTTP Public Key Pinning
+        if ($config['hpkp'] === true) {
+            $opts = $config['hpkp_options'];
+
+            if (count($opts['pin-sha256']) > 0) {
+                $value = array();
+                foreach($opts['pin-sha256'] as $key) {
+                    $value[] = 'pin-sha256="' . $key . '"';
+                }
+                $value[] = 'max-age=' . $opts['max-age'];
+                if ($opts['includeSubDomains'] === true) {
+                    $value[] = 'includeSubDomains';
+                }
+                if ($opts['report-uri'] !== false) {
+                    $value[] = 'report-uri="' . $opts['report-uri'] . '"';
+                }
+
+                $response->headers['Public-Key-Pins'] = implode('; ', $value);
+            }
+        }
+
+        return $response;
+    }
+
 }

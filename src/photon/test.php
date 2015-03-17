@@ -64,11 +64,15 @@ class HTTP
     public static function baseRequest($method='GET', $path='/', $query='', $body='', $params=array(), $headers=array())
     {
         list($uri, $query) = self::getUriQuery($path, $params);
-        $_headers = array('VERSION' => 'HTTP/1.1',
-                          'METHOD' => $method,
-                          'URI' => $uri,
-                          'QUERY' => $query,
-                          'PATH' => $path);
+        $_headers = array(
+            'VERSION' => 'HTTP/1.1',
+            'METHOD' => $method,
+            'URI' => $uri,
+            'QUERY' => $query,
+            'PATH' => $path,
+            'URL_SCHEME' => 'http',
+            'host' => 'test.example.com',
+        );
         $headers = array_merge($_headers, $headers);
         $msg = new \photon\mongrel2\Message('dummy', 'dummy', 
                                             $path, (object) $headers, $body);
