@@ -163,15 +163,13 @@ class Middleware
             return $response;
         }
 
-        $accessed = $request->session->accessed;
-        $modified = $request->session->modified;
         if ($request->session->accessed) {
             // This view used session data to render, this means it
             // varies on the cookie information.
             \photon\http\HeaderTool::updateVary($response, array('Cookie'));
         }
-        if ($request->session->modified 
-            || Conf::f('session_save_every_request', false)) {
+
+        if ($request->session->modified || Conf::f('session_save_every_request', false)) {
             // Time to store
             $request->session->commit($response);
             $expire = Conf::f('session_cookie_expire', 1209600);
