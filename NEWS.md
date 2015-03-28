@@ -1,4 +1,13 @@
-# Photon 0.3 - xxxxxx LANG="en_EN.UTF-8" date -u -R xxxxxxxx
+
+# Photon 0.5 - xxxxxx LANG="en_EN.UTF-8" date -u -R xxxxxxxx
+
+
+# Photon 0.4 - Sat, 28 Mar 2015 12:00:00 +0000
+
+## New Features
+- Add security middleware (SSL redirect, HTTP Strict Transport Security, Public Key Pinning)
+
+# Photon 0.3 - Thu, 08 Jan 2015 16:00:00 +0000
 
 ## Changes
 - Handle mongrel2 disconnect message earlier to avoid Middleware execution.  
