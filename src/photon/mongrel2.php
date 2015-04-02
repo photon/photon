@@ -126,6 +126,10 @@ class Connection
 
     public function __construct($pull_addr=null, $pub_addr=null, $ctrl_addr=null)
     {
+        if ($pull_addr === null && $pub_addr === null && $ctrl_addr === null) {
+            throw new Exception('Pull/Pub/Ctrl addresses are null, check your configuration');
+        }
+
         $this->pull_addr = $pull_addr;
         $this->pub_addr = $pub_addr;
         $this->ctrl_addr = $ctrl_addr;
@@ -141,17 +145,23 @@ class Connection
         if ($this->pull_addr !== null) {
             $this->pull_socket = new \ZMQSocket($ctx, \ZMQ::SOCKET_PULL);
             $this->pull_socket->connect($this->pull_addr);
+        } else {
+            $this->pull_socket = null;
         }
 
         if ($this->pub_addr !== null) {
             $this->pub_socket = new \ZMQSocket($ctx, \ZMQ::SOCKET_PUB);
             $this->pub_socket->setSockOpt(\ZMQ::SOCKOPT_IDENTITY, uniqid());
             $this->pub_socket->connect($this->pub_addr);
+        } else {
+            $this->pub_socket = null;
         }
 
         if ($this->ctrl_addr !== null) {
             $this->ctrl_socket = new \ZMQSocket($ctx, \ZMQ::SOCKET_REQ);
             $this->ctrl_socket->connect($this->ctrl_addr);
+        } else {
+            $this->ctrl_socket = null;
         }
     }
 
@@ -302,7 +312,8 @@ class Connection
             throw new Exception('Mongrel2 pub socket not initialized');
         }
 
-        return send($this->pub_socket, $uuid, $listener, $payload);
+        $header = \sprintf('%s %d:%s,', $uuid, \strlen($listeners), $listeners);
+        return $this->pub_socket->send($header . ' ' . $payload);
     }
 
     /**
@@ -314,48 +325,20 @@ class Connection
      */
     public function deliver($uuid, $listeners, $payload)
     {
-        if ($this->pub_socket === null) {
-            throw new Exception('Mongrel2 pub socket not initialized');
+        if (129 > count($listeners)) {
+            return $this->send($socket, $uuid, \join(' ', $listeners), $payload);
         }
 
-        return deliver($this->pub_socket, $uuid, $listeners, $payload);
+        // We need to send multiple times the data. We are going to send
+        // the data in series of 128 to the clients. 128 is the default
+        // maximum number of listeners which can be addressed in one go
+        // with Mongrel2. This value can be changed in the configuration. 
+        $a = 1;
+        foreach (array_chunk($listeners, 128) as $chunk) {
+            $a = $a & (int) $this->send($socket, $uuid, \join(' ', $chunk),  $payload);
+        }
+
+        return (bool) $a;
     }
 }
 
-/**
- * Send an answer over the socket.
- *
- * @param $socket ZMQ socket providing the send() method
- * @param $uuid UUID of the server for subscription
- * @param $listeners Space delimited list of listeners 
- * @param $msg Payload
- */
-function send($socket, $uuid, $listeners, $msg)
-{
-    $header = \sprintf('%s %d:%s,', $uuid, \strlen($listeners), $listeners);
-    return $socket->send($header . ' ' . $msg);
-}
-
-/**
- * Deliver a piece of data to a series of listeners.
- *
- * @param $socket The delivery socket
- * @param $uuid ID of the sender
- * @param $lids Array of the listeners connection ids
- * @param $payload Payload
- */
-function deliver($socket, $uuid, $lids, $payload)
-{
-    if (129 > count($lids)) {
-        return send($socket, $uuid, \join(' ', $lids),  $payload);
-    }
-    // We need to send multiple times the data. We are going to send
-    // the data in series of 128 to the clients. 128 is the default
-    // maximum number of listeners which can be addressed in one go
-    // with Mongrel2. This value can be changed in the configuration. 
-    $a = 1;
-    foreach (array_chunk($lids, 128) as $chunk) {
-        $a = $a & (int) send($socket, $uuid, \join(' ', $chunk),  $payload);
-    }
-    return (bool) $a;
-}
