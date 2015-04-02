@@ -312,7 +312,7 @@ class Connection
             throw new Exception('Mongrel2 pub socket not initialized');
         }
 
-        $header = \sprintf('%s %d:%s,', $uuid, \strlen($listeners), $listeners);
+        $header = \sprintf('%s %d:%s,', $uuid, \strlen($listener), $listener);
         return $this->pub_socket->send($header . ' ' . $payload);
     }
 
