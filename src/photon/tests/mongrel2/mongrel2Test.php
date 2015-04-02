@@ -100,6 +100,8 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
 
     public function testConnectionRecv()
     {
+        $this->markTestIncomplete('To rewrite');
+
         $socket = new DummyZMQSocket();
         $socket->setNextRecv(file_get_contents(__DIR__ . '/../data/example.payload'));
 
@@ -110,6 +112,8 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
 
     public function testConnectionRecvGet()
     {
+        $this->markTestIncomplete('To rewrite');
+
         $socket = new DummyZMQSocket();
         $socket->setNextRecv('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 421:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"GET","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},0:');
         $conn = new mongrel2\Connection($socket, null);
@@ -119,6 +123,8 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
 
     public function testConnectionRecvJson()
     {
+        $this->markTestIncomplete('To rewrite');
+
         $socket = new DummyZMQSocket();
         $socket->setNextRecv('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 422:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"JSON","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},7:"HELLO"');
         $conn = new mongrel2\Connection($socket, null);
@@ -132,6 +138,8 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
      */
     public function testBigHeaders()
     {
+        $this->markTestIncomplete('To rewrite');
+
         $headers = array('METHOD' => 'JSON');
         for ($i=1; $i<=100; $i++) {
             $headers['X-Dummy-' . $i] = str_repeat(chr($i % 26 + 64), 100);
@@ -148,6 +156,8 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
 
     public function testConnectionSend()
     {
+        $this->markTestIncomplete('To rewrite');
+
         $socket_pull = new DummyZMQSocket();
         $socket_pub = new DummyZMQSocket();
         $conn = new mongrel2\Connection($socket_pull, $socket_pub);
@@ -159,6 +169,8 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
 
     public function testConnectionDeliver()
     {
+        $this->markTestIncomplete('To rewrite');
+
         $socket_pull = new DummyZMQSocket();
         $socket_pub = new DummyZMQSocket();
         $conn = new mongrel2\Connection($socket_pull, $socket_pub);
@@ -173,6 +185,8 @@ class mongrel2Test extends \PHPUnit_Framework_TestCase
 
     public function testReplyResponse()
     {
+        $this->markTestIncomplete('To rewrite');
+
         $response = new DummyResponse();
         $socket_pull = new DummyZMQSocket();
         $socket_pub = new DummyZMQSocket();

@@ -87,6 +87,8 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
 
     public function testSendIterable()
     {
+        $this->markTestIncomplete('To rewrite');
+
         $iter = array('a', 'b');
         $socket = new DummyZMQSocket();
         $socket->setNextRecv(file_get_contents(__DIR__ . '/../data/example.payload'));

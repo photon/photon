@@ -14,7 +14,7 @@ before_script:
   - mkdir test
   - cd test
   - composer init --no-interaction --stability=dev
-  - composer require "photon/photon:dev-develop"
+  - composer require "photon/photon:dev-refactor/m2conn"
   
 script: php vendor/photon/photon/src/photon.php selftest
 
