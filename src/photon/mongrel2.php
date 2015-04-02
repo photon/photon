@@ -135,6 +135,21 @@ class Connection
         $this->ctrl_addr = $ctrl_addr;
     }
 
+    public function getPubAddr()
+    {
+        return $this->pub_addr;
+    }
+
+    public function getPullAddr()
+    {
+        return $this->pull_addr;
+    }
+
+    public function getControlAddr()
+    {
+        return $this->ctrl_addr;
+    }
+
     /*
      *  Connect to mongrel2 based on socket addr given in the constructor
      */
