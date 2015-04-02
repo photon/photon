@@ -362,8 +362,7 @@ class Server extends Service
      */
     public function runService()
     {
-        $server = new \photon\server\Server(Conf::f('server_conf', array()));
-
+        $server = new \photon\server\Server;
         return $server->start();
     }
 

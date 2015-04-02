@@ -113,13 +113,33 @@ class Message
  */
 class Connection
 {
+    private $ctx;
+    private $pull_addr;
+    private $pub_addr;
+
     public $pull_socket;
     public $pub_socket;
 
-    public function __construct($pull_socket, $pub_socket)
+    public function __construct($pull_addr, $pub_addr)
     {
-        $this->pull_socket = $pull_socket;
-        $this->pub_socket = $pub_socket;
+        $this->pull_addr = $pull_addr;
+        $this->pub_addr = $pub_addr;
+    }
+
+    /*
+     *  Connect to mongrel2 based on socket addr given in the constructor
+     */
+    public function connect()
+    {
+        $ctx = new \ZMQContext();
+
+        $this->pull_socket = new \ZMQSocket($ctx, \ZMQ::SOCKET_PULL);
+        $this->pull_socket->connect($this->pull_addr);
+
+        $this->pub_socket = new \ZMQSocket($ctx, \ZMQ::SOCKET_PUB);
+        $this->pub_socket->setSockOpt(\ZMQ::SOCKOPT_IDENTITY, uniqid());
+        $this->pub_socket->connect($this->pub_addr);
+
     }
 
     /**
