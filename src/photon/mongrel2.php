@@ -30,6 +30,8 @@
  */
 namespace photon\mongrel2;
 
+class Exception extends \Exception {}
+
 /**
  * Parse a netstring.
  *
@@ -116,14 +118,17 @@ class Connection
     private $ctx;
     private $pull_addr;
     private $pub_addr;
+    private $ctrl_addr;
 
     public $pull_socket;
     public $pub_socket;
+    public $ctrl_socket;
 
-    public function __construct($pull_addr, $pub_addr)
+    public function __construct($pull_addr=null, $pub_addr=null, $ctrl_addr=null)
     {
         $this->pull_addr = $pull_addr;
         $this->pub_addr = $pub_addr;
+        $this->ctrl_addr = $ctrl_addr;
     }
 
     /*
@@ -133,13 +138,35 @@ class Connection
     {
         $ctx = new \ZMQContext();
 
-        $this->pull_socket = new \ZMQSocket($ctx, \ZMQ::SOCKET_PULL);
-        $this->pull_socket->connect($this->pull_addr);
+        if ($this->pull_addr !== null) {
+            $this->pull_socket = new \ZMQSocket($ctx, \ZMQ::SOCKET_PULL);
+            $this->pull_socket->connect($this->pull_addr);
+        }
 
-        $this->pub_socket = new \ZMQSocket($ctx, \ZMQ::SOCKET_PUB);
-        $this->pub_socket->setSockOpt(\ZMQ::SOCKOPT_IDENTITY, uniqid());
-        $this->pub_socket->connect($this->pub_addr);
+        if ($this->pub_addr !== null) {
+            $this->pub_socket = new \ZMQSocket($ctx, \ZMQ::SOCKET_PUB);
+            $this->pub_socket->setSockOpt(\ZMQ::SOCKOPT_IDENTITY, uniqid());
+            $this->pub_socket->connect($this->pub_addr);
+        }
 
+        if ($this->ctrl_addr !== null) {
+            $this->ctrl_socket = new \ZMQSocket($ctx, \ZMQ::SOCKET_REQ);
+            $this->ctrl_socket->connect($this->ctrl_addr);
+        }
+    }
+
+    /*
+     * Send a query encoded in tnetstring to the control port
+     * @return tnetstring
+     */
+    public function control($query)
+    {
+        if ($this->ctrl_socket === null) {
+            throw new Exception('Mongrel2 control socket not initialized');
+        }    
+
+        $this->ctrl_socket->send($query);
+        return $this->ctrl_socket->recv();
     }
 
     /**
@@ -158,6 +185,10 @@ class Connection
      */
     public function recv() 
     {
+        if ($this->pull_socket === null) {
+            throw new Exception('Mongrel2 pull socket not initialized');
+        }
+
         $fp = fopen('php://temp/maxmemory:5242880', 'r+');
         fputs($fp, $this->pull_socket->recv());
         rewind($fp);
@@ -267,6 +298,10 @@ class Connection
      */
     public function send($uuid, $listener, $payload)
     {
+        if ($this->pub_socket === null) {
+            throw new Exception('Mongrel2 pub socket not initialized');
+        }
+
         return send($this->pub_socket, $uuid, $listener, $payload);
     }
 
@@ -279,6 +314,10 @@ class Connection
      */
     public function deliver($uuid, $listeners, $payload)
     {
+        if ($this->pub_socket === null) {
+            throw new Exception('Mongrel2 pub socket not initialized');
+        }
+
         return deliver($this->pub_socket, $uuid, $listeners, $payload);
     }
 }

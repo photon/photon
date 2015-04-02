@@ -67,18 +67,19 @@ class Server
     private static $defaultMongrel2Addr = array(
         /**
          * Where the requests are provided.
-         *
-         * It is either a string, when the application server is
-         * connecting to a single Mongrel2 server or an array when pulling
-         * from many Mongrel2.
          */
-        'pull_addrs' => 'tcp://127.0.0.1:9997',
+        'pull_addr' => 'tcp://127.0.0.1:9997',
 
         /**
-         * Where the answers are pushed. Like the pull, it can publish on
-         * several sockets if an array.
+         * Where the answers are pushed.
          */
-        'pub_addrs' => 'tcp://127.0.0.1:9996',
+        'pub_addr' => 'tcp://127.0.0.1:9996',
+
+        /**
+         * Where the statistics about connections in mongrel2 are available
+         * This feature must be explicitly activated in mongrel2
+         */
+        'crtl_addr' => null,
     );
 
     private $connections = array();
@@ -93,7 +94,10 @@ class Server
                 throw new Exception('Old style configuration detected, please update the "server_conf" key');
             }
 
-            $connection = new Connection($server['pull_addrs'], $server['pub_addrs']);
+            $pull_addr  = isset($server['pull_addr'])   ? $server['pull_addr']  : null;
+            $pub_addr   = isset($server['pub_addr'])    ? $server['pub_addr']   : null;
+            $ctrl_addr  = isset($server['ctrl_addr'])   ? $server['ctrl_addr']  : null;
+            $connection = new Connection($pull_addr, $pub_addr, $ctrl_addr);
             $this->connections[] = $connection;
         }
     }
