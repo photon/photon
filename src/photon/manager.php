@@ -371,27 +371,6 @@ class Server extends Service
 
 
 /**
- * Broker to shuffle work between handlers and worker tasks.
- *
- */
-class Broker extends Service
-{
-    /**
-     * Run the production Photon server.
-     *
-     * By default, it outputs nothing, if you want some details, run
-     * in verbose mode.
-     */
-    public function runService()
-    {
-        $broker = new \photon\broker\MdBroker(Conf::f('broker_conf', array()));
-
-        return $broker->start();
-    }
-
-}
-
-/**
  * Task.
  *
  */
