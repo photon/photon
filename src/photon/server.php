@@ -100,6 +100,10 @@ class Server
             $connection = new Connection($pull_addr, $pub_addr, $ctrl_addr);
             $this->connections[] = $connection;
         }
+        if (count($this->connections) === 0) {
+            throw new Exception('No mongrel2 servers detected');
+        }
+
     }
 
     /**
