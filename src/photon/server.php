@@ -100,12 +100,6 @@ class Server
      */
     public $ctx = null; 
 
-    public $stats = array('start_time' => 0,
-                          'requests' => 0,
-                          'memory_current' => 0,
-                          'poll_avg' => array(),
-                          'memory_peak' => 0);
-
     public function __construct($conf=array())
     {
         foreach ($conf as $key=>$value) {
@@ -128,8 +122,6 @@ class Server
      */
     public function start()
     {
-        $this->stats['start_time'] = time();
-
         $this->registerSignals(); // For SIGTERM handling
 
         // We create a zeromq context which will be used everywhere
