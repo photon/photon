@@ -235,35 +235,9 @@ class Init extends Base
                 }
             }
         }
-        // Make the run/logs/tmp folders of Mongrel2
-        foreach (array('run', 'logs', 'tmp') as $mdir) {
-            $dest_filepath = sprintf('%s/mongrel2/%s', $this->project_dir, $mdir);
-            if (!mkdir($dest_filepath)) {
-                throw new Exception(sprintf('Failed to make directory %s', $dest_filepath));
-            }
-        }        
-        // Set the uuid in the mongrel2 configuration file
-        $conf = file_get_contents($this->project_dir . '/mongrel2/conf/myproject-mongrel2.conf');
-        $conf = str_replace(array('%%UUID1%%', '%%UUID2%%'),
-                            array(SecretKeyGenerator::makeUuid(),
-                                  SecretKeyGenerator::makeUuid()),
-                            $conf);
-        file_put_contents($this->project_dir . '/mongrel2/conf/myproject-mongrel2.conf', $conf);
-        // Set the unique private key
-        $conf = file_get_contents($this->project_dir . '/config.php');
-        $conf = str_replace('%%SECRET_KEY%%',
-                            SecretKeyGenerator::generateSecretKey(64),
-                            $conf);
-        file_put_contents($this->project_dir . '/config.php', $conf);
-        $this->info(sprintf('Default project created in: %s.',
-                            $this->project_dir));
-        $this->info('To start using this project run:');
-        $this->info(sprintf('  $ cd %s', $this->project_dir));
-        $this->info('  $ hnu serve');
-        $this->info('  $ hnu task photonchat_server');
-        $this->info('  $ m2sh load -config mongrel2/conf/myproject-mongrel2.conf');
-        $this->info('  $ m2sh start -host localhost');
-        $this->info('Then access http://localhost:6767/demo/ with your browser');
+
+        $this->info(sprintf('Default project created in: %s.', $this->project_dir));
+        $this->info('A README file is in the project to explain how to start mongrel2 and your photon project.');
         $this->info('Have fun! The Photon Project Team.');
     }
 
