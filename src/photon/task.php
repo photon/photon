@@ -193,12 +193,6 @@ class BaseTask
      */
     public $sub_addr = SUB_ADDR;
 
-    public $phid = '';
-    public $stats = array('start_time' => 0,
-                          'requests' => 0,
-                          'memory_current' => 0,
-                          'memory_peak' => 0);
-
     public function __construct($conf)
     {
         $this->loadConfig($conf);
@@ -208,7 +202,6 @@ class BaseTask
 
     public function run()
     {
-        $this->stats['start_time'] = time();
         $to_write = array(); 
         $to_read = array();
         while (true) {
@@ -230,7 +223,6 @@ class BaseTask
             if ($events > 0) {
                 foreach ($to_read as $r) {
                     $this->work($r);
-                    $this->stats['requests']++;
                 }
             }
             $this->loop();
@@ -251,9 +243,6 @@ class BaseTask
      */
     public function setupBase()
     {
-        // Get a unique id for the process
-        $this->phid = sprintf('%s-task-%s-%s-%s', gethostname(), $this->name,
-                              posix_getpid(), time());
         $this->registerSignals(); // For SIGTERM handling
 
         // We create a zeromq context which will be used everywhere

@@ -31,6 +31,10 @@ namespace photon\server;
 use photon\log\Timer;
 use photon\log\Log;
 use photon\event\Event;
+use photon\config\Container as Conf;
+use photon\mongrel2\Connection;
+
+class Exception extends \Exception {}
 
 /**
  * Generate a uuid for each incoming request.
@@ -40,9 +44,9 @@ use photon\event\Event;
  * @param $unique Required string to make more unique the uuid 
  * @return string Type 4 UUID
  */
-function request_uuid($unique)
+function request_uuid()
 {
-    $rnd = sha1(uniqid($unique));
+    $rnd = sha1(uniqid('photon', true));
     return sprintf('%s-%s-4%s-b%s-%s',
                    substr($rnd, 0, 8), substr($rnd, 8, 4),
                    substr($rnd, 12, 3), substr($rnd, 15, 3),
@@ -56,71 +60,50 @@ function request_uuid($unique)
  */
 class Server
 {
-   /**
-     * Must be set if you want persistance of the published messages,
-     * but, in this case, you need to have one per server. Also, if
-     * you restart, you need to reuse the same and restart on the same
-     * host.
+    /*
+     *  Default mongrel2 configuration used when 'server_conf' configuration
+     *  key is not defined
      */
-    public $sender_id = '';
+    private static $defaultMongrel2Addr = array(
+        /**
+         * Where the requests are provided.
+         */
+        'pull_addr' => 'tcp://127.0.0.1:9997',
 
-   /**
-     * The id of this server daemon. It is unique, randomly generated
-     * or retrieved from the command line.
-     */
-    public $server_id = '';
+        /**
+         * Where the answers are pushed.
+         */
+        'pub_addr' => 'tcp://127.0.0.1:9996',
 
-    /**
-     * Where the requests are provided.
-     *
-     * It is either a string, when the application server is
-     * connecting to a single Mongrel2 server or an array when pulling
-     * from many Mongrel2.
-     */
-    public $pull_addrs = 'tcp://127.0.0.1:9997';
+        /**
+         * Where the statistics about connections in mongrel2 are available
+         * This feature must be explicitly activated in mongrel2
+         */
+        'crtl_addr' => null,
+    );
 
-    /**
-     * Where the answers are pushed. Like the pull, it can publish on
-     * several sockets if an array.
-     */
-    public $pub_addrs = 'tcp://127.0.0.1:9996';
+    private $connections = array();
 
-    /**
-     * ZeroMQ sockets connected to the Mongrel2 servers.
-     */
-    public $pull_socket = null;
 
-    /**
-     * ZeroMQ socket publishing the answers.
-     */
-    public $pub_socket = null;
-
-    /**
-     * ZeroMQ context.
-     */
-    public $ctx = null; 
-
-    public $stats = array('start_time' => 0,
-                          'requests' => 0,
-                          'memory_current' => 0,
-                          'poll_avg' => array(),
-                          'memory_peak' => 0);
-
-    public function __construct($conf=array())
+    public function __construct()
     {
-        foreach ($conf as $key=>$value) {
-            $this->$key = $value;
+        $servers = Conf::f('server_conf', array(self::$defaultMongrel2Addr));
+
+        foreach ($servers as $key => $server) {
+            if (in_array($key, array('pull_addrs', 'pub_addrs'), true) === true) {
+                throw new Exception('Old style configuration detected, please update the "server_conf" key');
+            }
+
+            $pull_addr  = isset($server['pull_addr'])   ? $server['pull_addr']  : null;
+            $pub_addr   = isset($server['pub_addr'])    ? $server['pub_addr']   : null;
+            $ctrl_addr  = isset($server['ctrl_addr'])   ? $server['ctrl_addr']  : null;
+            $connection = new Connection($pull_addr, $pub_addr, $ctrl_addr);
+            $this->connections[] = $connection;
         }
-        if (!is_array($this->pull_addrs)) {
-            $this->pull_addrs = array($this->pull_addrs);
+        if (count($this->connections) === 0) {
+            throw new Exception('No mongrel2 servers detected');
         }
-        if (!is_array($this->pub_addrs)) {
-            $this->pub_addrs = array($this->pub_addrs);
-        }
-        // Get a unique id for the process
-        if ('' === $this->server_id) {
-            $this->server_id = sprintf('%s-%s-%s', gethostname(), posix_getpid(), time());
-        }
+
     }
 
     /**
@@ -128,34 +111,12 @@ class Server
      */
     public function start()
     {
-        $this->stats['start_time'] = time();
-
         $this->registerSignals(); // For SIGTERM handling
 
-        // We create a zeromq context which will be used everywhere
-        // within the process. The creation of a context is the
-        // equivalent of one "zmq_init" and it should be run only
-        // once.
-        $this->ctx = new \ZMQContext(); 
-
-        // Connect to the Mongrel2 servers and add them to the poll
         $poll = new \ZMQPoll();
-        $this->pull_socket = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PULL);
-        foreach ($this->pull_addrs as $addr) {
-            $this->pull_socket->connect($addr);
-        }
-        $poll->add($this->pull_socket, \ZMQ::POLL_IN);
-
-        // Connect to publish
-        $this->pub_socket = new \ZMQSocket($this->ctx, \ZMQ::SOCKET_PUB);
-        if (0 == strlen($this->sender_id)) {
-            // We generate a random sender_id if no id available. You
-            // need a unique sender_id per process.
-            $this->sender_id = request_uuid('sender_id'); 
-        }
-        $this->pub_socket->setSockOpt(\ZMQ::SOCKOPT_IDENTITY, $this->sender_id);
-        foreach ($this->pub_addrs as $addr) {
-            $this->pub_socket->connect($addr);
+        foreach($this->connections as $connection) {
+            $connection->connect();
+            $poll->add($connection->pull_socket, \ZMQ::POLL_IN);
         }
 
         // We are using polling to not block indefinitely and be able
@@ -181,7 +142,12 @@ class Server
             }
             if ($events > 0) {
                 foreach ($to_read as $r) {
-                    $this->processRequest($r);
+                    foreach($this->connections as $connection) {
+                        if ($connection->pull_socket === $r) {
+                            $this->processRequest($connection);
+                            break;
+                        }
+                    }
                     $i++;
                 }
             }
@@ -200,11 +166,10 @@ class Server
      *
      * The socket is available for reading with recv().
      */
-    public function processRequest($socket)
+    public function processRequest($conn)
     {
         Timer::start('photon.process_request');
-        $uuid = request_uuid($this->server_id); 
-        $conn = new \photon\mongrel2\Connection($socket, $this->pub_socket);
+        $uuid = request_uuid(); 
         $mess = $conn->recv();
         
         if ($mess->is_disconnect()) {

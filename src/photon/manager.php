@@ -191,22 +191,15 @@ class ShowConfig extends Base
 class Init extends Base
 {
     public $project_dir = ''; /**< Store the full path to the project files */
-    public $project = ''; /**< Name of the project */
 
     /**
      * Generate the default files for the project.
      * recursively copies the data/project_template directory
      * renames __APPNAME__ along the way
-     * @param string $app_name the directory name for the app, like 'helloworld'
      * @return void
      */
-    public function generateFiles($app_name)
+    public function generateFiles()
     {
-        // make the initial project directory
-        if (!mkdir($this->project_dir)) {
-            throw new Exception(sprintf('Failed to make directory %s.', $this->project_dir));
-        }
-
         // recursively copy the project_template directory
         $src_directory =  __DIR__ . '/data/project_template';
         $src_directory_length = strlen($src_directory) + 1;
@@ -235,35 +228,9 @@ class Init extends Base
                 }
             }
         }
-        // Make the run/logs/tmp folders of Mongrel2
-        foreach (array('run', 'logs', 'tmp') as $mdir) {
-            $dest_filepath = sprintf('%s/mongrel2/%s', $this->project_dir, $mdir);
-            if (!mkdir($dest_filepath)) {
-                throw new Exception(sprintf('Failed to make directory %s', $dest_filepath));
-            }
-        }        
-        // Set the uuid in the mongrel2 configuration file
-        $conf = file_get_contents($this->project_dir . '/mongrel2/conf/myproject-mongrel2.conf');
-        $conf = str_replace(array('%%UUID1%%', '%%UUID2%%'),
-                            array(SecretKeyGenerator::makeUuid(),
-                                  SecretKeyGenerator::makeUuid()),
-                            $conf);
-        file_put_contents($this->project_dir . '/mongrel2/conf/myproject-mongrel2.conf', $conf);
-        // Set the unique private key
-        $conf = file_get_contents($this->project_dir . '/config.php');
-        $conf = str_replace('%%SECRET_KEY%%',
-                            SecretKeyGenerator::generateSecretKey(64),
-                            $conf);
-        file_put_contents($this->project_dir . '/config.php', $conf);
-        $this->info(sprintf('Default project created in: %s.',
-                            $this->project_dir));
-        $this->info('To start using this project run:');
-        $this->info(sprintf('  $ cd %s', $this->project_dir));
-        $this->info('  $ hnu serve');
-        $this->info('  $ hnu task photonchat_server');
-        $this->info('  $ m2sh load -config mongrel2/conf/myproject-mongrel2.conf');
-        $this->info('  $ m2sh start -host localhost');
-        $this->info('Then access http://localhost:6767/demo/ with your browser');
+
+        $this->info(sprintf('Default project created in: %s.', $this->project_dir));
+        $this->info('A README file is in the project to explain how to start mongrel2 and your photon project.');
         $this->info('Have fun! The Photon Project Team.');
     }
 
@@ -272,15 +239,10 @@ class Init extends Base
      */
      public function run()
      {
-         $this->project_dir = $this->cwd . '/' . $this->project;
+         $this->project_dir = $this->cwd . '/';
 
-         // make sure project directory doesn't already exist
-         if (is_dir($this->project_dir)) {
-             throw new Exception(sprintf('Project folder already exists: %s.',
-                 $this->project_dir));
-         }
          // copy the application template
-         $this->generateFiles('helloworld');
+         $this->generateFiles();
      }
 }
 
@@ -362,34 +324,12 @@ class Server extends Service
      */
     public function runService()
     {
-        $server = new \photon\server\Server(Conf::f('server_conf', array()));
-
+        $server = new \photon\server\Server;
         return $server->start();
     }
 
 }
 
-
-/**
- * Broker to shuffle work between handlers and worker tasks.
- *
- */
-class Broker extends Service
-{
-    /**
-     * Run the production Photon server.
-     *
-     * By default, it outputs nothing, if you want some details, run
-     * in verbose mode.
-     */
-    public function runService()
-    {
-        $broker = new \photon\broker\MdBroker(Conf::f('broker_conf', array()));
-
-        return $broker->start();
-    }
-
-}
 
 /**
  * Task.
