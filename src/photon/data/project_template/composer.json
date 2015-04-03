@@ -1,0 +1,6 @@
+{
+    "minimum-stability": "dev",
+    "require": {
+        "photon/photon": "dev-develop"
+    }
+}
