@@ -191,22 +191,15 @@ class ShowConfig extends Base
 class Init extends Base
 {
     public $project_dir = ''; /**< Store the full path to the project files */
-    public $project = ''; /**< Name of the project */
 
     /**
      * Generate the default files for the project.
      * recursively copies the data/project_template directory
      * renames __APPNAME__ along the way
-     * @param string $app_name the directory name for the app, like 'helloworld'
      * @return void
      */
-    public function generateFiles($app_name)
+    public function generateFiles()
     {
-        // make the initial project directory
-        if (!mkdir($this->project_dir)) {
-            throw new Exception(sprintf('Failed to make directory %s.', $this->project_dir));
-        }
-
         // recursively copy the project_template directory
         $src_directory =  __DIR__ . '/data/project_template';
         $src_directory_length = strlen($src_directory) + 1;
@@ -246,15 +239,10 @@ class Init extends Base
      */
      public function run()
      {
-         $this->project_dir = $this->cwd . '/' . $this->project;
+         $this->project_dir = $this->cwd . '/';
 
-         // make sure project directory doesn't already exist
-         if (is_dir($this->project_dir)) {
-             throw new Exception(sprintf('Project folder already exists: %s.',
-                 $this->project_dir));
-         }
          // copy the application template
-         $this->generateFiles('helloworld');
+         $this->generateFiles();
      }
 }
 

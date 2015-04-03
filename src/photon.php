@@ -77,8 +77,7 @@ namespace photon
 
         $cmds = array('init' =>
            array('desc' => 'generate the skeleton of a new Photon project in the current folder',
-                 'args' => array('project' =>
-                                 array('description' => 'the name of the project'))),
+                 ),
                       'pot' =>
            array('desc' => 'generate a standard gettext template file for the project (.pot)',
                  'opts' => array('potfile' =>
@@ -104,20 +103,6 @@ namespace photon
            array('desc' => 'start a Photon worker',
                  'args' => array('task' =>
                                  array('description' => 'the name of the worker task')),
-                 'opts' => array('server_id' =>
-                                 array('long_name'   => '--server-id',
-                                       'action'      => 'StoreString',
-                                       'help_name'   => 'id',
-                                       'description' => 'set the Photon task id'),
-                                 'daemonize' =>
-                                 array('long_name'   => '--daemonize',
-                                       'action'      => 'StoreTrue',
-                                       'description' => 'run as daemon'),
-                                 )
-                 ),
-
-                      'broker' =>
-           array('desc' => 'start the Photon task broker',
                  'opts' => array('server_id' =>
                                  array('long_name'   => '--server-id',
                                        'action'      => 'StoreString',
@@ -212,7 +197,6 @@ namespace
             case 'init':
                 // options and arguments for this command are stored in the
                 // $result->command instance:
-                $params['project'] = $result->command->args['project'];
                 $m = new \photon\manager\Init($params);
                 $m->run();
                 break;
