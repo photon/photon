@@ -245,6 +245,10 @@ class Security
 
     function process_response($request, $response)
     {
+        if ($response === false) {
+            return false;
+        }
+
         $config = self::getConfig();
 
         // HTTP Strict Transport Security
