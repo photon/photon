@@ -1,5 +1,5 @@
 
-# Photon 0.5 - xxxxxx LANG="en_EN.UTF-8" date -u -R xxxxxxxx
+# Photon 0.5 - Fri, 03 Apr 2015 13:34:56 +0000
 
 ## New Features
 - Add worker to stream large payload without filling the RAM (https://github.com/photon/worker-download)
@@ -10,21 +10,21 @@
 - Answer are now publish only on one server, mulitple PUB sockets are created for out-going message.
   Mongrel2 connection ID are too weak (integer auto-increment), and the handler can previouly publish
   a answer to multiple client request due mongrel2 connection ID colission.
-- server_conf configuration key are changed, old style declaration throw an execption.
-  Example of new configuration :
+- server_conf configuration key are changed, old style declaration throw an execption.  
+  Example of new configuration 
 
-    'server_conf' => array(
-        array(
-            'pub_addr'  => 'tcp://127.0.0.1:9014',
-            'pull_addr' => 'tcp://127.0.0.1:9015',
-            'ctrl_addr' => 'tcp://127.0.0.1:9999',
-        ),
-        array(
-            'pub_addr'  => 'tcp://127.0.0.1:8014',
-            'pull_addr' => 'tcp://127.0.0.1:8015',
-            'ctrl_addr' => 'tcp://127.0.0.1:9998',
-        ),
-    ),
+          'server_conf' => array(
+              array(
+                  'pub_addr'  => 'tcp://127.0.0.1:9014',
+                  'pull_addr' => 'tcp://127.0.0.1:9015',
+                  'ctrl_addr' => 'tcp://127.0.0.1:9999',
+              ),
+              array(
+                  'pub_addr'  => 'tcp://127.0.0.1:8014',
+                  'pull_addr' => 'tcp://127.0.0.1:8015',
+                  'ctrl_addr' => 'tcp://127.0.0.1:9998',
+              ),
+          ),
 
 # Photon 0.4 - Sat, 28 Mar 2015 12:00:00 +0000
 
