@@ -12,7 +12,7 @@
 ## Changes
 - Handle mongrel2 disconnect message earlier to avoid Middleware execution.  
   An event is emitted.
-- Rewrite Runner class to detect when worker are away, ans don't block the handler
+- Rewrite Runner class to detect when worker are away, and don't block the handler
 - Increase code coverage of unit tests
 - Source code are mirrored on Github under the organizsation "photon"
 - Units tests are executed by Travis CI for all branch, and pull request on Github

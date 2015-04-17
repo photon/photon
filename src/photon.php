@@ -185,6 +185,7 @@ namespace
     // This add the current directory in the include path and add the
     // Photon autoloader to the SPL autoload stack.
     include_once __DIR__ . '/photon/autoload.php';
+    use photon\config\Container as Conf;
 
     // Let's its go
     try {
@@ -193,6 +194,7 @@ namespace
         $params = array('cwd' => getcwd());
         $params = $params + $result->options;
         // find which command was entered
+        Conf::set('cmd', $result->command_name);
         switch ($result->command_name) {
             case 'init':
                 // options and arguments for this command are stored in the
