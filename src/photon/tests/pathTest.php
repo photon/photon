@@ -45,6 +45,6 @@ class PathTest extends \PHPUnit_Framework_TestCase
     public function testListFiles()
     {
         // review this test, adding a file in the data folder breaks it...
-        $this->assertEquals(28, count(Dir::listFiles(__DIR__ . '/../data')));
+        $this->assertEquals(13, count(Dir::listFiles(__DIR__ . '/../data')));
     }
 }

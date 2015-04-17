@@ -119,6 +119,7 @@ class Connection
     private $pull_addr;
     private $pub_addr;
     private $ctrl_addr;
+    private $ctrl_waiting_answer;
 
     public $pull_socket;
     public $pub_socket;
@@ -175,6 +176,7 @@ class Connection
         if ($this->ctrl_addr !== null) {
             $this->ctrl_socket = new \ZMQSocket($ctx, \ZMQ::SOCKET_REQ);
             $this->ctrl_socket->connect($this->ctrl_addr);
+            $this->ctrl_waiting_answer = false;
         } else {
             $this->ctrl_socket = null;
         }
@@ -190,8 +192,22 @@ class Connection
             throw new Exception('Mongrel2 control socket not initialized');
         }    
 
-        $this->ctrl_socket->send($query);
-        return $this->ctrl_socket->recv();
+        if ($this->ctrl_waiting_answer === false) {
+            $this->ctrl_socket->send($query);
+            $this->ctrl_waiting_answer = true;
+        }
+
+        for($i=0; $i<10; $i++) {
+            $rc = $this->ctrl_socket->recv(\ZMQ::MODE_DONTWAIT);
+            if ($rc !== false) {
+                $this->ctrl_waiting_answer = false;
+                return $rc;
+            }
+
+            usleep(10000);
+        }
+
+        return null;
     }
 
     /**

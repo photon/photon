@@ -5,3 +5,5 @@
 For up-to-date information:
 - Website : http://www.photon-project.com
 - mailing list : http://librelist.com/browser/photon.users/
+- Changelog : https://github.com/photon/photon/blob/develop/NEWS.md
+
