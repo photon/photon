@@ -180,9 +180,8 @@ class Csrf
  * Security Middleware.
  *
  * Various collection of security feature.
- * - HTTP Strict Transport Security (IETF RFC 6797)
- * - HTTP Public Key Pinning (IETF Draft)
- * - SSL Redirect
+ * - HTTP Strict Transport Security (IETF RFC 6797), aka SSL Redirect
+ * - HTTP Public Key Pinning (IETF RFC 7469)
  */
 class Security
 {
