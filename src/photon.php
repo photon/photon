@@ -191,10 +191,8 @@ namespace
     try {
         $parser = \photon\getParser();
         $result = $parser->parse();
-        $params = array('cwd' => getcwd());
+        $params = array('cwd' => getcwd(), 'cmd' => $result->command_name);
         $params = $params + $result->options;
-        // find which command was entered
-        Conf::set('cmd', $result->command_name);
         switch ($result->command_name) {
             case 'init':
                 // options and arguments for this command are stored in the
@@ -225,11 +223,6 @@ namespace
             case 'serve':
                 $params += $result->command->options;
                 $m = new \photon\manager\Server($params);
-                exit($m->run()); 
-                break;
-            case 'broker':
-                $params += $result->command->options;
-                $m = new \photon\manager\Broker($params);
                 exit($m->run()); 
                 break;
             case 'worker':
