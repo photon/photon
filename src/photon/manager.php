@@ -42,6 +42,7 @@ class Base
     public $verbose = false;
     public $conf = ''; /**< Path to the configuration file */
     public $cwd = ''; /**< Current working directory */
+    public $cmd = ''; /**< Current command name, i.e 'serve' */
     public $photon_path = '';
     public $help;
     public $version;
