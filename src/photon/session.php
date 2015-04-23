@@ -163,6 +163,12 @@ class Middleware
             return $response;
         }
 
+        if (isset($request->session) == false) {
+            // The request do not have execute process_request before
+            // A more highly priority middleware have return a answer
+            return $response;
+        }
+
         if ($request->session->accessed) {
             // This view used session data to render, this means it
             // varies on the cookie information.
