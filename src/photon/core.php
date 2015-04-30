@@ -293,7 +293,7 @@ class URL
                 }
                 continue;
             }
-            if ($view_name == $dview['name']) {
+            if (isset($dview['name']) && $view_name == $dview['name']) {
                 $regbase[] = $dview['regex'];
 
                 return $regbase;
