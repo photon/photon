@@ -33,23 +33,6 @@ namespace photon
     const VERSION = '@version@';
 
     /**
-     * Shortcut needed all over the place.
-     *
-     * Note that in some cases, we need to escape strings not in UTF-8, so
-     * this is not possible to safely use a call to htmlspecialchars. This
-     * is why str_replace is used.
-     *
-     * @param string Raw string
-     * @return string HTML escaped string
-     */
-    function esc($string)
-    {
-        return str_replace(array('&',     '"',      '<',    '>'),
-                           array('&amp;', '&quot;', '&lt;', '&gt;'),
-                           (string) $string);
-    }
-
-    /**
      * Returns a parser of the command line arguments.
      */
     function getParser()
