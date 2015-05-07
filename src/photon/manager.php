@@ -128,7 +128,21 @@ class Base
             throw new Exception('The "secret_key" configuration variable is required.');
         }
 
+        $this->checkPHP();
+
         return $path;
+    }
+
+    /*
+     *  Analyse the PHP configuration
+     *  This function must log only warning and recommendation about php.ini
+     */
+    public function checkPHP()
+    {
+        // Short tag generate syntax error in PHP when template contains XML, because <?xml contains <?
+        if (ini_get('short_open_tag') === 1) {
+            $this->info('PHP Configuration warning : short_open_tag is On, recommended value is Off');
+        }
     }
 
     public function daemonize()
