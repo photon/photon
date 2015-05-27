@@ -105,11 +105,15 @@ class Field
         // etc. and update the member variables accordingly. This is
         // practical when you extend this class with your own class.
         $default = array();
-        foreach ($params as $key=>$in) {
-            if ($key !== 'widget_attrs')
-                // Here on purpose it will fail if a parameter not
-                // needed for this field is passed.
+        foreach ($params as $key => $in) {
+            if ($key !== 'widget_attrs') {
+                // Ignore unknown parameters, it's allow form generator to be a little verbose
+                if (isset($this->$key) === false) {
+                    unset($params[$key]);
+                    continue;
+                }
                 $default[$key] = $this->$key; 
+            }
         }
         $m = array_merge($default, $params);
         foreach ($params as $key=>$in) {
