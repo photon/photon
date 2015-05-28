@@ -108,11 +108,11 @@ class Field
         foreach ($params as $key => $in) {
             if ($key !== 'widget_attrs') {
                 // Ignore unknown parameters, it's allow form generator to be a little verbose
-                if (isset($this->$key) === false && @is_null($this->$key) === false) {
+                if (property_exists($this, $key)) {=
+                    $default[$key] = $this->$key;
+                } else {
                     unset($params[$key]);
-                    continue;
                 }
-                $default[$key] = $this->$key; 
             }
         }
         $m = array_merge($default, $params);
