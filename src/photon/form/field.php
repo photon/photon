@@ -108,7 +108,7 @@ class Field
         foreach ($params as $key => $in) {
             if ($key !== 'widget_attrs') {
                 // Ignore unknown parameters, it's allow form generator to be a little verbose
-                if (property_exists($this, $key)) {=
+                if (property_exists($this, $key)) {
                     $default[$key] = $this->$key;
                 } else {
                     unset($params[$key]);
