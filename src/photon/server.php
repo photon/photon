@@ -95,9 +95,17 @@ class Server
             }
 
             $pull_addr  = isset($server['pull_addr'])   ? $server['pull_addr']  : null;
+            if ($pull_addr === null) {
+                /*
+                 *  This mongrel2 server is defined only to able to push data, not receive requests
+                 */
+                continue;
+            }
+
             $pub_addr   = isset($server['pub_addr'])    ? $server['pub_addr']   : null;
             $ctrl_addr  = isset($server['ctrl_addr'])   ? $server['ctrl_addr']  : null;
             $connection = new Connection($pull_addr, $pub_addr, $ctrl_addr);
+
             $this->connections[] = $connection;
         }
         if (count($this->connections) === 0) {
