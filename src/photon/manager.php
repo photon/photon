@@ -772,12 +772,11 @@ class Packager extends Base
                                strlen($this->cwd) + 1,
                                strlen($fileInfo->getRealPath()));
 
+            /*
+             *  Fix for PHP Bug #64931 : phar_add_file is too restrive on filename
+             *  Fixed in PHP 5.6.8 and 5.5.24
+             */
             if (substr($pharpath, 0, 5) === '.phar') {
-                $this->verbose("[PROJECT IGNORE] " . $filename);
-                continue;
-            }
-
-            if (preg_match('/^config[\.-](\w+\.)*php/', $pharpath)) {
                 $this->verbose("[PROJECT IGNORE] " . $filename);
                 continue;
             }
