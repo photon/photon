@@ -374,6 +374,31 @@ class Datetime extends Varchar
     }
 }
 
+class TimeZone extends Field
+{
+    public $widget = '\photon\form\widget\SelectInput';
+
+    public function __construct($params=array())
+    {
+        $tz = timezone_identifiers_list();
+        $tz = array_combine($tz, $tz);
+
+        $params['widget_attrs']['choices'] = $tz;
+        parent::__construct($params);
+    }
+
+    public function toPhp($value)
+    {
+        $tz = timezone_identifiers_list();
+
+        if (in_array($value, $tz, true)) {
+            return $value;
+        }
+
+        throw new Invalid($this->error_messages['invalid']);
+    }
+}
+
 class Email extends Varchar
 {
     public function __construct($params=array())
