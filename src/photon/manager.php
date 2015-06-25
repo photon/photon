@@ -636,7 +636,7 @@ class Packager extends Base
         // Package all the photon code without the tests folder
         $phar_name = sprintf('%s.phar', $this->project);
         @unlink($phar_name);
-        $phar = new \Phar($phar_name, 0, $phar_name);
+        $phar = new \Phar($phar_name, 0);
         $phar->startBuffering();
         
         $this->verbose("Use composer : " . (($this->composer) ? "Yes" : "No"));
