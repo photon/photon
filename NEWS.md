@@ -1,3 +1,20 @@
+# Photon 1.0.0 - Sat, 05 Dec 2015 10:55:46 +000
+
+## New Features
+- Add form field to select a timezone
+
+## Changes
+- Add HTTP Code 308 : Permanent Redirect
+- Remove dead code about broker
+- Add a function "checkPHP" in \photon\Base\manager to log warning and recommendation about the php.ini content.
+- Add PHP 5.6 in Travis tests
+- Remove hardcoded ignore of "config*" file during phar packaging, use pharignore to filter them.
+- Do not force a explicit alias for generated phar
+
+## Bugfixes
+- Middleware Security, do not process false response
+- Middleware Session, ensure session exists before use it.
+- Remove PHP notice if the view do not have name
 
 # Photon 0.5 - Fri, 03 Apr 2015 13:34:56 +0000
 
