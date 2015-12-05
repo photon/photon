@@ -28,6 +28,7 @@ namespace photon\manager;
 use photon\config\Container as Conf;
 use photon\log\Log as Log;
 use photon\template\compiler as compiler;
+use photon\path\Dir;
 
 class Exception extends \Exception {}
 
@@ -41,6 +42,7 @@ class Base
     public $verbose = false;
     public $conf = ''; /**< Path to the configuration file */
     public $cwd = ''; /**< Current working directory */
+    public $cmd = ''; /**< Current command name, i.e 'serve' */
     public $photon_path = '';
     public $help;
     public $version;
@@ -126,7 +128,21 @@ class Base
             throw new Exception('The "secret_key" configuration variable is required.');
         }
 
+        $this->checkPHP();
+
         return $path;
+    }
+
+    /*
+     *  Analyse the PHP configuration
+     *  This function must log only warning and recommendation about php.ini
+     */
+    public function checkPHP()
+    {
+        // Short tag generate syntax error in PHP when template contains XML, because <?xml contains <?
+        if (ini_get('short_open_tag') === 1) {
+            $this->info('PHP Configuration warning : short_open_tag is On, recommended value is Off');
+        }
     }
 
     public function daemonize()
@@ -168,6 +184,17 @@ class Base
     }
 }
 
+class ShowConfig extends Base
+{
+    public function run()
+    {
+        $this->loadConfig();
+        $conf = Conf::dump();
+        unset($conf['cmd_params']);
+        var_export($conf);
+    }
+}
+
 /**
  * Initialisation of a new project.
  *
@@ -179,22 +206,15 @@ class Base
 class Init extends Base
 {
     public $project_dir = ''; /**< Store the full path to the project files */
-    public $project = ''; /**< Name of the project */
 
     /**
      * Generate the default files for the project.
      * recursively copies the data/project_template directory
      * renames __APPNAME__ along the way
-     * @param string $app_name the directory name for the app, like 'helloworld'
      * @return void
      */
-    public function generateFiles($app_name)
+    public function generateFiles()
     {
-        // make the initial project directory
-        if (!mkdir($this->project_dir)) {
-            throw new Exception(sprintf('Failed to make directory %s.', $this->project_dir));
-        }
-
         // recursively copy the project_template directory
         $src_directory =  __DIR__ . '/data/project_template';
         $src_directory_length = strlen($src_directory) + 1;
@@ -223,35 +243,9 @@ class Init extends Base
                 }
             }
         }
-        // Make the run/logs/tmp folders of Mongrel2
-        foreach (array('run', 'logs', 'tmp') as $mdir) {
-            $dest_filepath = sprintf('%s/mongrel2/%s', $this->project_dir, $mdir);
-            if (!mkdir($dest_filepath)) {
-                throw new Exception(sprintf('Failed to make directory %s', $dest_filepath));
-            }
-        }        
-        // Set the uuid in the mongrel2 configuration file
-        $conf = file_get_contents($this->project_dir . '/mongrel2/conf/myproject-mongrel2.conf');
-        $conf = str_replace(array('%%UUID1%%', '%%UUID2%%'),
-                            array(SecretKeyGenerator::makeUuid(),
-                                  SecretKeyGenerator::makeUuid()),
-                            $conf);
-        file_put_contents($this->project_dir . '/mongrel2/conf/myproject-mongrel2.conf', $conf);
-        // Set the unique private key
-        $conf = file_get_contents($this->project_dir . '/config.php');
-        $conf = str_replace('%%SECRET_KEY%%',
-                            SecretKeyGenerator::generateSecretKey(64),
-                            $conf);
-        file_put_contents($this->project_dir . '/config.php', $conf);
-        $this->info(sprintf('Default project created in: %s.',
-                            $this->project_dir));
-        $this->info('To start using this project run:');
-        $this->info(sprintf('  $ cd %s', $this->project_dir));
-        $this->info('  $ hnu serve');
-        $this->info('  $ hnu task photonchat_server');
-        $this->info('  $ m2sh load -config mongrel2/conf/myproject-mongrel2.conf');
-        $this->info('  $ m2sh start -host localhost');
-        $this->info('Then access http://localhost:6767/demo/ with your browser');
+
+        $this->info(sprintf('Default project created in: %s.', $this->project_dir));
+        $this->info('A README file is in the project to explain how to start mongrel2 and your photon project.');
         $this->info('Have fun! The Photon Project Team.');
     }
 
@@ -260,15 +254,10 @@ class Init extends Base
      */
      public function run()
      {
-         $this->project_dir = $this->cwd . '/' . $this->project;
+         $this->project_dir = $this->cwd . '/';
 
-         // make sure project directory doesn't already exist
-         if (is_dir($this->project_dir)) {
-             throw new Exception(sprintf('Project folder already exists: %s.',
-                 $this->project_dir));
-         }
          // copy the application template
-         $this->generateFiles('helloworld');
+         $this->generateFiles();
      }
 }
 
@@ -350,34 +339,12 @@ class Server extends Service
      */
     public function runService()
     {
-        $server = new \photon\server\Server(Conf::f('server_conf', array()));
-
+        $server = new \photon\server\Server;
         return $server->start();
     }
 
 }
 
-
-/**
- * Broker to shuffle work between handlers and worker tasks.
- *
- */
-class Broker extends Service
-{
-    /**
-     * Run the production Photon server.
-     *
-     * By default, it outputs nothing, if you want some details, run
-     * in verbose mode.
-     */
-    public function runService()
-    {
-        $broker = new \photon\broker\MdBroker(Conf::f('broker_conf', array()));
-
-        return $broker->start();
-    }
-
-}
 
 /**
  * Task.
@@ -434,7 +401,7 @@ class RunTests extends Base
         // for each app, the corresponding tests folder.
         $test_dirs = array();
         $test_files = array();
-        $inc_dirs = explode(PATH_SEPARATOR,  get_include_path());
+        $inc_dirs = Dir::getIncludePath();
         foreach ($apps as $app) {
             foreach ($inc_dirs as $dir) {
                 if (file_exists($dir . '/' . $app . '/tests')) {
@@ -485,8 +452,11 @@ class RunTests extends Base
                                 realpath($this->params['directory'])));
         } else {
             $xmlout = tempnam(Conf::f('tmp_folder', sys_get_temp_dir()), 'phpunit').'.xml';
-            $this->verbose('phpunit --bootstrap '.realpath(__DIR__).'/autoload.php --coverage-clover '.$xmlout.' --configuration '.$tmpfname);
-            passthru('phpunit --bootstrap '.realpath(__DIR__).'/testbootstrap.php --coverage-clover '.$xmlout.' --configuration '.$tmpfname, $rvar);
+
+            $cmd = 'phpunit --verbose --bootstrap ' . realpath(__DIR__) . 
+                   '/testbootstrap.php --coverage-clover ' . $xmlout . ' --configuration ' . $tmpfname;
+            $this->verbose($cmd);
+            passthru($cmd, $rvar);
             unlink($tmpfname);
             if (!file_exists($xmlout)) {
 
@@ -561,7 +531,7 @@ class SelfTest extends Base
             if (!file_exists($this->directory)) {
                 mkdir($this->directory);
             }
-            $cmd = 'phpunit --bootstrap ' . $this->photon_path . '/photon/testbootstrap.php ' 
+            $cmd = 'phpunit --verbose --bootstrap ' . $this->photon_path . '/photon/testbootstrap.php ' 
                 . '--coverage-html ' . realpath($this->directory) . ' '
                 . $this->photon_path . '/photon/tests/';
             $this->verbose($cmd);
@@ -570,18 +540,23 @@ class SelfTest extends Base
                                 realpath($this->directory)));
         } else {
             $xmlout = tempnam(Conf::f('tmp_folder', sys_get_temp_dir()), 'phpunit').'.xml';
-            $cmd = 'phpunit --bootstrap ' . $this->photon_path . '/photon/testbootstrap.php '
+            $cmd = 'phpunit --verbose --bootstrap ' . $this->photon_path . '/photon/testbootstrap.php '
                 . '--coverage-clover ' . $xmlout . ' '
                 . $this->photon_path . '/photon/tests/';
 
             $this->verbose($cmd);
             passthru($cmd, $rvar);
-            $xml = simplexml_load_string(file_get_contents($xmlout));
-            unlink($xmlout);
-            $this->info(sprintf('Code coverage %s/%s (%s%%)',
-                                $xml->project->metrics['coveredstatements'],
-                                $xml->project->metrics['statements'],
-                                round(($xml->project->metrics['coveredstatements']/(float)$xml->project->metrics['statements']) * 100.0, 2)));
+            
+            if(file_exists($xmlout) === false) {
+                $this->info('Code coverage output file not found. Ensure the Xdebug module is loaded with "php --re xdebug"');
+            } else {
+                $xml = simplexml_load_string(file_get_contents($xmlout));
+                unlink($xmlout);
+                $this->info(sprintf('Code coverage %s/%s (%s%%)',
+                                    $xml->project->metrics['coveredstatements'],
+                                    $xml->project->metrics['statements'],
+                                    round(($xml->project->metrics['coveredstatements']/(float)$xml->project->metrics['statements']) * 100.0, 2)));
+            }
         }
 
         return $rvar;
@@ -652,7 +627,8 @@ class Packager extends Base
     public $project; /**< Name of the phar archive without the extension */
     public $conf_file; /**< Configuration file loaded in the phar */
     public $exclude_files = ''; /**< Exclude files from the packaging */
-
+    public $composer = null; /**< Build a phar for the composer version of photon */
+    
     public function run()
     {
         $this->loadConfig(); 
@@ -660,9 +636,15 @@ class Packager extends Base
         // Package all the photon code without the tests folder
         $phar_name = sprintf('%s.phar', $this->project);
         @unlink($phar_name);
-        $phar = new \Phar($phar_name, 0, $phar_name);
+        $phar = new \Phar($phar_name, 0);
         $phar->startBuffering();
-        $this->addPhotonFiles($phar);
+        
+        $this->verbose("Use composer : " . (($this->composer) ? "Yes" : "No"));
+        
+        if ($this->composer !== true) {
+            // Old style PEAR Mode
+            $this->addPhotonFiles($phar);
+        }
         $this->addProjectFiles($phar);
         
         $this->CompileAddTemplates($phar, 
@@ -671,9 +653,12 @@ class Packager extends Base
             $phar->addFile($this->conf_file, 'config.php');
             $phar['config.php']->compress(\Phar::GZ);
         }
-        $stub = file_get_contents($this->photon_path . '/photon/data/pharstub.php');
+        
+        $stubFilename = ($this->composer === true) ? 'pharstub-composer.php' : 'pharstub.php';
+        $stub = file_get_contents($this->photon_path . '/photon/data/' . $stubFilename);
         $phar->setStub(sprintf($stub, 
                                $phar_name, $phar_name, $phar_name, $phar_name));
+        
         $phar->stopBuffering();
     }
 
@@ -685,8 +670,18 @@ class Packager extends Base
     public function addProjectFiles(&$phar)
     {
         foreach ($this->getProjectFiles() as $file => $path) {
-            $phar->addFile($path, $file);
-            if (substr($file, -4) == '.php') {
+            $this->verbose("[PROJECT ADD] " . $file);
+
+            // Remove shebang 
+            if ($file === 'vendor/photon/photon/src/photon.php') {
+                $photon = file($file);
+                array_shift($photon); // Remove shebang
+                $phar->addFromString($file, implode('', $photon));
+            } else {
+                $phar->addFile($path, $file);
+            }
+
+            if (substr($file, -4) === '.php') {
                 $phar[$file]->compress(\Phar::GZ);
             }
         }
@@ -701,14 +696,30 @@ class Packager extends Base
             $phar->addFile($path, $file);
             $phar[$file]->compress(\Phar::GZ);
         }
+
         $photon = file($this->photon_path . '/photon.php');
         foreach ($photon as &$line) {
             if (trim($line) == 'include_once __DIR__ . \'/photon/autoload.php\';') {
                 $line = '    include_once \'photon/autoload.php\';'."\n";
+            } else
+            if (false !== mb_strstr($line, '@version@')) {
+                $this->info("Photon run from source, not a PEAR install");
+                $output = '';
+                $return_var = 0;
+                $command = 'git --git-dir="'. $this->photon_path .'/../.git" log -1 --format="%h"';
+                exec($command, $output, $return_var);
+                if ($return_var !== 0) {
+                    throw new Exception('Can\'t get the last commit id.');
+                }
+                $this->info('Photon version is ' . \end($output));
+                $line = str_replace('@version@', 'commit ' . \end($output), $line);
             }
         }
         array_shift($photon); // Remove shebang
         $phar->addFromString('photon.php', implode('', $photon));
+        $phar['photon.php']->compress(\Phar::GZ);
+        $this->verbose('[PHOTON GENERATE] photon.php');
+
         $auto = file($this->photon_path . '/photon/autoload.php');
         foreach ($photon as &$line) {
             if (0 === strpos(trim($line), 'set_include_path')) {
@@ -716,6 +727,8 @@ class Packager extends Base
             }
         }
         $phar->addFromString('photon/autoload.php', implode('', $auto));
+        $phar['photon/autoload.php']->compress(\Phar::GZ);
+        $this->verbose('[PHOTON GENERATE] photon/autoload.php');
     }
 
 
@@ -732,8 +745,20 @@ class Packager extends Base
     public function getProjectFiles()
     {
         $dirItr = new \RecursiveDirectoryIterator($this->cwd);
-        $filterItr = new \photon\path\IgnoreFilterIterator($dirItr, 
-                                                           $this->cwd, $this->cwd . '/.pharignore');
+
+        if ($this->composer === true) {
+            $files = glob('vendor/*/*/.pharignore');        // Pharignore of particules (including photon)
+            $filter = array($this->cwd => '.pharignore');   // Pharignore of the project
+            foreach($files as $f) {
+                $filter[substr($f, 0, strlen($f) - strlen('/.pharignore'))] = '.pharignore';
+            }
+            $filterItr = new \photon\path\IgnoreFilterIterator($dirItr, 
+                                                               $this->cwd, $filter);
+        } else {
+            $filterItr = new \photon\path\IgnoreFilterIterator($dirItr, 
+                                                               $this->cwd, $this->cwd . '/.pharignore');
+        }
+    
         $itr = new \RecursiveIteratorIterator($filterItr, 
                                               \RecursiveIteratorIterator::SELF_FIRST);
         $files = array();
@@ -741,16 +766,21 @@ class Packager extends Base
             if (!$fileInfo->isFile()) {
                 continue;
             }
-            if (substr($fileInfo->getFilename(), -5) == '.phar') {
-                continue;
-            }
-            if (preg_match('/^config\.(\w+\.)*php/', $fileInfo->getFilename())) {
-                continue;
-            }
 
+            $filename = $fileInfo->getFilename();
             $pharpath = substr($fileInfo->getRealPath(),
                                strlen($this->cwd) + 1,
                                strlen($fileInfo->getRealPath()));
+
+            /*
+             *  Fix for PHP Bug #64931 : phar_add_file is too restrive on filename
+             *  Fixed in PHP 5.6.8 and 5.5.24
+             */
+            if (substr($pharpath, 0, 5) === '.phar') {
+                $this->verbose("[PROJECT IGNORE] " . $filename);
+                continue;
+            }
+
             $files[$pharpath] = $fileInfo->getRealPath();
         }
 
@@ -778,15 +808,23 @@ class Packager extends Base
             }
             $phar_path = substr($disk_path, strlen($this->photon_path) + 1);
             if (false !== strpos($phar_path, 'photon/tests/')) {
+                $this->verbose("[PHOTON IGNORE] " . $phar_path);
                 continue;
             }
             if (false !== strpos($phar_path, 'photon/data/project_template')) {
+                $this->verbose("[PHOTON IGNORE] " . $phar_path);
                 continue;
             }
             if ($phar_path == 'photon/autoload.php') {
+                $this->verbose("[PHOTON IGNORE] " . $phar_path);
+                continue;
+            }
+            if ($phar_path == 'photon.php') {
+                $this->verbose("[PHOTON IGNORE] " . $phar_path);
                 continue;
             }
             $out[$phar_path] = $disk_path;
+            $this->verbose("[PHOTON ADD] " . $phar_path);
         }        
 
         return $out;
@@ -823,6 +861,7 @@ class %s
             foreach (\photon\path\Dir::listFiles($folder) as $tpl) {
                 if (!in_array($tpl, $already_compiled)) {
                     // Compile the template
+                    $this->verbose("[PROJECT COMPILE] " . $tpl);
                     $compiler = new compiler\Compiler($tpl, $folders);
                     $content = $compiler->compile();
                     $class = 'Template_' . md5($tpl);
@@ -834,8 +873,9 @@ class %s
                 }
             }
         }
+
         $phar->addFromString('photon/template/compiled.php', $compiled);
-        $phar['photon/template/compiled.php']->compress(\Phar::GZ);
+        //$phar['photon/template/compiled.php']->compress(\Phar::GZ);
 
         $this->verbose(sprintf('Added %d compiled templates.', 
                                count($already_compiled)));
@@ -866,7 +906,10 @@ class PotGenerator extends Base
 
                     // save it
                     $output = $tmp_folder . '/' . $tpl;
-                    @mkdir(dirname($output), 0777, true);
+                    $directory = dirname($output);
+                    if (is_dir($directory) === false) {
+                        mkdir($directory, 0777, true);
+                    }
                     file_put_contents($output, $content);
 
                     $already_compiled[] = $tpl;
@@ -878,12 +921,12 @@ class PotGenerator extends Base
 
         // Run xgettext on PHP project source
         $cmd = 'cd ' . $this->cwd . ' && find . -type f -iname "*.php" | sed -e \'s/^\\.\\///\' | xargs xgettext -o ' . $this->potfile . ' -p ' . $this->cwd . ' --from-code=UTF-8 -j --keyword --keyword=__ --keyword=_n:1,2 -L PHP';
-        passthru($cmd, &$return_var);
+        passthru($cmd, $return_var);
 
         // Run xgettext on PHP project compiled template source
         $cmd = 'cd ' . $tmp_folder . ' && find . -type f | sed -e \'s/^\\.\\///\' | xargs xgettext -o ' . $this->potfile . ' -p ' . $this->cwd . ' --from-code=UTF-8 -j --keyword --keyword=__ --keyword=_n:1,2 -L PHP';
-        passthru($cmd, &$return_var);
+        passthru($cmd, $return_var);
 
-        @rmdir($tmp_folder);
+        \photon\path\Dir::remove($tmp_folder);
     }
 }

@@ -83,6 +83,7 @@ class Response
      * Status code list.
      *
      * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
+     * @see http://tools.ietf.org/html/rfc4918#section-21.4
      */
     public $status_code_list = array(100 => 'Continue',
                                      101 => 'Switching Protocols',
@@ -93,6 +94,7 @@ class Response
                                      204 => 'No Content',
                                      205 => 'Reset Content',
                                      206 => 'Partial Content',
+                                     207 => 'Multi-Status',
                                      300 => 'Multiple Choices',
                                      301 => 'Moved Permanently',
                                      302 => 'Found',
@@ -101,6 +103,7 @@ class Response
                                      305 => 'Use Proxy',
                                      306 => 'Reserved',
                                      307 => 'Temporary Redirect',
+                                     308 => 'Permanent Redirect',   // RFC 7538
                                      400 => 'Bad Request',
                                      401 => 'Unauthorized',
                                      402 => 'Payment Required',
@@ -119,12 +122,16 @@ class Response
                                      415 => 'Unsupported Media Type',
                                      416 => 'Requested Range Not Satisfiable',
                                      417 => 'Expectation Failed',
+                                     422 => 'Unprocessable Entity',
+                                     423 => 'Locked',
+                                     424 => 'Failed Dependency',
                                      500 => 'Internal Server Error',
                                      501 => 'Not Implemented',
                                      502 => 'Bad Gateway',
                                      503 => 'Service Unavailable',
                                      504 => 'Gateway Timeout',
-                                     505 => 'HTTP Version Not Supported'
+                                     505 => 'HTTP Version Not Supported',
+                                     507 => 'Insufficient Storage',
                                      );
 
     /**
@@ -248,8 +255,10 @@ class Request
             \mb_parse_str($this->mess->headers->QUERY, $this->GET);
             $this->query = $this->mess->headers->QUERY;
         }
-        if ('POST' === $this->mess->headers->METHOD) {
-            if (0 === strpos($this->mess->headers->{'content-type'}, 'multipart/form-data; boundary=')) {
+        if ('POST' === $this->mess->headers->METHOD || 'PUT' === $this->mess->headers->METHOD) {
+            if (isset($this->mess->headers->{'content-type'}) === false) {
+                $this->BODY =& $mess->body;
+            } else if (0 === strpos($this->mess->headers->{'content-type'}, 'multipart/form-data; boundary=')) {
                 $parser = new \photon\http\multipartparser\MultiPartParser($mess->headers, $mess->body);
                 foreach ($parser->parse() as $part) {
                     if ('FIELD' === $part['of_type']) {
@@ -258,7 +267,7 @@ class Request
                         add_file_to_post($this->FILES, $part['name'], $part);
                     }
                 }
-            } elseif (false !== mb_strstr($this->mess->headers->{'content-type'}, 'application/x-www-form-urlencoded')) {
+            } else if (false !== mb_strstr($this->mess->headers->{'content-type'}, 'application/x-www-form-urlencoded')) {
                 $this->POST = parse_str(substr(stream_get_contents($mess->body), 0, -1));
             } else {
                 $this->BODY =& $mess->body;

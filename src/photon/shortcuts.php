@@ -31,8 +31,6 @@ namespace photon\shortcuts;
 use photon\config\Container as Conf;
 use photon\template as ptemplate;
 
-class Exception extends \Exception {}
-
 class Template
 {
     /**
@@ -51,4 +49,20 @@ class Template
 
         return new \photon\http\Response($renderer->render($context));
     }
+
+    /**
+     * Render a template file and an array as a reponse.
+     *
+     * @param $tmpl Template file name
+     * @param $context Associative array for the context
+     * @return Rendered template as a string
+     */
+    public static function RenderToString($tmpl, $context)
+    {
+        $renderer = new ptemplate\Renderer($tmpl, Conf::f('template_folders'));
+        $context = new ptemplate\Context($context);
+
+        return $renderer->render($context);
+    }
 }
+

@@ -111,12 +111,18 @@ class AssetDir
 
             return new \photon\http\response\Forbidden($request);
         }
-        $phar = new \Phar(\Phar::running(false));
-        $path = sprintf('%s/%s', substr($directory, 7), $match[1]);
-        if (!isset($phar[$path])) {
 
+        list($pharPath, $subFolder) = explode('.phar', $directory);
+        $pharPath = substr($pharPath, 7) . '.phar';
+        $subFolder = ($subFolder[0] === '/') ? substr($subFolder, 1) : $subFolder;
+
+        $phar = new \Phar($pharPath);
+        $path = $subFolder . '/' . $match[1];
+
+        if (!isset($phar[$path])) {
             throw new \photon\http\error\NotFound();
         }
+
         $file = $phar[$path];
         $crc32 = dechex($file->getCRC32());
         $modified = $file->getMTime();
@@ -161,6 +167,11 @@ class AssetDir
      */
     public function serve($request, $match, $directory)
     {
+        // Handle phar content
+        if (substr($directory, 0, 7) === 'phar://') {
+            return self::serveFromPhar($request, $match, $directory);
+        }
+
         $directory = realpath($directory);
         $file = realpath($directory . '/' . $match[1]);
         if (0 !== strpos($file, $directory)) {

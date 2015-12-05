@@ -31,64 +31,67 @@ use \photon\http\Response as Response;
 use \photon\mail\EMail as Mail;
 use \photon\template as template;
 
-class Forbidden extends Response
+class Created extends Response
 {
-    public function __construct($request)
+    /**
+     * The request has been fulfilled and resulted in a new resource being created.
+     *
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.2
+     */
+    function __construct($content='')
     {
-        $content = 'You are not authorized to view this page. You do not have permission' . "\n"
-            . 'to view the requested directory or page using the credentials supplied.' . "\n\n"
-            . '403 - Forbidden';
-        parent::__construct($content, 'text/plain');
-        $this->status_code = 403;
+        parent::__construct($content);
+        $this->status_code = 201;
     }
 }
 
-class NotFound extends Response
+class Accepted extends Response
 {
-    public function __construct($request)
+    /**
+     * The request has been accepted for processing, but the processing has not been completed.
+     * The request might or might not eventually be acted upon,
+     * as it might be disallowed when processing actually takes place.
+     *
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.3
+     */
+    function __construct($content='')
     {
-        $content = sprintf('The requested URL %s was not found on this server.' . "\n" .
-                           'Please check the URL and try again.' . "\n\n" . '404 - Not Found',
-                           str_replace(array('&',     '"',      '<',    '>'),
-                                       array('&amp;', '&quot;', '&lt;', '&gt;'),
-                                       $request->path));
-        parent::__construct($content, 'text/plain');
-        $this->status_code = 404;
+        parent::__construct($content);
+        $this->status_code = 202;
     }
 }
 
-class NotModified extends Response
+class NoContent extends Response
 {
-    public function __construct($content='', $mimetype='text/html; charset=utf-8')
+    /**
+     * The server successfully processed the request, but is not returning any content.
+     * Usually used as a response to a successful delete request.
+     *
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.5
+     */
+    function __construct()
     {
-        parent::__construct('', $mimetype);
-        $this->status_code = 304;
+        parent::__construct();
+        $this->status_code = 204;
     }
 }
 
-class NotSupported extends Response
+class MultiStatus extends Response
 {
-    public function __construct($request, $allow=array('GET'))
+    /**
+     * Define in WebDav HTTP Extensions
+     * A Multi-Status response conveys information about multiple resources.
+     * The default Multi-Status response body is a text/xml or application/xml HTTP entity with a 'multistatus' root element.
+     *
+     * @see http://www.webdav.org/specs/rfc4918.html#STATUS_207
+     */
+    public function __construct($content, $mimetype='application/xml; charset=utf-8')
     {
-        $content = sprintf('HTTP method %s is not supported for the URL %s.' 
-                           . "\n" .
-                           'Supported methods are: %s.' . "\n" .
-                           '405 - Not Supported',
-                           htmlspecialchars($request->method), 
-                           str_replace(array('&',     '"',      '<',    '>'),
-                                       array('&amp;', '&quot;', '&lt;', '&gt;'),
-                                       $request->path),
-                           implode ($allow, ', ')
-                           );
-        parent::__construct($content, 'text/plain');
-        $this->headers['Allow'] = implode ($allow, ', ');
-        $this->status_code = 405;
+        parent::__construct($content, $mimetype);
+        $this->status_code = 207;
     }
-} 
+}
 
-/**
- * A HTTP response doing a redirect.
- */
 class Redirect extends Response
 {
     /**
@@ -106,9 +109,6 @@ class Redirect extends Response
     }
 }
 
-/**
- * A response to redirect after POSTing a form.
- */
 class FormRedirect extends Redirect
 {
     /**
@@ -121,6 +121,183 @@ class FormRedirect extends Redirect
     function __construct($url, $code=303)
     {
         parent::__construct($url, $code=303);
+    }
+}
+
+class NotModified extends Response
+{
+    /**
+     * Indicates that the resource has not been modified since the version specified by
+     * the request headers If-Modified-Since or If-Match. This means that there is no need
+     * to retransmit the resource, since the client still has a previously-downloaded copy.
+     *
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.5
+     */
+    public function __construct($content='', $mimetype='text/html; charset=utf-8')
+    {
+        parent::__construct('', $mimetype);
+        $this->status_code = 304;
+    }
+}
+
+class BadRequest extends Response
+{
+    /**
+     * The request could not be understood by the server due to malformed syntax.
+     * The client SHOULD NOT repeat the request without modifications.
+     *
+     * @param Request The request object of the current page.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.1
+     */
+    public function __construct($request=null)
+    {
+        $content = 'The request could not be understood by the server due to malformed syntax.'
+            . "\n\n" . '400 - BadRequest';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 400;
+    }
+}
+
+class AuthorizationRequired extends Response
+{
+    public function __construct()
+    {
+        $content = 'This server could not verify that you are authorized to access the document requested.' . "\n" .
+                   'Either you supplied the wrong credentials (e.g., bad password), or your browser ' . 
+                   'doesn\'t understand how to supply the credentials required.' . "\n\n" .
+                   '401 - Authorization Required';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 401;
+    }
+}
+
+class Forbidden extends Response
+{
+    /**
+     * The server understood the request, but is refusing to fulfill it.
+     *
+     * @param Request The request object of the current page.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4
+     */
+    public function __construct($request=null)
+    {
+        $content = 'You are not authorized to view this page. You do not have permission' . "\n"
+            . 'to view the requested directory or page using the credentials supplied.' . "\n\n"
+            . '403 - Forbidden';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 403;
+    }
+}
+
+class NotFound extends Response
+{
+    /**
+     * The server has not found anything matching the Request-URI.
+     * No indication is given of whether the condition is temporary or permanent.
+     *
+     * @param Request The request object of the current page.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.5
+     */
+    public function __construct($request)
+    {
+        $content = sprintf('The requested URL %s was not found on this server.' . "\n" .
+                           'Please check the URL and try again.' . "\n\n" . '404 - Not Found',
+                           str_replace(array('&',     '"',      '<',    '>'),
+                                       array('&amp;', '&quot;', '&lt;', '&gt;'),
+                                       $request->path));
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 404;
+    }
+}
+
+class NotSupported extends Response
+{
+    /**
+     * The method specified in the Request-Line is not allowed for the resource
+     * identified by the Request-URI. The response MUST include an Allow header containing
+     * a list of valid methods for the requested resource.
+     *
+     * @param Request The request object of the current page.
+     * @param Allow The list of HTTP method allow for this URI.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.6
+     */
+    public function __construct($request, $allow=array('GET'))
+    {
+        $content = sprintf('HTTP method %s is not supported for the URL %s.' 
+                           . "\n" .
+                           'Supported methods are: %s.' . "\n" .
+                           '405 - Not Supported',
+                           htmlspecialchars($request->method), 
+                           str_replace(array('&',     '"',      '<',    '>'),
+                                       array('&amp;', '&quot;', '&lt;', '&gt;'),
+                                       $request->path),
+                           implode ($allow, ', ')
+                           );
+        parent::__construct($content, 'text/plain');
+        $this->headers['Allow'] = implode ($allow, ', ');
+        $this->status_code = 405;
+    }
+}
+
+class RequestEntityTooLarge extends Response
+{
+    /**
+     * @param Request The request object of the current page.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.14
+     */
+    public function __construct($request, $body=null)
+    {
+        if ($body === null) {
+            $content = sprintf('The request is larger than the server is willing or able to process.' . "\n" .
+                               '413 - Request Entity Too Large');
+                               
+            parent::__construct($content, 'text/plain');
+        } else {
+            parent::__construct($body, 'text/plain');
+        }
+        
+        $this->status_code = 413;
+    }
+}
+
+class NotImplemented extends Response
+{
+    /**
+     * The server does not support the functionality required to fulfill the request.
+     * This is the appropriate response when the server does not recognize the request
+     * method and is not capable of supporting it for any resource.
+     *
+     * @param Request The request object of the current page.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.2
+     */
+    public function __construct($request)
+    {
+        $content = 'The server either does not recognize the request method, or it lacks the ability to fulfill the request' . "\n\n"
+                   . '501 - Not Implemented';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 501;
+    }
+}
+
+
+class ServiceUnavailable extends Response
+{
+    /**
+     * The server is currently unable to handle the request due to a temporary overloading
+     * or maintenance of the server. The implication is that this is a temporary condition
+     * which will be alleviated after some delay. If known, the length of the delay MAY
+     * be indicated in a Retry-After header.
+     *
+     * @param Request The request object of the current page.
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.4
+     */
+    public function __construct($request, $retryAfter=300)
+    {
+        $content = 'The server is currently unable to handle the request' . "\n\n"
+                   . '501 - Service Unavailable';
+        parent::__construct($content, 'text/plain');
+        $this->headers['Retry-After'] = $retryAfter;
+        $this->status_code = 503;
     }
 }
 
@@ -160,12 +337,27 @@ class RedirectToLogin extends Response
 }
 
 
-
 class Json extends Response
 {
     function render($output_body=true)
     {
         return json_encode($this->content);
+    }
+}
+
+/**
+ * Display a simple server error page.
+ */
+class InternalServerError extends Response
+{
+    function __construct($exception, $mimetype=null)
+    {
+        $content = 'The server encountered an unexpected condition which prevented it from fulfilling your request.'."\n\n"
+                .'An email has been sent to the administrators, we will correct this error as soon as possible. Thank you for your comprehension.'
+                ."\n\n".'500 - Internal Server Error';
+
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 500;
     }
 }
 
@@ -232,7 +424,7 @@ function pretty_server_error($e, $req)
                }
                return $loc;');
     $src2lines = create_function('$file',
-               '$src = nl2br(highlight_file($file, TRUE));
+               '$src = nl2br(@highlight_file($file, TRUE));
                return explode("<br />", $src);');
     $clean = create_function('$line',
                'return html_entity_decode(str_replace("&nbsp;", " ", $line));');
@@ -333,6 +525,7 @@ function html_pretty_server_error($e, $req)
     $o = function ($in) {
         return htmlspecialchars($in);
     };
+
     $sub = function($f) {
         $loc = '';
         if (isset($f['class'])) {
@@ -347,6 +540,7 @@ function html_pretty_server_error($e, $req)
         }
         return $loc;
     };
+
     $parms = function ($f) {
         $params = array();
         if (isset($f['function'])) {
@@ -364,8 +558,9 @@ function html_pretty_server_error($e, $req)
         }
         return $params;
     };
+
     $src2lines = function ($file) {
-        $src = nl2br(highlight_file($file, true));
+        $src = nl2br(@highlight_file($file, true));
         return explode('<br />', $src);
     };
 

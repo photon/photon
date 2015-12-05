@@ -105,11 +105,15 @@ class Field
         // etc. and update the member variables accordingly. This is
         // practical when you extend this class with your own class.
         $default = array();
-        foreach ($params as $key=>$in) {
-            if ($key !== 'widget_attrs')
-                // Here on purpose it will fail if a parameter not
-                // needed for this field is passed.
-                $default[$key] = $this->$key; 
+        foreach ($params as $key => $in) {
+            if ($key !== 'widget_attrs') {
+                // Ignore unknown parameters, it's allow form generator to be a little verbose
+                if (property_exists($this, $key)) {
+                    $default[$key] = $this->$key;
+                } else {
+                    unset($params[$key]);
+                }
+            }
         }
         $m = array_merge($default, $params);
         foreach ($params as $key=>$in) {
@@ -268,11 +272,22 @@ class Varchar extends Field
         // evaluating if a value is required or not. So, we take the
         // step to trim them. We trim only space, tabs, nul byte and
         // vertical tab, not the carriage return and new lines.
-        $value = rtrim($value, " \t\x0B\0");
-        if (in_array($value, $this->empty_values, true)) {
-            return '';
+        if (is_array($value) === false) {
+            $value = rtrim($value, " \t\x0B\0");
+            if (in_array($value, $this->empty_values, true)) {
+                return '';
+            }
+            return $value;
+        } else {
+            foreach($value as $key => &$val) {
+                $val = rtrim($val, " \t\x0B\0");
+                if (in_array($val, $this->empty_values, true)) {
+                    unset($value[$key]);
+                }
+            }
+
+            return $value;
         }
-        return $value;
     }
 }
 
@@ -355,6 +370,31 @@ class Datetime extends Varchar
                 return $date;
             }
         }
+        throw new Invalid($this->error_messages['invalid']);
+    }
+}
+
+class TimeZone extends Field
+{
+    public $widget = '\photon\form\widget\SelectInput';
+
+    public function __construct($params=array())
+    {
+        $tz = timezone_identifiers_list();
+        $tz = array_combine($tz, $tz);
+
+        $params['widget_attrs']['choices'] = $tz;
+        parent::__construct($params);
+    }
+
+    public function toPhp($value)
+    {
+        $tz = timezone_identifiers_list();
+
+        if (in_array($value, $tz, true)) {
+            return $value;
+        }
+
         throw new Invalid($this->error_messages['invalid']);
     }
 }
@@ -471,7 +511,8 @@ class File extends Field
         $this->error_messages['invalid'] = __('No file was submitted. Check the encoding type on the form.');
         $this->error_messages['required'] = __('No file was submitted.');
         $this->error_messages['empty'] = __('The submitted file is empty.');
-        $this->error_messages['max_length'] = __('Ensure this filename has at most %1$d characters (it has %1$d).');
+        $this->error_messages['big'] = __('The submitted file is too big, limit is %1$d octets.');
+        $this->error_messages['max_length'] = __('Ensure this filename has at most %1$d characters (it has %2$d).');
         parent::__construct($params);
     }
 
@@ -486,6 +527,7 @@ class File extends Field
         $filename = $value['filename'];
         $size = $value['size'];
 
+        // Test the filename size
         if (null !== $this->max_length 
             && strlen($filename) > $this->max_length) {
             throw new Invalid(sprintf($this->error_messages['max_length'],
@@ -497,6 +539,12 @@ class File extends Field
         if (0 === $size) {
             throw new Invalid($this->error_messages['empty']);
         }
+        
+        // Test the content size
+        if (null !== $this->max_size && $size > $this->max_size) {
+            throw new Invalid(sprintf($this->error_messages['big'], $this->max_size));
+        }
+        
         return $value;
     }
 }

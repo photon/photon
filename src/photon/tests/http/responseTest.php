@@ -87,14 +87,58 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
 
     public function testSendIterable()
     {
+        $this->markTestIncomplete('To rewrite');
+
         $iter = array('a', 'b');
         $socket = new DummyZMQSocket();
         $socket->setNextRecv(file_get_contents(__DIR__ . '/../data/example.payload'));
         $conn = new mongrel2\Connection($socket, $socket);
         $mess = $conn->recv();
-        
+
         $res = new http\Response($iter);
         $res->sendIterable($mess, $conn);
         $res->sendIterable($mess, $conn, false);
+    }
+
+    public function testCreatedRequest()
+    {
+        $res = new response\Created();
+        $this->assertSame(201, $res->status_code);
+    }
+
+    public function testAcceptedRequest()
+    {
+        $res = new response\Accepted();
+        $this->assertSame(202, $res->status_code);
+    }
+
+    public function testNoContentRequest()
+    {
+        $res = new response\NoContent();
+        $this->assertSame(204, $res->status_code);
+    }
+
+    public function testMultiStatus()
+    {
+        $res = new response\MultiStatus('<i love xml/>');
+        $this->assertSame(207, $res->status_code);
+    }
+
+    public function testBadRequest()
+    {
+        $res = new response\BadRequest('/');
+        $this->assertSame(400, $res->status_code);
+    }
+
+    public function testNotImplemented()
+    {
+        $res = new response\NotImplemented('/');
+        $this->assertSame(501, $res->status_code);
+    }
+
+    public function testServiceUnavailable()
+    {
+        $res = new response\ServiceUnavailable('/');
+        $this->assertSame(503, $res->status_code);
     }
 }

@@ -249,6 +249,7 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         $this->assertNotEquals(false, strpos($resp->content, 'coredispatchTest'));
         Conf::set('debug', false);
         Conf::set('template_force_compilation', true);
+        Conf::set('template_folders', array(dirname(__FILE__)));
         $req = new \photon\http\Request($msg);
         list($req, $resp) = Dispatcher::dispatch($req);
         // Ensure the answer contains a string in the 500.html template
@@ -293,40 +294,4 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         list($req, $resp) = Dispatcher::dispatch($req);
         $this->assertEquals(false, $resp);
     }
-    /*
-array (
-  0 => 
-  array (
-    'regex' => '#^/jquery#',
-    'sub' => 
-    array (
-      0 => 
-      array (
-        'regex' => '#^/(.*)$#',
-        'view' => 
-        array (
-          0 => '\\photon\\views\\AssetDir',
-          1 => 'serve',
-        ),
-        'name' => 'jquery_static_assets',
-        'params' => '/home/pl/bankRoot/src/apps/Jquery/static',
-      ),
-    ),
-  ),
-) 
-*/
-    public function testMongrelDisconnect()
-    {
-        $headers = (object) array('METHOD' => 'JSON');
-        $body = (object) array('type' => 'disconnect');
-        $msg = new Message('dummy', 'dummy', '@*', $headers, $body);
-        $req = new \photon\http\Request($msg);
-        list($req, $resp) = Dispatcher::dispatch($req);
-        $this->assertEquals(false, $resp);
-    }
-
-
-
-
-
 }

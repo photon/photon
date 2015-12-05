@@ -159,3 +159,25 @@ class Messages extends Tag
                      $class, $content);
     }
 }
+
+/**
+ * Send a event from templates
+ * It's allow to create hooks in template to add content dynamically
+ *
+ * @param $eventName Name of the event to generate
+ */
+class Event extends \photon\template\tag\Tag
+{
+    function start($eventName, $params=array())
+    {
+        $sender = null;
+        $request = $this->context->get('request');
+        if ('' !== $request) {
+            $sender = isset($request->view[0]['name']) ? $request->view[0]['name'] : null;
+            $params = array_merge($params, array('request' => $request));
+        }
+        
+        \photon\event\Event::send($eventName, $sender, $params);
+    }
+}
+

@@ -33,23 +33,6 @@ namespace photon
     const VERSION = '@version@';
 
     /**
-     * Shortcut needed all over the place.
-     *
-     * Note that in some cases, we need to escape strings not in UTF-8, so
-     * this is not possible to safely use a call to htmlspecialchars. This
-     * is why str_replace is used.
-     *
-     * @param string Raw string
-     * @return string HTML escaped string
-     */
-    function esc($string)
-    {
-        return str_replace(array('&',     '"',      '<',    '>'),
-                           array('&amp;', '&quot;', '&lt;', '&gt;'),
-                           (string) $string);
-    }
-
-    /**
      * Returns a parser of the command line arguments.
      */
     function getParser()
@@ -77,8 +60,7 @@ namespace photon
 
         $cmds = array('init' =>
            array('desc' => 'generate the skeleton of a new Photon project in the current folder',
-                 'args' => array('project' =>
-                                 array('description' => 'the name of the project'))),
+                 ),
                       'pot' =>
            array('desc' => 'generate a standard gettext template file for the project (.pot)',
                  'opts' => array('potfile' =>
@@ -86,6 +68,8 @@ namespace photon
                                        'action'      => 'StoreString',
                                        'help_name'   => 'myproject.pot',
                                        'description' => 'Output filename for the gettext template'))),
+                      'show-config' =>
+           array('desc' => 'Dump the config file on the standard output, usefull to show phar packaged configuration'),
                       'serve' =>
            array('desc' => 'start a Photon handler server',
                  'opts' => array('server_id' =>
@@ -102,20 +86,6 @@ namespace photon
            array('desc' => 'start a Photon worker',
                  'args' => array('task' =>
                                  array('description' => 'the name of the worker task')),
-                 'opts' => array('server_id' =>
-                                 array('long_name'   => '--server-id',
-                                       'action'      => 'StoreString',
-                                       'help_name'   => 'id',
-                                       'description' => 'set the Photon task id'),
-                                 'daemonize' =>
-                                 array('long_name'   => '--daemonize',
-                                       'action'      => 'StoreTrue',
-                                       'description' => 'run as daemon'),
-                                 )
-                 ),
-
-                      'broker' =>
-           array('desc' => 'start the Photon task broker',
                  'opts' => array('server_id' =>
                                  array('long_name'   => '--server-id',
                                        'action'      => 'StoreString',
@@ -159,6 +129,10 @@ namespace photon
                                        'action'      => 'StoreString',
                                        'help_name'   => 'path/config.prod.php',
                                        'description' => 'path to the configuration file used in production'),
+                                 'composer' =>
+                                 array('long_name'   => '--composer',
+                                       'action'      => 'StoreTrue',
+                                       'description' => 'Build a phar for the composer version of photon'),
                                  'exclude_files' =>
                                  array('long_name'   => '--exclude-files',
                                        'action'      => 'StoreString',
@@ -194,23 +168,27 @@ namespace
     // This add the current directory in the include path and add the
     // Photon autoloader to the SPL autoload stack.
     include_once __DIR__ . '/photon/autoload.php';
+    use photon\config\Container as Conf;
 
+    // Let's its go
     try {
         $parser = \photon\getParser();
         $result = $parser->parse();
-        $params = array('cwd' => getcwd());
+        $params = array('cwd' => getcwd(), 'cmd' => $result->command_name);
         $params = $params + $result->options;
-        // find which command was entered
         switch ($result->command_name) {
             case 'init':
                 // options and arguments for this command are stored in the
                 // $result->command instance:
-                $params['project'] = $result->command->args['project'];
                 $m = new \photon\manager\Init($params);
                 $m->run();
                 break;
+            case 'show-config':
+                $m = new \photon\manager\ShowConfig($params);
+                $m->run();
+                break;
             case 'pot':
-                $params['potfile'] = isset($result->command->args['potfile']) ? $result->command->args['potfile'] : 'myproject.pot';
+                $params['potfile'] = isset($result->command->options['potfile']) ? $result->command->options['potfile'] : 'myproject.pot';
                 $m = new \photon\manager\PotGenerator($params);
                 exit($m->run());
                 break;
@@ -230,11 +208,6 @@ namespace
                 $m = new \photon\manager\Server($params);
                 exit($m->run()); 
                 break;
-            case 'broker':
-                $params += $result->command->options;
-                $m = new \photon\manager\Broker($params);
-                exit($m->run()); 
-                break;
             case 'worker':
                 $params['task'] = $result->command->args['task'];
                 $m = new \photon\manager\Task($params);
@@ -249,6 +222,7 @@ namespace
                 $params['project'] = $result->command->args['project'];
                 $params['conf_file'] = $result->command->options['conf_file'];
                 $params['exclude_files'] = $result->command->options['exclude_files'];
+                $params['composer'] = $result->command->options['composer'];
                 $m = new \photon\manager\Packager($params);
                 $m->run();
                 break;

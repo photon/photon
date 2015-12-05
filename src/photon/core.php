@@ -116,6 +116,9 @@ class Dispatcher
         } else {
             $to_match = $req->path;
         }
+        
+        $url = '';
+        $matchs = array();
         try {
             $n = count($views);
             $i = 0;
@@ -123,14 +126,19 @@ class Dispatcher
                 $ctl = $views[$i];
                 $checked[] = $ctl;
                 if (preg_match($ctl['regex'], $to_match, $match)) {
+                    $match0 = array_shift($match);
+                    $url .= $match0;
+                    $matchs = array_merge($matchs, $match);
+                
                     if (!isset($ctl['sub'])) {
-                        return self::send($req, $ctl, $match);
+                        array_unshift($matchs, $url);
+                        return self::send($req, $ctl, $matchs);
                     } else {
                         // Go in the subtree
                         $views = $ctl['sub'];
                         $i = 0;
                         $n = count($views);
-                        $to_match = substr($to_match, strlen($match[0]));
+                        $to_match = substr($to_match, strlen($match0));
                         continue;
                     }
                 }
@@ -138,15 +146,6 @@ class Dispatcher
             }
         } catch (\photon\http\error\NotFound $e) { 
             // We catch only the not found errors at the moment.
-        }
-
-        // We have a particular case, the request could have been a
-        // system message from Mongrel2 to disconnect, as the framework
-        // decided not to act on it, we need to handle it to not send
-        // back an answer to Mongrel2.
-        if ($req->mess->is_disconnect()) {
-
-            return false;
         }
 
         $response = new \photon\http\response\NotFound($req);
@@ -264,10 +263,10 @@ class URL
         if (false === $regbase) {
             throw new Exception(sprintf('Error, the view: %s has not been found.', $view_name));
         }
-        $url = '';
-        foreach ($regbase as $regex) {
-            $url .= self::buildReverse($regex, $params);
-        }
+
+        $regex = implode('', $regbase);
+        $regex = str_replace(array('$##^', '##^', '##'), '', $regex);
+        $url = self::buildReverse($regex, $params);
 
         return $url;
     }
@@ -294,7 +293,7 @@ class URL
                 }
                 continue;
             }
-            if ($view_name == $dview['name']) {
+            if (isset($dview['name']) && $view_name == $dview['name']) {
                 $regbase[] = $dview['regex'];
 
                 return $regbase;

@@ -137,4 +137,21 @@ class modifierTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($out, (string) template\Renderer::sreturn($mod));
     }
 
+    public function testStrftime()
+    {
+        $this->markTestIncomplete('Update this test to deal with locales on travis...');
+
+        setlocale(LC_ALL, 'fr_FR.UTF-8');
+        $in = 1234567890;
+        $out = Modifier::strftime($in, '%d/%m/%Y %H:%M:%S');
+        $this->assertEquals($out, '14/02/2009 00:31:30');
+    }
+    
+    public function testDateFormat()
+    {
+        setlocale(LC_ALL, 'C.UTF-8');
+        $in = '2009-02-14 00:31:30';
+        $out = Modifier::dateFormat($in, '%b %e, %Y');
+        $this->assertEquals($out, 'Feb 14, 2009');
+    }
 }

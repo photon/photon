@@ -54,50 +54,106 @@ class Runner
      */
     public function __construct($connect=true)
     {
-        $this->id = 'NOT-USED-YET'; 
-        if ($connect) {
-            $this->connect();
-        }
-    }
-
-    public function connect()
-    {
-        if (null !== self::$ctx) {
-            return;
-        }
+        $this->id = 'NOT-USED-YET';
         self::$ctx = new \ZMQContext(); 
-        foreach (Conf::f('installed_tasks', array()) as $name => $class) {
-            // We need to know if this is an async or sync task
-            // We need to get the bind socket.
-            $conf = Conf::f('photon_task_' . $name, array());
-            $bind = (isset($conf['sub_addr'])) ? $conf['sub_addr'] : SUB_ADDR;
-            $type = (isset($conf['type'])) ? $conf['type'] : $class::$type;
-            if ('async' === $type) {
-                self::$sockets[$name] = new \ZMQSocket(self::$ctx, 
-                                                       \ZMQ::SOCKET_DOWNSTREAM);
-                self::$sockets[$name]->connect($bind);
-            } else {
-                self::$sockets[$name] = new \ZMQSocket(self::$ctx, 
-                                                       \ZMQ::SOCKET_REQ);
-                self::$sockets[$name]->connect($bind);
-            }
-            self::$types[$name] = $type;
-        }
     }
 
-    public function run($task, $payload, $encode=true)
+    private function connectTask($name, $class=null)
     {
+        if (null === self::$ctx) {
+            return false;
+        }
+        
+        if (isset(self::$sockets[$name])) {
+            return true;
+        }
+        
+        if ($class === null) {
+            $tasks = Conf::f('installed_tasks', array());
+            $class = $tasks[$name];
+        }
+    
+        // We need to know if this is an async or sync task
+        // We need to get the bind socket.
+        $conf = Conf::f('photon_task_' . $name, array());
+        $bind = (isset($conf['sub_addr'])) ? $conf['sub_addr'] : SUB_ADDR;
+        $type = (isset($conf['type'])) ? $conf['type'] : $class::$type;
+        
+        if ('async' === $type) {
+            self::$sockets[$name] = new \ZMQSocket(self::$ctx, 
+                                                   \ZMQ::SOCKET_DOWNSTREAM);
+            self::$sockets[$name]->connect($bind);
+        } else {
+            self::$sockets[$name] = new \ZMQSocket(self::$ctx, 
+                                                   \ZMQ::SOCKET_REQ);
+            self::$sockets[$name]->connect($bind);
+        }
+        self::$types[$name] = $type;
+        
+        return true;
+    }
+    
+    private function disconnectTask($name)
+    {
+        unset(self::$sockets[$name]);
+        unset(self::$types[$name]);
+    }
+
+    /*
+     *  Timeout allow the serve thread which call Runner::run, to
+     *  return if the Task don't answer or are offline.
+     */
+    public function run($task, $payload, $encode=true, $timeout=-1)
+    {
+        // Ensure a valid socket exist for this task
+        if ($this->connectTask($task) === false) {
+            return null;
+        }
+    
         if ($encode) {
             $payload = json_encode($payload);
         }
-        $mess = sprintf('%s %s %s', $task, $this->id, $payload);
-        self::$sockets[$task]->send($mess);
-        if ('async' === self::$types[$task]) {
 
-            return;
+        // Send the message to the Task        
+        $mess = sprintf('%s %s %s', $task, $this->id, $payload);
+        try {
+            self::$sockets[$task]->send($mess, \ZMQ::MODE_NOBLOCK);
+        } catch (\ZMQSocketException $e) {
+            $this->disconnectTask($task);
+            return null;
         }
-        list( , , $res) = explode(' ', self::$sockets[$task]->recv(), 3);
-        return ($encode) ? json_decode($res) : $res;
+        if ('async' === self::$types[$task]) {
+            return true;
+        }
+
+        // Wait the answer
+        $poll = new \ZMQPoll();
+        $poll->add(self::$sockets[$task], \ZMQ::POLL_IN);
+        if ($timeout !== -1) {
+            $timeout = $timeout * 1000; // Convert timeout from seconds to ms
+        }
+        $to_read = $to_write = array();
+        try {
+            $events = $poll->poll($to_read, $to_write, $timeout);
+            $errors = $poll->getLastErrors();
+            if (count($errors) > 0) {
+                foreach ($errors as $error) {
+                    Log::error('Error polling object: ' . $error);
+                }
+            }
+        } catch (\ZMQPollException $e) {
+            Log::fatal('Poll failed: ' . $e->getMessage());
+            $this->disconnectTask($task);
+            return null;
+        }
+        
+        // An answer has been received
+        if ($events > 0) {  
+            list( , , $res) = explode(' ', self::$sockets[$task]->recv(), 3);
+            return ($encode) ? json_decode($res) : $res;
+        }
+        
+        return null;
     }
 }
 
@@ -137,12 +193,6 @@ class BaseTask
      */
     public $sub_addr = SUB_ADDR;
 
-    public $phid = '';
-    public $stats = array('start_time' => 0,
-                          'requests' => 0,
-                          'memory_current' => 0,
-                          'memory_peak' => 0);
-
     public function __construct($conf)
     {
         $this->loadConfig($conf);
@@ -152,7 +202,6 @@ class BaseTask
 
     public function run()
     {
-        $this->stats['start_time'] = time();
         $to_write = array(); 
         $to_read = array();
         while (true) {
@@ -174,7 +223,6 @@ class BaseTask
             if ($events > 0) {
                 foreach ($to_read as $r) {
                     $this->work($r);
-                    $this->stats['requests']++;
                 }
             }
             $this->loop();
@@ -195,9 +243,6 @@ class BaseTask
      */
     public function setupBase()
     {
-        // Get a unique id for the process
-        $this->phid = sprintf('%s-task-%s-%s-%s', gethostname(), $this->name,
-                              posix_getpid(), time());
         $this->registerSignals(); // For SIGTERM handling
 
         // We create a zeromq context which will be used everywhere

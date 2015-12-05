@@ -237,4 +237,11 @@ class WidgetTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('<input pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" name="e1" type="text" />', (string) $widget->render('e1', null));
         $this->assertEquals('<input pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" name="e1" type="text" value="127.0.0.1" />', (string) $widget->render('e1', '127.0.0.1'));
     }
+
+    public function testTimeZoneInput()
+    {
+        $field = new field\TimeZone();
+        $widget = $field->widget;
+        $widget->render('e1', null);
+    }
 }

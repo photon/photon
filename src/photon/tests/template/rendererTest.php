@@ -196,5 +196,62 @@ class rendererTest extends \PHPUnit_Framework_TestCase
                                           array(__dir__));
         $this->assertequals("deadbeaf\n", $renderer->render(new template\Context(array('value' => 0xdeadbeaf))));
     }
-}
 
+    public function testMessagesTagNoSession()
+    {
+        $request = (object) array();
+        $renderer = new template\Renderer('data-template-message-tag.html', 
+                                          array(__dir__));
+        $ctx = new template\ContextRequest($request, array());
+        $out = $renderer->render($ctx);
+        $this->assertequals("\n", $out);
+    }
+    
+    public function testMessagesTagNoMessage()
+    {
+        $request = (object) array(
+            'session' => array(),
+        );
+        $renderer = new template\Renderer('data-template-message-tag.html', 
+                                          array(__dir__));
+        $ctx = new template\ContextRequest($request, array());
+        $out = $renderer->render($ctx);
+        $this->assertequals("\n", $out);
+    }
+
+    public function testMessagesTag()
+    {
+        $request = (object) array(
+            'session' => array(
+                '_msg' => 'custom-error-class|CUSTOM-ERROR-MESSAGE',
+            ),
+        );
+        $renderer = new template\Renderer('data-template-message-tag.html', 
+                                          array(__dir__));
+        $ctx = new template\ContextRequest($request, array());
+        $out = $renderer->render($ctx);
+        
+        // Check if both class and the error message are in the output
+        $this->assertRegExp('/custom-error-class/', $out);
+        $this->assertRegExp('/CUSTOM-ERROR-MESSAGE/', $out);
+    }
+
+    public function testEventTagNoRequest()
+    {
+        $renderer = new template\Renderer('data-template-event-tag.html', 
+                                          array(__dir__));
+        $ctx = new template\Context(array());
+        $out = $renderer->render($ctx);
+        $this->assertequals("\n", $out);
+    }
+    
+    public function testEventTagNotConnected()
+    {
+        $request = (object) array();
+        $renderer = new template\Renderer('data-template-event-tag.html', 
+                                          array(__dir__));
+        $ctx = new template\ContextRequest($request, array());
+        $out = $renderer->render($ctx);
+        $this->assertequals("\n", $out);
+    }
+}

@@ -20,7 +20,18 @@
 #
 # ***** END LICENSE BLOCK ***** */
 
+use \photon\translation\Translation;
 
+require_once('path.php');
+
+/*
+ *  Includes fallback support
+ */
+require_once 'fallback/constants.php';
+require_once 'fallback/http_build_cookie.php';
+require_once 'fallback/http_parse_cookie.php';
+require_once 'fallback/http_parse_headers.php';
+require_once 'fallback/http_parse_params.php';
 
 /**
  * Autoloader for Photon.
@@ -40,7 +51,15 @@ function photonAutoLoad($class)
     // require_once will prevent double loading a file and will result
     // in non confusing error messages.
     // printf("Class: %s, file: %s\n", $class, $file);    
-    require_once $file;
+
+    $includePath = \photon\path\Dir::getIncludePath();
+    foreach($includePath as $path) {
+        $fullpath = $path . DIRECTORY_SEPARATOR . $file;
+        if (is_readable($fullpath)) {
+            require_once $fullpath;
+            break;
+        }
+    } 
 }
 
 /**
@@ -76,8 +95,9 @@ function photonLoadFunction($func)
  */
 function __($str)
 {
-    return (!empty(\photon\translation\Translation::$loaded[\photon\translation\Translation::$current_lang][$str][0]))
-        ? \photon\translation\Translation::$loaded[\photon\translation\Translation::$current_lang][$str][0]
+    // FFS: Add use here
+    return (!empty(Translation::$loaded[Translation::$current_lang][$str][0]))
+        ? Translation::$loaded[Translation::$current_lang][$str][0]
         : $str;
 }
 
@@ -91,16 +111,16 @@ function __($str)
  */
 function _n($sing, $plur, $n)
 {
-    if (isset(\photon\translation\Translation::$plural_forms[\photon\translation\Translation::$current_lang])) {
-        $cl = \photon\translation\Translation::$plural_forms[\photon\translation\Translation::$current_lang];
+    if (isset(Translation::$plural_forms[Translation::$current_lang])) {
+        $cl = Translation::$plural_forms[Translation::$current_lang];
         $idx = $cl($n);
     } else {
         $idx = (int) ($n != 1);  // Default to English form
     }
     $str = $sing . '#' . $plur;
-    if (!empty(\photon\translation\Translation::$loaded[\photon\translation\Translation::$current_lang][$str][$idx])) {
+    if (!empty(Translation::$loaded[Translation::$current_lang][$str][$idx])) {
 
-        return \photon\translation\Translation::$loaded[\photon\translation\Translation::$current_lang][$str][$idx];
+        return Translation::$loaded[Translation::$current_lang][$str][$idx];
     }
 
     return ($n == 1) ? $sing : $plur;
@@ -108,4 +128,13 @@ function _n($sing, $plur, $n)
 
 set_include_path(realpath(__DIR__ . '/../') . PATH_SEPARATOR . get_include_path());
 spl_autoload_register('photonAutoLoad', true, true);
+
+/*
+ *  Detect composer autoloader, and add bin path
+ */
+$composerAutoloaderPath = __DIR__ . '/../../../../../vendor/autoload.php';
+if (file_exists($composerAutoloaderPath)) {
+    require_once($composerAutoloaderPath);
+    set_include_path('./vendor/bin' . PATH_SEPARATOR . get_include_path());
+}
 
