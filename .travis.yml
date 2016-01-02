@@ -17,7 +17,7 @@ before_script:
   - echo 'extension = "propro.so"'  >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
   - echo 'extension = "http.so"'    >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
   - printf "yes\nyes\nno\nyes\n" | pecl install pecl_http
-  - php -r 'print_r(get_loaded_extensions());'
+  - php -r '$exts = get_loaded_extensions(); foreach($exts as $ext){$v=phpversion($ext); echo "$ext = $v\n";}'
   - composer self-update
   - composer init --no-interaction --stability=dev
   - composer require "photon/photon:dev-develop"
