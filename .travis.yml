@@ -10,15 +10,7 @@ matrix:
   fast_finish: true
 
 before_script:
-  - sudo locale-gen fr_FR fr_FR.UTF-8
-  - locale -a  
-  - echo "extension = zmq.so"       >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
-  - echo 'extension = "raphf.so"'   >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
-  - echo 'extension = "propro.so"'  >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
-  - echo 'extension = "http.so"'    >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
-  - printf "yes\nyes\nno\nyes\n" | pecl install pecl_http
-  - php -r '$exts = get_loaded_extensions(); foreach($exts as $ext){$v=phpversion($ext); echo "$ext = $v\n";}'
-  - composer self-update
+  - ./vendor/photon/photon/scripts/travis
   - composer init --no-interaction --stability=dev
   - composer require "photon/photon:dev-develop"
   
