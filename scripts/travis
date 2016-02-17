@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#
+# This script is part of Photon, The High Performance PHP Framework.
+# Photon, copyrights 2016, William MARTIN and contributors.
+#
+# This script setup the test environnement used by travis
+
+env
