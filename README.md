@@ -2,6 +2,11 @@
 
 [![Build Status](https://travis-ci.org/photon/photon.svg?branch=develop)](https://travis-ci.org/photon/photon)
 
+## PHP Versions
+
+- 5.x is supported and tested under travis
+- 7.x is not tested yet, but should works
+
 ## Available extensions (Particules)
 
 Each extensions have their own release cycle which is not synchronized with the Photon core.
