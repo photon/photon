@@ -10,7 +10,7 @@ matrix:
   fast_finish: true
 
 before_script:
-  - ./vendor/photon/photon/scripts/travis
+  - ./scripts/travis
   - composer init --no-interaction --stability=dev
   - composer require "photon/photon:dev-develop"
   
