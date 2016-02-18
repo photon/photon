@@ -143,6 +143,11 @@ class Base
         if (ini_get('short_open_tag') === 1) {
             $this->info('PHP Configuration warning : short_open_tag is On, recommended value is Off');
         }
+
+        // xdebug impacts on runtime performance
+        if (extension_loaded('xdebug') === true) {
+            $this->info('You are running with xdebug enabled. This has a major impact on runtime performance.');
+        }
     }
 
     public function daemonize()

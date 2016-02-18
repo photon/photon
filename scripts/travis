@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+#
+# This script is part of Photon, The High Performance PHP Framework.
+# Photon, copyrights 2016, William MARTIN and contributors.
+#
+# This script setup the test environnement used by travis
+
+#
+#   Detect PHP version based on TRAVIS_PHP_VERSION environnement variable
+#
+if [ -z "$TRAVIS_PHP_VERSION" ]; then
+    echo "TRAVIS_PHP_VERSION is not set, abording"
+    exit 1
+fi
+
+#
+#   PHP-ZMQ is broken on travis, the extension do not report the correct version code
+#
+if [ "$TRAVIS_PHP_VERSION" == "5.3" -o "$TRAVIS_PHP_VERSION" == "5.4" ]; then
+    echo 'extension = "zmq.so"'     >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
+else
+    yes '' | pecl install zmq-1.1.3
+fi;
+
+#
+#   Enable pecl_http for PHP-5.4 because post-install do not
+#
+if [ "$TRAVIS_PHP_VERSION" == "5.4" ]; then
+    echo 'extension = "raphf.so"'   >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
+    echo 'extension = "propro.so"'  >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
+    echo 'extension = "http.so"'    >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
+fi;
+
+#
+#   Install pecl_http
+#       Version 2.x is for PHP 5.x
+#       Version 3.x is for PHP 7.x
+#
+case "$TRAVIS_PHP_VERSION" in
+"5.3" | "5.4" | "5.5" | "5.6")
+    printf "yes\nyes\nno\nyes\n" | pecl install pecl_http-2.5.5
+    ;;
+
+*)
+    echo "This version of PHP is not supported, abording"
+    exit 1
+    ;;
+esac
+
+#
+#   Install extra locales
+#
+sudo locale-gen fr_FR fr_FR.UTF-8
+
+#
+#   Update composer
+#
+composer self-update
+composer --version
+
+#
+#   Show usefull debug
+#
+echo "============ env ============"
+env
+echo "============ locale ============"
+locale -a
+echo "============ php ini ============"
+php -ini
+echo "============ php exts ============"
+php -r '$exts = get_loaded_extensions(); foreach($exts as $ext){$v=phpversion($ext); echo "$ext = $v\n";}'
+

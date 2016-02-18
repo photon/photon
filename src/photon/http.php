@@ -87,6 +87,7 @@ class Response
      */
     public $status_code_list = array(100 => 'Continue',
                                      101 => 'Switching Protocols',
+                                     102 => 'Processing',                               // RFC 2518
                                      200 => 'OK',
                                      201 => 'Created',
                                      202 => 'Accepted',
@@ -94,7 +95,9 @@ class Response
                                      204 => 'No Content',
                                      205 => 'Reset Content',
                                      206 => 'Partial Content',
-                                     207 => 'Multi-Status',
+                                     207 => 'Multi-Status',                             // RFC 4918
+                                     208 => 'Already Reported',                         // RFC 5842
+                                     226 => 'IM Used',                                  // RFC 3229
                                      300 => 'Multiple Choices',
                                      301 => 'Moved Permanently',
                                      302 => 'Found',
@@ -103,7 +106,7 @@ class Response
                                      305 => 'Use Proxy',
                                      306 => 'Reserved',
                                      307 => 'Temporary Redirect',
-                                     308 => 'Permanent Redirect',   // RFC 7538
+                                     308 => 'Permanent Redirect',                       // RFC 7538
                                      400 => 'Bad Request',
                                      401 => 'Unauthorized',
                                      402 => 'Payment Required',
@@ -122,16 +125,24 @@ class Response
                                      415 => 'Unsupported Media Type',
                                      416 => 'Requested Range Not Satisfiable',
                                      417 => 'Expectation Failed',
-                                     422 => 'Unprocessable Entity',
-                                     423 => 'Locked',
-                                     424 => 'Failed Dependency',
+                                     418 => 'I am a Teapot',                            // RFC 2324
+                                     422 => 'Unprocessable Entity',                     // RFC 4918
+                                     423 => 'Locked',                                   // RFC 4918
+                                     424 => 'Failed Dependency',                        // RFC 4918
+                                     426 => 'Upgrade Required',                         // RFC 2817
+                                     428 => 'Precondition Required',                    // RFC 6585
+                                     429 => 'Too Many Requests',                        // RFC 6585
+                                     431 => 'Request Header Fields Too Large',          // RFC 6585
                                      500 => 'Internal Server Error',
                                      501 => 'Not Implemented',
                                      502 => 'Bad Gateway',
                                      503 => 'Service Unavailable',
                                      504 => 'Gateway Timeout',
                                      505 => 'HTTP Version Not Supported',
-                                     507 => 'Insufficient Storage',
+                                     507 => 'Insufficient Storage',                     // RFC 4918
+                                     508 => 'Loop Detected',                            // RFC 5842
+                                     510 => 'Not Extended',                             // RFC 2774
+                                     511 => 'Network Authentification Required',        // RFC 6585
                                      );
 
     /**
