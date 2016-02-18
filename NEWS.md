@@ -1,8 +1,17 @@
+# Photon 1.0.2 - Thu, 18 Feb 2016 10:52:35 +0000
+
+## Changes
+- Update PEAR Console CommandLine to version 1.2.1
+- Add warning when running with xdebug enable
+- Add some new HTTP code (102, 208, 226, 418, 426, 428, 429, 431, 508, 510, 511)
+
+## Bugfixes
+- Fix travis setup
+
 # Photon 1.0.1 - Fri, 11 Dec 2015 07:53:12 +0000
 
 ## Changes
 - Update PEAR Console CommandLine to version 1.2.1
-
 
 # Photon 1.0.0 - Sat, 05 Dec 2015 10:55:46 +000
 
