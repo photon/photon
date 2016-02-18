@@ -1,3 +1,18 @@
+# Photon 1.0.2 - Thu, 18 Feb 2016 10:52:35 +0000
+
+## Changes
+- Update PEAR Console CommandLine to version 1.2.1
+- Add warning when running with xdebug enable
+- Add some new HTTP code (102, 208, 226, 418, 426, 428, 429, 431, 508, 510, 511)
+
+## Bugfixes
+- Fix travis setup
+
+# Photon 1.0.1 - Fri, 11 Dec 2015 07:53:12 +0000
+
+## Changes
+- Update PEAR Console CommandLine to version 1.2.1
+
 # Photon 1.0.0 - Sat, 05 Dec 2015 10:55:46 +000
 
 ## New Features
@@ -43,10 +58,12 @@
               ),
           ),
 
+
 # Photon 0.4 - Sat, 28 Mar 2015 12:00:00 +0000
 
 ## New Features
 - Add security middleware (SSL redirect, HTTP Strict Transport Security, Public Key Pinning)
+
 
 # Photon 0.3 - Thu, 08 Jan 2015 16:00:00 +0000
 
@@ -88,6 +105,7 @@
 - Add MongoDB session storage (https://github.com/photon/session-mongodb)
 - Add Memcached session storage (https://github.com/photon/session-memcached)
 - Add Markdown support for template (https://github.com/photon/template-markdown)
+
 
 # Photon 0.2 - Mon, 11 Apr 2011 13:10:23 +0000
 

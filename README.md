@@ -5,7 +5,7 @@
 ## PHP Versions
 
 - 5.x is supported and tested under travis
-- 7.x is not tested yet, but should works
+- 7.x do not works
 
 ## Available extensions (Particules)
 
