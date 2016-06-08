@@ -594,3 +594,27 @@ class MacAddress extends Varchar
         $this->widget->attrs['pattern'] = '([0-9A-Fa-f]{2}[:-]{0,1}){5}[0-9A-Fa-f]{2}';
     }
 }
+
+class EUI48 extends Varchar
+{
+    public function __construct($params=array())
+    {
+        parent::__construct($params);
+        $this->validators[] = function ($value) {
+            return validator\Net::eui48($value);
+        };
+        $this->widget->attrs['pattern'] = '([0-9A-Fa-f]{2}[:-]{0,1}){5}[0-9A-Fa-f]{2}';
+    }
+}
+
+class EUI64 extends Varchar
+{
+    public function __construct($params=array())
+    {
+        parent::__construct($params);
+        $this->validators[] = function ($value) {
+            return validator\Net::eui64($value);
+        };
+        $this->widget->attrs['pattern'] = '([0-9A-Fa-f]{2}[:-]{0,1}){7}[0-9A-Fa-f]{2}';
+    }
+}
