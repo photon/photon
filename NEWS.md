@@ -1,3 +1,9 @@
+# Photon 1.1.0 - Wed, 08 Jun 2016 09:29:33 +0000
+
+## Changes
+- Add form field EUI-48
+- Add form field EUI-64
+
 # Photon 1.0.2 - Thu, 18 Feb 2016 10:52:35 +0000
 
 ## Changes
