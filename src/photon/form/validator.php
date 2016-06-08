@@ -113,10 +113,10 @@ class Net
     }
 
     /**
-     * Validation of a MAC address
+     * Validation of a EUI-48
      * Separator between byte can be ":", "-" and no separator
-     */    
-    public static function macAddress($mac)
+     */  
+    public static function eui48($mac)
     {
         $mac = filter_var($mac, FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^([0-9A-F]{2}[:-]{0,1}){5}[0-9A-F]{2}$/i')));
         if ($mac === false) {
@@ -124,6 +124,29 @@ class Net
         }
         
         return true;
+    }
+
+    /**
+     * Validation of a EUI-64
+     * Separator between byte can be ":", "-" and no separator
+     */  
+    public static function eui64($mac)
+    {
+        $mac = filter_var($mac, FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^([0-9A-F]{2}[:-]{0,1}){7}[0-9A-F]{2}$/i')));
+        if ($mac === false) {
+            throw new Invalid(__('Ensure this value has a correct MAC address format.'), 'mac_format');
+        }
+        
+        return true;
+    }
+
+    /**
+     * Validation of a MAC address
+     * Separator between byte can be ":", "-" and no separator
+     */    
+    public static function macAddress($mac)
+    {
+        return self::eui48($mac);
     }
 
     /**

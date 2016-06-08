@@ -104,7 +104,7 @@ class ValidatorTest extends \PHPUnit_Framework_TestCase
         }
     }
     
-    public function testMAC()
+    public function testEUI48akaMacAddress()
     {
         $inputs = array(
             array('mac' => '', 'res' => false),
@@ -120,14 +120,56 @@ class ValidatorTest extends \PHPUnit_Framework_TestCase
         foreach ($inputs as $i) {
             $mac = $i['mac'];
             $res = $i['res'];
+
             try {
                 $w = validator\Net::macAddress($mac);
+                $w = validator\Net::eui48($mac);
             } catch (Invalid $e) {
                 if (!$res) {
                     continue;
                 } 
                 $this->fail(sprintf('This value should be good: %s.', $mac));
             }
+
+            if (!$res) {
+                $this->fail(sprintf('This value should be bad: %s.', $mac));
+            }
+        }
+    }
+
+    public function testEUI64()
+    {
+        $inputs = array(
+            array('mac' => '', 'res' => false),
+            array('mac' => '00:11:22:33:44:55', 'res' => false),
+            array('mac' => '00-11-22-33-44-55', 'res' => false),
+            array('mac' => '001122334455', 'res' => false),
+            array('mac' => '0011223344', 'res' => false),
+            array('mac' => '00:11:22:33::55', 'res' => false),
+            array('mac' => '00:11:22:33', 'res' => false),
+            array('mac' => '00:ae:fe:23:45:F4', 'res' => false),
+            array('mac' => '00:11:22:33:44:55:66:77', 'res' => true),
+            array('mac' => '00-11-22-33-44-55-66-77', 'res' => true),
+            array('mac' => '0011223344556677', 'res' => true),
+            array('mac' => '00112233445566', 'res' => false),
+            array('mac' => '00:11:22:33::55:66:77', 'res' => false),
+            array('mac' => '00:11:22:33', 'res' => false),
+            array('mac' => '00:ae:fe:23:45:F4:d0:79', 'res' => true),
+        );
+        
+        foreach ($inputs as $i) {
+            $mac = $i['mac'];
+            $res = $i['res'];
+
+            try {
+                $w = validator\Net::eui64($mac);
+            } catch (Invalid $e) {
+                if (!$res) {
+                    continue;
+                } 
+                $this->fail(sprintf('This value should be good: %s.', $mac));
+            }
+
             if (!$res) {
                 $this->fail(sprintf('This value should be bad: %s.', $mac));
             }

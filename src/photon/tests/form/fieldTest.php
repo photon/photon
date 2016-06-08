@@ -301,9 +301,16 @@ class FieldTest extends \PHPUnit_Framework_TestCase
     public function testIPv4Field()
     {
         $field = new field\IPv4();
-        $goods = array('127.0.0.1', '192.168.1.1', '1.2.3.4',
-                       '255.255.255.255');
-        $bads = array('1.2.3', '1..2.3');
+        $goods = array(
+            '127.0.0.1',
+            '192.168.1.1',
+            '1.2.3.4',
+            '255.255.255.255'
+        );
+        $bads = array(
+            '1.2.3',
+            '1..2.3'
+        );
         $this->validateSeries($field, $goods, $bads);
     }
     
@@ -327,20 +334,52 @@ class FieldTest extends \PHPUnit_Framework_TestCase
     public function testIPv4v6Field()
     {
         $field = new field\IPv4v6();
-        $goods = array('fe80:0000:0000:0000:0204:61ff:fe9d:f156',
-                        '127.0.0.1');
-        $bads = array('1234::11::11', '127.300.0.1');
+        $goods = array(
+            'fe80:0000:0000:0000:0204:61ff:fe9d:f156',
+            '127.0.0.1'
+        );
+        $bads = array(
+            '1234::11::11',
+            '127.300.0.1'
+        );
         $this->validateSeries($field, $goods, $bads);
     }
   
     public function testMacAddressField()
     {
+        $goods = array(
+            '00:00:00:00:00:00',
+            'ff:ff:ff:ff:ff:ff',
+            '12:34:56:78:9a:bc'
+        );
+
+        $bads = array(
+            '00:00:00:00:00:0h',
+            '127.300.0.1'
+        );
+
         $field = new field\MacAddress();
-        $goods = array('00:00:00:00:00:00',
-                        'ff:ff:ff:ff:ff:ff',
-                        '12:34:56:78:9a:bc');
-        $bads = array('00:00:00:00:00:0h',
-                       '127.300.0.1');
+        $this->validateSeries($field, $goods, $bads);
+
+        $field = new field\EUI48();
+        $this->validateSeries($field, $goods, $bads);
+    }
+
+    public function testEUI64Field()
+    {
+        $goods = array(
+            '00:00:00:00:00:00:00:00',
+            'ff:ff:ff:ff:ff:ff:ff:ff',
+            '12:34:56:78:9a:bc:d4:f5'
+        );
+
+        $bads = array(
+            '00:00:00:00:00:0h',
+            '12:34:56:78:9a:bc',
+            '127.300.0.1'
+        );
+
+        $field = new field\EUI64();
         $this->validateSeries($field, $goods, $bads);
     }
 }
