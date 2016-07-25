@@ -37,23 +37,6 @@ use photon\mongrel2\Connection;
 class Exception extends \Exception {}
 
 /**
- * Generate a uuid for each incoming request.
- *
- * You should use the Photon id for the unique string.
- *
- * @param $unique Required string to make more unique the uuid 
- * @return string Type 4 UUID
- */
-function request_uuid()
-{
-    $rnd = sha1(uniqid('photon', true));
-    return sprintf('%s-%s-4%s-b%s-%s',
-                   substr($rnd, 0, 8), substr($rnd, 8, 4),
-                   substr($rnd, 12, 3), substr($rnd, 15, 3),
-                   substr($rnd, 18, 12));
-}
-
-/**
  * Photon server.
  *
  * It can daemonize, it reacts on SIGTERM.
@@ -179,9 +162,15 @@ class Server
     public function processRequest($conn)
     {
         Timer::start('photon.process_request');
-        $uuid = request_uuid(); 
-        $mess = $conn->recv();
+
+        $rnd = sha1(uniqid('photon', true));
+        $uuid = sprintf('%s-%s-4%s-b%s-%s',
+                   substr($rnd, 0, 8), substr($rnd, 8, 4),
+                   substr($rnd, 12, 3), substr($rnd, 15, 3),
+                   substr($rnd, 18, 12));
         
+        $mess = $conn->recv();
+
         if ($mess->is_disconnect()) {
             // A client disconnect from mongrel2 before a answer was send
             // Use this event to cleanup your context (long polling socket, task queue, ...)
