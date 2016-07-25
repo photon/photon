@@ -33,6 +33,7 @@ use photon\log\Log;
 use photon\event\Event;
 use photon\config\Container as Conf;
 use photon\mongrel2\Connection;
+use photon\shortcuts;
 
 class Exception extends \Exception {}
 
@@ -183,6 +184,8 @@ class Server
             $req = new \photon\http\Request($mess);
             $req->uuid = $uuid;
             $req->conn = $conn;
+
+            shortcuts\Server::setCurrentRequest($req);
             
             list($req, $response) = $this->dispatcher->dispatch($req);
             // If the response is false, the view is simply not
@@ -198,10 +201,12 @@ class Server
                     $response->sendIterable($mess, $conn);
                 }
             }
+
+            shortcuts\Server::setCurrentRequest(null);
         }
+
         unset($mess); // Cleans the memory with the __destruct call.
-        Log::perf(array('photon.process_request', $uuid, 
-                        Timer::stop('photon.process_request')));
+        Log::perf(array('photon.process_request', $uuid, Timer::stop('photon.process_request')));
     }
 
     /**
