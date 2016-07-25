@@ -67,7 +67,8 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
     public function testSSLRedirect_defaultConfig()
     {
         $req = HTTP::baseRequest('GET', '/');
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals(200, $resp->status_code);
     }
 
@@ -79,7 +80,8 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         ));
 
         $req = HTTP::baseRequest('GET', '/');
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals(302, $resp->status_code);
     }
 
@@ -87,7 +89,8 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
     public function testHSTS_defaultConfig()
     {
         $req = HTTP::baseRequest('GET', '/');
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals(200, $resp->status_code);
         $this->assertArrayNotHasKey('Strict-Transport-Security', $resp->headers);
     }
@@ -100,7 +103,8 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         ));
 
         $req = HTTP::baseRequest('GET', '/');
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals(200, $resp->status_code);
         $this->assertArrayHasKey('Strict-Transport-Security', $resp->headers);
     }
@@ -109,7 +113,8 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
     public function testHPKP_defaultConfig()
     {
         $req = HTTP::baseRequest('GET', '/');
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals(200, $resp->status_code);
         $this->assertArrayNotHasKey('Public-Key-Pins', $resp->headers);
     }
@@ -128,7 +133,8 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         ));
 
         $req = HTTP::baseRequest('GET', '/');
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals(200, $resp->status_code);
         $this->assertArrayHasKey('Public-Key-Pins', $resp->headers);
     }

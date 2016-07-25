@@ -35,7 +35,7 @@ namespace photon\event;
  */
 class Event
 {
-    public static $events = array();
+    private static $events = array();
 
     /**
      * Send an event.
@@ -47,12 +47,14 @@ class Event
      */
     public static function send($event, $sender, &$params=array())
     {
-        if (!empty(self::$events[$event])) {
-            foreach (self::$events[$event] as $key=>$val) {
-                if ($val[1] === null || $sender == $val[1]) {
-                    if (!call_user_func_array($val[0], array($event, &$params))) {
-                        break;
-                    }
+        if (isset(self::$events[$event]) === false) {
+            return;
+        }
+
+        foreach (self::$events[$event] as $key => $val) {
+            if ($val[1] === null || $sender == $val[1]) {
+                if (!call_user_func_array($val[0], array($event, &$params))) {
+                    break;
                 }
             }
         }
@@ -70,6 +72,7 @@ class Event
         if (!isset(self::$events[$event])) {
             self::$events[$event] = array();
         }
+
         self::$events[$event][] = array($who, $sender);
     }
 }

@@ -36,6 +36,88 @@ class Exception extends \Exception {}
 class NotImplemented extends \Exception {}
 
 /**
+ * Create cache for middleware
+ */
+class MiddlewareCache
+{
+    private $middleware = array();
+
+    /*
+     *  Create the cache for middleware
+     */
+    public function __construct()
+    {
+        // Create initial cache
+        $this->createCache();
+
+        // Reload cache if notified
+        Event::connect('Middleware::updated', array($this, 'createCache'));
+    }
+
+    /**
+     * Create the cache from the photon configuration
+     */
+    private function createCache()
+    {
+        // Clear previous middleware
+        $this->middleware = array();
+
+        // Load middleware
+        foreach (Conf::f('middleware_classes', array()) as $mw) {
+            $obj = new $mw();
+            $process_request = false;
+            $process_response = false;
+
+            if (method_exists($mw, 'process_request')) {
+                $process_request = true;
+            }
+
+            if (method_exists($mw, 'process_response')) {
+                $process_response = true;
+            }
+
+            $this->middleware[] = array($obj, $process_request, $process_response);
+        }
+    }
+
+    /**
+     * Process the request for all Middleware installed.
+     */
+    public function process_request(&$request)
+    {
+        // direct read
+        foreach($this->middleware as $current) {
+            list($obj, $process_request, $process_response) = $current;
+            if ($process_request) {
+                $response = $obj->process_request($request);
+                if ($response !== false) {
+                    return $response;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Process the response for all Middleware installed.
+     */
+    public function process_response($request, $response)
+    {
+        // reverse read
+        for (end($this->middleware); key($this->middleware) !== null; prev($this->middleware)) {
+            list($obj, $process_request, $process_response) = current($this->middleware);
+            if ($process_response) {
+                $response = $obj->process_response($request, $response);
+            }
+        }
+
+        return $response;
+    }
+}
+
+
+/**
  * Dispatch a request to the correct handler.
  *
  * Dispatching is based on the requested path and possibly some
@@ -43,6 +125,13 @@ class NotImplemented extends \Exception {}
  */
 class Dispatcher
 {
+    private $mw = null;
+
+    public function __construct()
+    {
+        $this->mw = new MiddlewareCache;
+    }
+
     /**
      * Dispatch a Photon request object and returns the request
      * object and the response object.
@@ -50,38 +139,17 @@ class Dispatcher
      * @param $req Photon request object.
      * @return array(Photon request, Photon response)
      */
-    public static function dispatch($req)
+    public function dispatch($req)
     {
         Timer::start('photon.dispatch');
-        // FUTUREOPT: One can generate the lists at the initialisation
-        // of the server to avoid the repetitive calls to
-        // method_exists.
-        $middleware = array();
-        foreach (Conf::f('middleware_classes', array()) as $mw) {
-            $middleware[] = new $mw();
-        }
+
         $response = false;
         try {
-            foreach ($middleware as $mw) {
-                if (method_exists($mw, 'process_request')) {
-                    $response = $mw->process_request($req);
-                    if ($response !== false) {
-                        // $response is a response, the middleware has
-                        // preempted the request and the possible
-                        // corresponding view will not called.
-                        break;
-                    }    
-                }
-            }
+            $response = $this->mw->process_request($req);
             if ($response === false) {   
                 $response = self::match($req);
             }
-            $middleware = array_reverse($middleware);
-            foreach ($middleware as $mw) {
-                if (method_exists($mw, 'process_response')) {
-                    $response = $mw->process_response($req, $response);
-                }    
-            }
+            $response = $this->mw->process_response($req, $response);
         } catch (\Exception $e) {
             Event::send('\photon\core\Dispatcher::dispatchException', null, $e);
             if (true !== Conf::f('debug', false)) {
@@ -91,6 +159,7 @@ class Dispatcher
                 $response->setContent($e, $req);
             }
         }
+
         $view_name = isset($req->view[0]['name']) 
             ? $req->view[0]['name'] 
             : 'not_defined';
@@ -98,6 +167,7 @@ class Dispatcher
                         Timer::stop('photon.dispatch'),
                         $view_name,
                         array($req->method, $req->path)));
+
         return array($req, $response);
     }
 
@@ -107,7 +177,7 @@ class Dispatcher
      * @param $req \photon\http\Request
      * @return mixed Response object or false
      */
-    public static function match($req)
+    private function match($req)
     {
         $checked = array();
         $views = Conf::f('urls', array());
@@ -165,7 +235,7 @@ class Dispatcher
      * @param $matches The matches found by preg_match
      * @return mixed Response or None
      */
-    public static function send($req, $ctl, $match)
+    private function send($req, $ctl, $match)
     {
         Log::debug(array('photon.dispatch.send', $req->uuid, 
                          array($ctl, $match)));
@@ -174,6 +244,7 @@ class Dispatcher
         if (is_array($ctl['view'])) {
             list($mn, $mv) = $ctl['view'];
             $m = new $mn();
+
             if (isset($m->{$mv . '_precond'})) {
                 // Preconditions to respects. A precondition must return
                 // true or a response object.
@@ -185,6 +256,7 @@ class Dispatcher
                     }
                 }
             }
+
             if (!isset($ctl['params'])) {
                 return $m->{$mv}($req, $match);
             } else {

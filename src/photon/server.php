@@ -83,7 +83,7 @@ class Server
     );
 
     private $connections = array();
-
+    private $dispatcher = null;
 
     public function __construct()
     {
@@ -108,10 +108,12 @@ class Server
 
             $this->connections[] = $connection;
         }
+
         if (count($this->connections) === 0) {
             throw new Exception('No mongrel2 servers detected');
         }
 
+        $this->dispatcher = new \photon\core\Dispatcher;
     }
 
     /**
@@ -193,7 +195,7 @@ class Server
             $req->uuid = $uuid;
             $req->conn = $conn;
             
-            list($req, $response) = \photon\core\Dispatcher::dispatch($req);
+            list($req, $response) = $this->dispatcher->dispatch($req);
             // If the response is false, the view is simply not
             // sending an answer, most likely the work was pushed to
             // another backend. Yes, you do not need to reply after a
@@ -220,15 +222,18 @@ class Server
      */
      static public function signalHandler($signo)
      {
-         if (\SIGTERM === $signo) {
-             Log::info('Received SIGTERM, now stopping.');
-             foreach(Conf::f('shutdown', array()) as $i) {
-                 call_user_func($i);
-             }
-             die(0); // Happy death, normally we run the predeath hook.
-         }
-     }
+        if (\SIGTERM === $signo) {
+            Log::info('Received SIGTERM, now stopping.');
+            foreach(Conf::f('shutdown', array()) as $i) {
+                call_user_func($i);
+            }
+            die(0); // Happy death, normally we run the predeath hook.
+        }
+    }
 
+    /**
+     * Register POSIX signals to handle.
+     */
     public function registerSignals()
     {
         if (!pcntl_signal(\SIGTERM, array('\photon\server\Server', 'signalHandler'))) {
