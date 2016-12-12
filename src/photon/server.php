@@ -202,7 +202,7 @@ class Server
                 }
             }
 
-            shortcuts\Server::setCurrentRequest(null);
+            shortcuts\Server::clearCurrentRequest();
         }
 
         unset($mess); // Cleans the memory with the __destruct call.

@@ -91,12 +91,27 @@ class Server
     }
 
     /**
+     * Clear the current HTTP context
+     *
+     * @param $request Photon request
+     */
+    public function clearCurrentRequest()
+    {
+        self::$request = null;
+    }
+
+
+    /**
      * Get the current session handler
      *
      * @return Photon session handler
      */
     public function getCurrentSession()
     {
+        if (self::$request === null) {
+            return null;
+        }
+
         if (isset(self::$request->session)) {
             return self::$request->session;
         }
