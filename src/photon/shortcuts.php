@@ -68,7 +68,7 @@ class Template
 
 class Server
 {
-    private $request = null;
+    static private $request = null;
 
     /**
      * Get the current HTTP context
