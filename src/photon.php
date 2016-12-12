@@ -160,7 +160,6 @@ namespace photon
 
         return $parser;
     }
-
 }
 
 namespace

@@ -279,7 +279,8 @@ class Request
                     }
                 }
             } else if (false !== mb_strstr($this->mess->headers->{'content-type'}, 'application/x-www-form-urlencoded')) {
-                $this->POST = parse_str(substr(stream_get_contents($mess->body), 0, -1));
+                $this->BODY = substr(stream_get_contents($mess->body), 0, -1);
+                $this->POST = parse_str($this->BODY);
             } else {
                 $this->BODY =& $mess->body;
             }
@@ -636,8 +637,10 @@ function parse_str($payload)
 {
     $post = array();
     foreach (explode('&', $payload) as $field) {
-        list($key, $value) = explode('=', trim($field));
-        add_to_post($post, $key, urldecode($value));
+        $data = explode('=', trim($field));
+        if (count($data) == 2) {
+            add_to_post($post, $data[0], urldecode($data[1]));
+        }
     }
     return $post;
 }

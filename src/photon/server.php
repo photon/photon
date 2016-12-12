@@ -33,25 +33,9 @@ use photon\log\Log;
 use photon\event\Event;
 use photon\config\Container as Conf;
 use photon\mongrel2\Connection;
+use photon\shortcuts;
 
 class Exception extends \Exception {}
-
-/**
- * Generate a uuid for each incoming request.
- *
- * You should use the Photon id for the unique string.
- *
- * @param $unique Required string to make more unique the uuid 
- * @return string Type 4 UUID
- */
-function request_uuid()
-{
-    $rnd = sha1(uniqid('photon', true));
-    return sprintf('%s-%s-4%s-b%s-%s',
-                   substr($rnd, 0, 8), substr($rnd, 8, 4),
-                   substr($rnd, 12, 3), substr($rnd, 15, 3),
-                   substr($rnd, 18, 12));
-}
 
 /**
  * Photon server.
@@ -83,7 +67,7 @@ class Server
     );
 
     private $connections = array();
-
+    private $dispatcher = null;
 
     public function __construct()
     {
@@ -108,10 +92,12 @@ class Server
 
             $this->connections[] = $connection;
         }
+
         if (count($this->connections) === 0) {
             throw new Exception('No mongrel2 servers detected');
         }
 
+        $this->dispatcher = new \photon\core\Dispatcher;
     }
 
     /**
@@ -177,9 +163,15 @@ class Server
     public function processRequest($conn)
     {
         Timer::start('photon.process_request');
-        $uuid = request_uuid(); 
-        $mess = $conn->recv();
+
+        $rnd = sha1(uniqid('photon', true));
+        $uuid = sprintf('%s-%s-4%s-b%s-%s',
+                   substr($rnd, 0, 8), substr($rnd, 8, 4),
+                   substr($rnd, 12, 3), substr($rnd, 15, 3),
+                   substr($rnd, 18, 12));
         
+        $mess = $conn->recv();
+
         if ($mess->is_disconnect()) {
             // A client disconnect from mongrel2 before a answer was send
             // Use this event to cleanup your context (long polling socket, task queue, ...)
@@ -192,8 +184,10 @@ class Server
             $req = new \photon\http\Request($mess);
             $req->uuid = $uuid;
             $req->conn = $conn;
+
+            shortcuts\Server::setCurrentRequest($req);
             
-            list($req, $response) = \photon\core\Dispatcher::dispatch($req);
+            list($req, $response) = $this->dispatcher->dispatch($req);
             // If the response is false, the view is simply not
             // sending an answer, most likely the work was pushed to
             // another backend. Yes, you do not need to reply after a
@@ -207,10 +201,12 @@ class Server
                     $response->sendIterable($mess, $conn);
                 }
             }
+
+            shortcuts\Server::setCurrentRequest(null);
         }
+
         unset($mess); // Cleans the memory with the __destruct call.
-        Log::perf(array('photon.process_request', $uuid, 
-                        Timer::stop('photon.process_request')));
+        Log::perf(array('photon.process_request', $uuid, Timer::stop('photon.process_request')));
     }
 
     /**
@@ -220,15 +216,18 @@ class Server
      */
      static public function signalHandler($signo)
      {
-         if (\SIGTERM === $signo) {
-             Log::info('Received SIGTERM, now stopping.');
-             foreach(Conf::f('shutdown', array()) as $i) {
-                 call_user_func($i);
-             }
-             die(0); // Happy death, normally we run the predeath hook.
-         }
-     }
+        if (\SIGTERM === $signo) {
+            Log::info('Received SIGTERM, now stopping.');
+            foreach(Conf::f('shutdown', array()) as $i) {
+                call_user_func($i);
+            }
+            die(0); // Happy death, normally we run the predeath hook.
+        }
+    }
 
+    /**
+     * Register POSIX signals to handle.
+     */
     public function registerSignals()
     {
         if (!pcntl_signal(\SIGTERM, array('\photon\server\Server', 'signalHandler'))) {

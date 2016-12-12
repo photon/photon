@@ -290,5 +290,4 @@ class Security
 
         return $response;
     }
-
 }

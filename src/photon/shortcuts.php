@@ -66,3 +66,42 @@ class Template
     }
 }
 
+class Server
+{
+    private $request = null;
+
+    /**
+     * Get the current HTTP context
+     *
+     * @return Photon request
+     */
+    public function getCurrentRequest()
+    {
+        return self::$request;
+    }
+
+    /**
+     * Set the current HTTP context
+     *
+     * @param $request Photon request
+     */
+    public function setCurrentRequest(&$request)
+    {
+        self::$request = $request;
+    }
+
+    /**
+     * Get the current session handler
+     *
+     * @return Photon session handler
+     */
+    public function getCurrentSession()
+    {
+        if (isset(self::$request->session)) {
+            return self::$request->session;
+        }
+
+        return null;
+    }
+}
+

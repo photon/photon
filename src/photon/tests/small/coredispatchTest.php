@@ -24,7 +24,6 @@
 namespace photon\tests\small\coredispatchTest;
 
 use \photon\config\Container as Conf;
-use \photon\core\Dispatcher as Dispatcher;
 use \photon\mongrel2\Message as Message;
 
 class DummyMiddleware
@@ -111,7 +110,8 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         $headers = (object) array('METHOD' => 'GET');
         $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
         $req = new \photon\http\Request($msg);
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals(false, $resp);
     }
 
@@ -126,7 +126,8 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         $headers = (object) array('METHOD' => 'GET');
         $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
         $req = new \photon\http\Request($msg);
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals('SIMPLE', $resp->content);
     }
 
@@ -142,7 +143,8 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         $headers = (object) array('METHOD' => 'GET');
         $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
         $req = new \photon\http\Request($msg);
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals('WITHPARAMS:OK', $resp->content);
     }
 
@@ -157,7 +159,8 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         $headers = (object) array('METHOD' => 'GET');
         $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
         $req = new \photon\http\Request($msg);
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals('WITHPRE:OK', $resp->content);
     }
 
@@ -172,7 +175,8 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         $headers = (object) array('METHOD' => 'GET');
         $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
         $req = new \photon\http\Request($msg);
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals('CAUGHT', $resp->content);
     }
 
@@ -193,7 +197,8 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         $headers = (object) array('METHOD' => 'GET');
         $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
         $req = new \photon\http\Request($msg);
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals('WITHPARAMS:OK', $resp->content);
     }
 
@@ -213,7 +218,8 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         $headers = (object) array('METHOD' => 'GET');
         $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
         $req = new \photon\http\Request($msg);
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals(false, $resp);
     }
 
@@ -230,7 +236,8 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         $headers = (object) array('METHOD' => 'GET');
         $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
         $req = new \photon\http\Request($msg);
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals('OK', $resp->content);
     }
 
@@ -245,13 +252,15 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         $headers = (object) array('METHOD' => 'GET');
         $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
         $req = new \photon\http\Request($msg);
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertNotEquals(false, strpos($resp->content, 'coredispatchTest'));
         Conf::set('debug', false);
         Conf::set('template_force_compilation', true);
         Conf::set('template_folders', array(dirname(__FILE__)));
         $req = new \photon\http\Request($msg);
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         // Ensure the answer contains a string in the 500.html template
         $this->assertTrue(false !== strpos($resp->content, 'Server Error!'));
     }
@@ -267,7 +276,8 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         $headers = (object) array('METHOD' => 'GET', 'PATH' => '/home/');
         $msg = new Message('dummy', 'dummy', '/home/', $headers, '');
         $req = new \photon\http\Request($msg);
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertNotEquals(false, strpos($resp->content, 'not found'));
     }
 
@@ -291,7 +301,8 @@ class coreurlTest extends \PHPUnit_Framework_TestCase
         $headers = (object) array('METHOD' => 'GET');
         $msg = new Message('dummy', 'dummy', '/hello/home/foo/', $headers, '');
         $req = new \photon\http\Request($msg);
-        list($req, $resp) = Dispatcher::dispatch($req);
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals(false, $resp);
     }
 }
