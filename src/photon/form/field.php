@@ -423,7 +423,7 @@ class Email extends Varchar
     }
 }
 
-class Integer extends Varchar
+class IntegerNumber extends Varchar
 {
     public $max_value = null;
     public $min_value = null;
@@ -472,8 +472,11 @@ class Integer extends Varchar
     }
 }
 
+if (version_compare(PHP_VERSION, '7.0.0', 'lt')) {
+    class_alias(__NAMESPACE__ . '\\IntegerNumber', __NAMESPACE__ . '\\Integer');
+}
 
-class Float extends Integer
+class FloatNumber extends IntegerNumber
 {
     public function __construct($params=array())
     {
@@ -499,6 +502,9 @@ class Float extends Integer
     }
 }
 
+if (version_compare(PHP_VERSION, '7.0.0', 'lt')) {
+    class_alias(__NAMESPACE__ . '\\FloatNumber', __NAMESPACE__ . '\\Float');
+}
 
 class File extends Field
 {

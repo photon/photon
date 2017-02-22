@@ -181,7 +181,7 @@ class WidgetTest extends \PHPUnit_Framework_TestCase
 
     public function testIntegerInput()
     {
-        $field = new field\Integer();
+        $field = new field\IntegerNumber();
         $widget = $field->widget;
         $this->assertEquals('<input name="e1" type="number" />', (string) $widget->render('e1', null));
         $this->assertEquals('<input name="e1" type="number" value="123" />', (string) $widget->render('e1', 123));
@@ -189,7 +189,7 @@ class WidgetTest extends \PHPUnit_Framework_TestCase
 
     public function testFloatInput()
     {
-        $field = new field\Float();
+        $field = new field\FloatNumber();
         $widget = $field->widget;
         $this->assertEquals('<input step="any" name="e1" type="number" />', (string) $widget->render('e1', null));
         $this->assertEquals('<input step="any" name="e1" type="number" value="123" />', (string) $widget->render('e1', 123));
@@ -197,21 +197,21 @@ class WidgetTest extends \PHPUnit_Framework_TestCase
 
     public function testIntegerBoundedInput()
     {
-        $field = new field\Integer(array(
+        $field = new field\IntegerNumber(array(
             'max_value' => 20,
         ));
         $widget = $field->widget;
         $this->assertEquals('<input max="20" name="e1" type="number" />', (string) $widget->render('e1', null));
         $this->assertEquals('<input max="20" name="e1" type="number" value="123" />', (string) $widget->render('e1', 123));
 
-        $field = new field\Integer(array(
+        $field = new field\IntegerNumber(array(
             'min_value' => 10,
         ));
         $widget = $field->widget;
         $this->assertEquals('<input min="10" name="e1" type="number" />', (string) $widget->render('e1', null));
         $this->assertEquals('<input min="10" name="e1" type="number" value="123" />', (string) $widget->render('e1', 123));
 
-        $field = new field\Integer(array(
+        $field = new field\IntegerNumber(array(
             'min_value' => 10,
             'max_value' => 20,
         ));
@@ -222,7 +222,7 @@ class WidgetTest extends \PHPUnit_Framework_TestCase
 
     public function testHiddenIntegerInput()
     {
-        $field = new field\Integer(array(
+        $field = new field\IntegerNumber(array(
             'widget' => '\photon\form\widget\HiddenInput',
         ));
         $widget = $field->widget;
