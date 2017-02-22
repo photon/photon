@@ -233,7 +233,7 @@ class Security
         $config = self::getConfig();
 
         // SSL Redirect
-        if ($config['ssl_redirect'] === true && isset($request->headers->URL_SCHEME) && isset($request->headers->host)) {
+        if (($config['ssl_redirect'] === true || $config['hsts'] === true) && isset($request->headers->URL_SCHEME) && isset($request->headers->host)) {
             if ($request->headers->URL_SCHEME === 'http') {
                 return new Redirect('https://' . $request->headers->host);
             }

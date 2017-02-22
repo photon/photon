@@ -105,7 +105,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $req = HTTP::baseRequest('GET', '/');
         $dispatcher = new \photon\core\Dispatcher;
         list($req, $resp) = $dispatcher->dispatch($req);
-        $this->assertEquals(200, $resp->status_code);
+        $this->assertEquals(302, $resp->status_code);
         $this->assertArrayHasKey('Strict-Transport-Security', $resp->headers);
     }
 
