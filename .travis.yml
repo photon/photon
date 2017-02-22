@@ -1,10 +1,9 @@
 language: php
 
 php:
-  - 5.3
-  - 5.4
-  - 5.5
-  - 5.6
+  - '5.6'
+  - '7.0'
+  - '7.1'
 
 matrix:
   fast_finish: true
@@ -12,6 +11,6 @@ matrix:
 before_script:
   - ./scripts/travis
   - composer init --no-interaction --stability=dev
-  - composer require "photon/photon:dev-develop"
+  - composer require "photon/photon:dev-php7"
   
 script: php vendor/photon/photon/src/photon.php selftest
