@@ -26,7 +26,6 @@ namespace photon\tests\small\cryptoTest;
 use \photon\config\Container as Conf;
 
 use \photon\crypto\Crypt;
-use \photon\crypto\Hash;
 use \photon\crypto\Sign;
 
 class cryptoTest extends \PHPUnit_Framework_TestCase
@@ -89,14 +88,5 @@ class cryptoTest extends \PHPUnit_Framework_TestCase
         $this->assertNotEquals($data, $encrypted);
         $decrypted = Crypt::decrypt($encrypted, $key, $iv);
         $this->assertEquals($data, $decrypted);
-    }
-
-    public function testHashing()
-    {
-        $password = 'foobar';
-        $hashed = Hash::hashPass($password);
-        $this->assertNotEquals($password, $hashed);
-        $checked = crypt($password, $hashed);
-        $this->assertEquals($hashed, $checked);
     }
 }

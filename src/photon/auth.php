@@ -120,10 +120,7 @@ class AnonymousUser
  *                              'othername' => 'otherpassword'),
  * </pre>
  * 
- * With the hashed password with blowfish. You can run 
- * \photon\crypt\Hash::hashPass('password') to generate the hashed password.
- *
- * @see crypt()
+ * With the hashed password with password_hash.
  */
 class ConfigBackend
 {
@@ -151,12 +148,17 @@ class ConfigBackend
      */
     public static function authenticate($auth)
     {
+        // Load the user
         $user = self::loadUser($auth['login']);
-        if (false === $user || $user->password !== crypt($auth['password'], $user->password)) {
-
+        if (false === $user) {
             return false;
         }
 
-        return $user;
+        // Check password
+        if (password_verify($auth['password'], $user->password)) {
+            return $user;
+        }
+
+        return false;
     }
 }

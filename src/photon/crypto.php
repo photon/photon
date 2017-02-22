@@ -30,43 +30,6 @@ namespace photon\crypto;
 class Exception extends \Exception {}
 
 /**
- * Utility function for hashing.
- */
-class Hash
-{
-    /**
-     * Returns a good salt with the right work factor for blowfish.
-     *
-     * @see http://www.postgresql.org/docs/8.3/static/pgcrypto.html
-     */
-    public static function getBlowfishSalt($workfactor='07')
-    {
-        $salt = base64_encode(mcrypt_create_iv(18, MCRYPT_RAND));
-        // The base64 encoding results in a 24 character length string
-        // without '=' padding.
-        // + is not accepted in the salt, we reduce a bit the
-        // randomness by converting the "+" to a ".".
-        $salt = substr(str_replace('+', '.', $salt), 0, 22);
-        
-        return '$2a$' . $workfactor . '$' . $salt;
-    }
-
-    /**
-     * bcrypt a password.
-     *
-     * This is a one way hash. It automatically generate a good salt
-     * and work factor for you.
-     *
-     * @param $password Clear text password
-     * @return string Hashed password including the salt
-     */
-    public static function hashPass($password)
-    {
-        return crypt($password, self::getBlowfishSalt());
-    }
-}
-
-/**
  * Small wrapper on top of mcrypt.
  *
  * Per the mcrypt documentation, the algorithm used by default is
