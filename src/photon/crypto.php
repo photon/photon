@@ -126,7 +126,7 @@ class Sign
                 $is_compressed = true;
             }
         }
-        $base64d = urlsafe_b64encode($serialized);
+        $base64d = self::urlsafe_b64encode($serialized);
         if ($is_compressed) {
             $base64d = '.' . $base64d;
         }
@@ -149,7 +149,7 @@ class Sign
             $base64d = substr($base64d, 1);
             $decompress = true;
         }
-        $serialized = urlsafe_b64decode($base64d);
+        $serialized = self::urlsafe_b64decode($base64d);
         if ($decompress) {
             $serialized = gzinflate($serialized);
         }
@@ -210,33 +210,35 @@ class Sign
      */
     public static function base64_hmac($value, $key)
     {
-        return urlsafe_b64encode(\hash_hmac('sha1', $value, $key, true));
+        return self::urlsafe_b64encode(\hash_hmac('sha1', $value, $key, true));
+    }
+
+    /**
+     * URL safe base 64 encoding.
+     *
+     * Compatible with python base64's urlsafe methods.
+     *
+     * @link http://www.php.net/manual/en/function.base64-encode.php#63543
+     */
+    private static function urlsafe_b64encode($string) 
+    {
+        return \str_replace(array('+','/','='), array('-','_',''),
+                            \base64_encode($string));
+    }
+
+    /**
+     * URL safe base 64 decoding.
+     */
+    private static function urlsafe_b64decode($string) 
+    {
+        $data = \str_replace(array('-','_'), array('+','/'),
+                             $string);
+        $mod4 = \strlen($data) % 4;
+        if ($mod4) {
+            $data .= \substr('====', $mod4);
+        }
+        return \base64_decode($data);
     }
 }
 
-/**
- * URL safe base 64 encoding.
- *
- * Compatible with python base64's urlsafe methods.
- *
- * @link http://www.php.net/manual/en/function.base64-encode.php#63543
- */
-function urlsafe_b64encode($string) 
-{
-    return \str_replace(array('+','/','='), array('-','_',''),
-                        \base64_encode($string));
-}
 
-/**
- * URL safe base 64 decoding.
- */
-function urlsafe_b64decode($string) 
-{
-    $data = \str_replace(array('-','_'), array('+','/'),
-                         $string);
-    $mod4 = \strlen($data) % 4;
-    if ($mod4) {
-        $data .= \substr('====', $mod4);
-    }
-    return \base64_decode($data);
-}
