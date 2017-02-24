@@ -27,11 +27,12 @@ include_once __DIR__ . '/../../locale/fr/formats.php';
 
 use photon\locale\fr\formats as fr_formats;
 
+use \photon\test\TestCase;
 use \photon\form\field;
 use \photon\form\Form;
 use \photon\form\Invalid;
 
-class FieldTest extends \PHPUnit_Framework_TestCase
+class FieldTest extends TestCase
 {
     /*
      *  Utils

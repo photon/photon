@@ -23,11 +23,12 @@
 
 namespace photon\tests\datetimeTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 use \photon\datetime\Date;
 use \photon\datetime\DateTime;
 
-class DatetimeTest extends \PHPUnit_Framework_TestCase
+class DatetimeTest extends TestCase
 {
     public function testDate()
     {

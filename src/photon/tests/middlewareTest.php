@@ -23,6 +23,7 @@
 
 namespace photon\tests\middlewareTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 use \photon\core\Dispatcher;
 use \photon\test\HTTP;
@@ -35,13 +36,11 @@ class DummyViews
     }
 }
 
-class MiddlewareTest extends \PHPUnit_Framework_TestCase
+class MiddlewareTest extends TestCase
 {
-    protected $conf;
-
     public function setUp()
     {
-        $this->conf = Conf::dump();
+        parent::setUp();
 
         // Dummy view to test the middleware
         Conf::set('urls', array(
@@ -59,7 +58,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
 
     public function tearDown()
     {
-        Conf::load($this->conf);
+        parent::tearDown();
         \photon\middleware\Security::clearConfig();
     }
 

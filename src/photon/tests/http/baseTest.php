@@ -23,6 +23,7 @@
 
 namespace photon\tests\http\baseTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 use \photon\http\Response as Response;
 use \photon\http\Request as Request;
@@ -30,21 +31,8 @@ use \photon\http\Request as Request;
 include_once __DIR__ . '/../../http.php';
 include_once __DIR__ . '/../../http/response.php';
 
-
-class baseTest extends \PHPUnit_Framework_TestCase
+class baseTest extends TestCase
 {
-    protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
-
     public function testSimpleRender()
     {
         $resp = new Response('##content##');

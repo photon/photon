@@ -23,24 +23,14 @@
 
 namespace photon\tests\small\cryptoTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
-
 use \photon\crypto\Crypt;
 use \photon\crypto\Sign;
 
-class cryptoTest extends \PHPUnit_Framework_TestCase
+class cryptoTest extends TestCase
 {
     protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
 
     public function testSimpleSign()
     {

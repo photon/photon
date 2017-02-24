@@ -23,10 +23,10 @@
 
 namespace photon\tests\template\templateTest;
 
-use photon\template\compiler as compiler;
+use \photon\test\TestCase;
+use photon\template\compiler;
 
-
-class templateTest extends \PHPUnit_Framework_TestCase
+class templateTest extends TestCase
 {
     public function testSimpleCompile()
     {

@@ -23,6 +23,7 @@
 
 namespace photon\tests\template\rendererTest;
 
+use \photon\test\TestCase;
 use photon\template as template;
 use \photon\config\Container as Conf;
 use photon\template\ContextRequest;
@@ -67,18 +68,8 @@ class LocalCompiler
     }
 }
 
-class rendererTest extends \PHPUnit_Framework_TestCase
+class rendererTest extends TestCase
 {
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
-
     public function testSimpleRenderer()
     {
         $renderer = new template\Renderer('data-template-simplest.html', 

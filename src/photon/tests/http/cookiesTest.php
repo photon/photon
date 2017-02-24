@@ -23,25 +23,12 @@
 
 namespace photon\tests\http\cookiesTest;
 
-use \photon\config\Container as Conf;
-use \photon\http\Cookie as Cookie;
-use \photon\http\CookieHandler as CookieHandler;
+use \photon\test\TestCase;
+use \photon\http\Cookie;
+use \photon\http\CookieHandler;
 
-
-class cookiesTest extends \PHPUnit_Framework_TestCase
+class cookiesTest extends TestCase
 {
-    protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
-
     public function testSimpleSetGet()
     {
         $cookies = new Cookie();

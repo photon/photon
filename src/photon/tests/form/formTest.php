@@ -23,6 +23,7 @@
 
 namespace photon\tests\form\formTest;
 
+use \photon\test\TestCase;
 use \photon\form\field;
 use \photon\form\Form;
 use \photon\form\Invalid;
@@ -153,7 +154,7 @@ class WithFieldsets extends Form
     }
 }
 
-class FormTest extends \PHPUnit_Framework_TestCase
+class FormTest extends TestCase
 {
     public function testNotImplemented()
     {

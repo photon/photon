@@ -25,23 +25,12 @@
 
 namespace photon\tests\pathTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 use \photon\path\Dir;
 
-class PathTest extends \PHPUnit_Framework_TestCase
+class PathTest extends TestCase
 {
-    protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
-
     public function testListFiles()
     {
         // review this test, adding a file in the data folder breaks it...

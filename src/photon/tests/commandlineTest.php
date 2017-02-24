@@ -23,9 +23,10 @@
 
 namespace photon\tests\commandlineTest;
 
+use \photon\test\TestCase;
 use \photon\commandline\Parser;
 
-class CommandlineTest extends \PHPUnit_Framework_TestCase
+class CommandlineTest extends TestCase
 {
     public function testParseCommand()
     {

@@ -22,14 +22,18 @@
 
 
 namespace photon\tests\translations\translate;
+
+use \photon\test\TestCase;
 use \photon\translation\Translation;
 use photon\config\Container as Conf;
+
 include_once __DIR__ . '/../../translation.php';
 
-class TranslateTest extends \PHPUnit_Framework_TestCase
+class TranslateTest extends TestCase
 {
     public function setUp()
     {
+        parent::setUp();
         set_include_path(realpath(__DIR__ . '/../data/') . PATH_SEPARATOR . get_include_path());
     }
 
@@ -174,7 +178,5 @@ msgstr "stats de l\'index"';
                                                  '');
         $this->assertEquals('fr', $lang);
     }
-
-
 }
 

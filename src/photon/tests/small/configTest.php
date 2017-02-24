@@ -23,22 +23,11 @@
 
 namespace photon\tests\small\configTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 
-class configTest extends \PHPUnit_Framework_TestCase
+class configTest extends TestCase
 {
-    protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
-
     public function testSimpleSet()
     {
         Conf::set('foo', 'bar');

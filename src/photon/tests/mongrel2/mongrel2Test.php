@@ -23,7 +23,7 @@
 
 namespace photon\tests\mongrel2\mongrel2Test;
 
-use \photon\config\Container as Conf;
+use \photon\test\TestCase;
 use \photon\mongrel2;
 
 class DummyZMQSocket
@@ -64,20 +64,8 @@ class DummyResponse
     }
 }
 
-class mongrel2Test extends \PHPUnit_Framework_TestCase
+class mongrel2Test extends TestCase
 {
-    protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
-
     public function testMessage()
     {
         $datafile = fopen(__DIR__ . '/../data/example.payload', 'rb');

@@ -23,6 +23,7 @@
 
 namespace photon\tests\eventTest;
 
+use \photon\test\TestCase;
 use photon\config\Container as Conf;
 use photon\event\Event;
 
@@ -34,20 +35,8 @@ class StaticAction
     }
 }
 
-class EventTest extends \PHPUnit_Framework_TestCase
+class EventTest extends TestCase
 {
-    protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
-
     public function testEventWithoutSender()
     {
         $i = 0;

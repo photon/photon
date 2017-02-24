@@ -23,6 +23,7 @@
 
 namespace photon\tests\http\responseTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 use \photon\http\response;
 use \photon\http;
@@ -30,20 +31,8 @@ use \photon\mongrel2;
 use \photon\tests\mongrel2\mongrel2Test\DummyZMQSocket;
 
 
-class ResponseTest extends \PHPUnit_Framework_TestCase
+class ResponseTest extends TestCase
 {
-    protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
-
     public function testJsonResponse()
     {
         $json = new response\Json(array('foo', 'bar'));

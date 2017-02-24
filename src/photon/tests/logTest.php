@@ -23,25 +23,25 @@
 
 namespace photon\tests\logTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 use \photon\log\Log;
 use \photon\log\FileBackend;
 use \photon\log\Timer;
 
-class LogTest extends \PHPUnit_Framework_TestCase
+class LogTest extends TestCase
 {
-    protected $conf;
     protected $level;
 
     public function setUp()
     {
-        $this->conf = Conf::dump();
+        parent::setUp();
         $this->level = Log::$level;
     }
 
     public function tearDown()
     {
-        Conf::load($this->conf);
+        parent::tearDown();
         Log::$stack = array();
         Log::$store = array();
         Log::$level = $this->level;
