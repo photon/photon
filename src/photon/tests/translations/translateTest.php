@@ -27,8 +27,6 @@ use \photon\test\TestCase;
 use \photon\translation\Translation;
 use photon\config\Container as Conf;
 
-include_once __DIR__ . '/../../translation.php';
-
 class TranslateTest extends TestCase
 {
     public function setUp()
@@ -40,16 +38,18 @@ class TranslateTest extends TestCase
     public function testGetPluralForm()
     {
         $po = file_get_contents(__DIR__ . '/../data/fr.po');
-        $french = \photon\translation\plural_to_php($po);
+        $french = Translation::plural_to_php($po);
         $this->assertEquals(1, $french(2));
         $this->assertEquals(0, $french(1));
         $this->assertEquals(0, $french(0));
-        $default = \photon\translation\plural_to_php('');
+
+        $default = Translation::plural_to_php('');
         $this->assertEquals(1, $default(2));
         $this->assertEquals(0, $default(1));
         $this->assertEquals(1, $default(0));
+
         $po = '"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2) ';
-        $russian = \photon\translation\plural_to_php($po);
+        $russian = Translation::plural_to_php($po);
         $this->assertEquals(1, $russian(2));
         $this->assertEquals(0, $russian(1));
         $this->assertEquals(2, $russian(0));
@@ -58,78 +58,31 @@ class TranslateTest extends TestCase
     public function testPluralLocale()
     {
         $this->assertEquals('plural', _n('singular', 'plural', 2));
+
         Translation::$plural_forms['en'] = function ($n) { return (int) ($n != 1); };
         $this->assertEquals('plural', _n('singular', 'plural', 2));
         unset(Translation::$plural_forms['en']);
-        $str = 'singular#plural';
-        Translation::$loaded['en'] = array($str =>
-                                                               array('Singular',
-                                                                     'Plural'));
-        $this->assertEquals('Singular', _n('singular', 'plural', 1));
-        $this->assertEquals('Plural', _n('singular', 'plural', 2));
-        unset(Translation::$loaded['en']);
     }
+
+    /*
+     *  Simple test to ensure the PO parser works fine on valid file
+     */
 
     public function testLoadPoFile()
     {
-        $hash = Translation::readPoFile(__DIR__ . '/../data/fr.po');
-        $this->assertEquals(array('seconde', 'secondes'),
-                            $hash['second#seconds']);
+        Translation::readPoFile('fr', __DIR__ . '/../data/fr.po');
     }
-
-    public function testParseErrorPo()
-    {
-        $po = '
-# French translations of Photon.
-#
-msgid ""
-msgstr ""
-"Project-Id-Version: Photon\n"
-"X-Poedit-SourceCharset: utf-8\n"
-"X-Poedit-Basepath: ../../../\n"
-
-msgid "search stats"
-foobar "stats de l\'index"
-
-#: Photon/Search/Stats.php:34
-msgid "search stats"
-msgstr "stats de l\'index"';
-        $this->assertEquals(false, Translation::parsePoContent($po));
-
-        $po = '
-# French translations of Photon.
-#
-
-bingo
-
-msgid ""
-msgstr ""
-"Project-Id-Version: Photon\n"
-"X-Poedit-SourceCharset: utf-8\n"
-"X-Poedit-Basepath: ../../../\n"
-
-msgid "search stats"
-msgstr "stats de l\'index\n"
-
-#: Photon/Search/Stats.php:34
-msgid "search stats 32"
-msgstr "stats de l\'index"';
-        $this->assertEquals(false, Translation::parsePoContent($po));
-    }
-
 
     public function testLoadLocale()
     {
         Conf::set('locale_folders', array());
-        $pos = Translation::loadLocale('fr', false);
-        $this->assertEquals(0, count($pos));
+        Translation::loadLocale('fr', false);
     }
 
     public function testLoadLocaleWithPhoton()
     {
         Conf::set('locale_folders', array('locale_dummyapp'));
-        $pos = Translation::loadLocale('fr', true);
-        $this->assertEquals(2, count($pos));
+        Translation::loadLocale('fr', true);
     }
 
     public function testSetLocale()
