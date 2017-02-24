@@ -154,47 +154,72 @@ class Translation
      */
     public static function getAcceptedLanguage($available, $accepted='')
     {
+        // No accepted header or empty, fallback on first available in the application
         if (0 === strlen($accepted)) {
-
             return $available[0];
         }
-        // We get and sort the accepted in priority order
-        $accepted = array_map(function($item) { return explode(';', $item); }, 
-                              explode(',', $accepted));
-        usort($accepted, 
-              function($a, $b) {
-                  $sa = (count($a) == 1) ? 1.0 : (float) substr($a[1], 2);
-                  $sb = (count($b) == 1) ? 1.0 : (float) substr($b[1], 2);
-                  if ($sa == $sb) {
-                      return 1;
-                  }
-                  return ($sa < $sb) ? 1 : -1;
-              });
+
+        // Parse accepted languages
+        $accepted = explode(',', $accepted);
+        $accepted = array_map(function($item) {
+            return array_map("trim", explode(';', $item));
+        }, $accepted);
+
+        // Sort accepted languages
+        usort($accepted, function($a, $b) {
+            // Get score for both language
+            $sa = isset($a[1]) ? (float) substr($a[1], 2) : 1.0;
+            $sb = isset($b[1]) ? (float) substr($b[1], 2) : 1.0;
+
+            // Draw case, prefers the more localized (fr_FR > fr)
+            if ($sa === $sb) {
+                $la = strlen($a[0]);
+                $lb = strlen($b[0]);
+
+                if ($la === $lb) {
+                    // PHP 7.x usort insert $a then $b if the function return 0
+                    // PHP 5.x usort insert $b then $a if the function return 0
+                    if (version_compare(PHP_VERSION, '7.0.0', 'le')) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                } else if ($la < $lb) {
+                    return 1;
+                }
+
+                return -1;
+            }
+
+            // Sort on score
+            return ($sa < $sb) ? 1 : -1;
+        });
+
         // We convert to have the correct xx_XX format for the "long" langs.
         $accepted = array_map(function($item) { 
-                $lang = explode('-', trim($item[0]));
-                if (1 === count($lang)) {
-                    return $lang[0];
-                } 
-                return $lang[0] . '_' . strtoupper($lang[1]);
-            }, 
-            $accepted);
+            $lang = explode('-', trim($item[0]));
+            if (1 === count($lang)) {
+                return $lang[0];
+            } 
+            return $lang[0] . '_' . strtoupper($lang[1]);
+        }, $accepted);
+
         foreach ($accepted as $lang) {
             if (in_array($lang, $available)) {
-
                 return $lang;
             }
         }
+
         foreach ($accepted as $lang) {
             // for the xx-XX cases we may have only the "main" language
             // form like xx is available
             $lang = substr($lang, 0, 2);
             if (in_array($lang, $available)) {
-
                 return $lang;
             }
         }
 
+        // Requested language not found, fallback on first available in the application
         return $available[0];
     }
 
