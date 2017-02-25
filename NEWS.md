@@ -1,3 +1,21 @@
+# Photon 2.0.0 - FFS
+
+## New Features
+- Add support for PHP 7.0 and 7.1
+- Use PO parser from https://github.com/raulferras/PHP-po-parser
+
+## Changes
+- Tests are executed with the last version of PHPUnit 5.x, the 6.x release require to drop support of PHP 5.6
+- The class \photon\form\field\Float, the name is reserved in PHP 7.x so we rename it FloatNumber
+- HSTS force https redirect, while ssl_redirect is not set
+- All photon tests case must extends \photon\test\TestCase
+- Fix \photon\translation\Translation::getAcceptedLanguage to works with PHP 5.x and 7.x
+- The class \photon\crypto\Crypt do not use mcrypt anymore, we use openssl configured with AES-256-CBC
+
+## Removes
+- The class \photon\crypto\Hash, use build in php function : password_hash and password_verify
+- Usage of the mcrypt ext (deprecated in PHP 7.1, will be removed in PHP 7.2)
+
 # Photon 1.1.0 - Wed, 08 Jun 2016 09:29:33 +0000
 
 ## Changes
@@ -107,7 +125,7 @@
 - Ensure all photon source are compressed in the PHAR
 - Don't add .pharignore in the PHAR, related to PHP bug https://bugs.php.net/bug.php?id=64931
 
-## Particules
+## Particules
 - Add MongoDB session storage (https://github.com/photon/session-mongodb)
 - Add Memcached session storage (https://github.com/photon/session-memcached)
 - Add Markdown support for template (https://github.com/photon/template-markdown)
