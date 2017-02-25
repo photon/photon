@@ -27,6 +27,8 @@
  */
 namespace photon\crypto;
 
+use photon\config\Container as Conf;
+
 class Exception extends \Exception {}
 
 /**
@@ -38,37 +40,51 @@ class Exception extends \Exception {}
  */
 class Crypt
 {
-    public static function getiv($cipher='twofish', $mode='cfb')
+    public static function encrypt($data, $passphrase=null)
     {
-        $td = mcrypt_module_open($cipher, '', $mode, '');
-        $iv = mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
-        mcrypt_module_close($td);
+        if ($passphrase === null) {
+            $passphrase = Conf::f('secret_key', null);
+            if ($passphrase === null) {
+                throw new Exception('No passphrase');
+            }
+        }
 
-        return $iv;
+        $key = hash('sha256', $passphrase);
+        $ivsize = openssl_cipher_iv_length('aes-256-cbc');
+        $iv = openssl_random_pseudo_bytes($ivsize);
+        
+        $ciphertext = openssl_encrypt(
+            $data,
+            'aes-256-cbc',
+            $key,
+            OPENSSL_RAW_DATA,
+            $iv
+        );
+        
+        return $iv . $ciphertext;
     }
 
-    public static function encrypt($data, $key, $iv, $cipher='twofish', $mode='cfb')
+    public static function decrypt($data, $passphrase=null)
     {
-        $td = mcrypt_module_open($cipher, '', $mode, '');
-        $key = substr($key, 0, mcrypt_enc_get_key_size($td));
-        mcrypt_generic_init($td, $key, $iv);
-        $crypted = mcrypt_generic($td, $data);
-        mcrypt_generic_deinit($td);
-        mcrypt_module_close($td);
+        if ($passphrase === null) {
+            $passphrase = Conf::f('secret_key', null);
+            if ($passphrase === null) {
+                throw new Exception('No passphrase');
+            }
+        }
 
-        return $crypted;
-    }
-
-    public static function decrypt($data, $key, $iv, $cipher='twofish', $mode='cfb')
-    {
-        $td = mcrypt_module_open($cipher, '', $mode, '');
-        $key = substr($key, 0, mcrypt_enc_get_key_size($td));
-        mcrypt_generic_init($td, $key, $iv);
-        $decrypted = rtrim(mdecrypt_generic($td, $data), "\0");
-        mcrypt_generic_deinit($td);
-        mcrypt_module_close($td);
-
-        return $decrypted;
+        $key = hash('sha256', $passphrase);
+        $ivsize = openssl_cipher_iv_length('aes-256-cbc');
+        $iv = mb_substr($data, 0, $ivsize, '8bit');
+        $ciphertext = mb_substr($data, $ivsize, null, '8bit');
+        
+        return openssl_decrypt(
+            $ciphertext,
+            'aes-256-cbc',
+            $key,
+            OPENSSL_RAW_DATA,
+            $iv
+        );
     }
 }
 

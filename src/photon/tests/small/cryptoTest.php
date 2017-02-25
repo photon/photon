@@ -73,10 +73,9 @@ class cryptoTest extends TestCase
     {
         $key = 'foobar';
         $data = 'very secret';
-        $iv = Crypt::getiv();
-        $encrypted = Crypt::encrypt($data, $key, $iv);
+        $encrypted = Crypt::encrypt($data, $key);
         $this->assertNotEquals($data, $encrypted);
-        $decrypted = Crypt::decrypt($encrypted, $key, $iv);
+        $decrypted = Crypt::decrypt($encrypted, $key);
         $this->assertEquals($data, $decrypted);
     }
 }

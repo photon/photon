@@ -289,11 +289,6 @@ class Cookies extends Base
      */
     public $key = '';
 
-    /**
-     * Initialisation vector for the encryption.
-     */
-    public $iv = '';
-
     public function keyExists($key)
     {
         // We anyway store directly in the browser, so, no need to
@@ -317,9 +312,6 @@ class Cookies extends Base
     {
         $this->cookie = $request->COOKIE;
         $this->key = $key;
-        if (isset($this->cookie['scsiv'])) {
-            $this->iv = $this->cookie['scsiv'];
-        }
     }
 
     /**
@@ -334,12 +326,9 @@ class Cookies extends Base
     public function commit($response)
     {
         $timeout = time() + 365 * 24 * 3600;
-        if (0 === strlen($this->iv)) {
-            $this->iv = Crypt::getiv();
-            $response->COOKIE->setCookie('scsiv', $this->iv, $timeout);
-        }
+
         foreach ($this->cache as $name => $val) {
-            $val = Crypt::encrypt($val, Conf::f('secret_key'), $this->iv);
+            $val = Crypt::encrypt($val, Conf::f('secret_key'));
             $response->COOKIE->setCookie('scs-' . $name, $val, $timeout);
         }
         foreach ($this->deleted as $name => $val) {
@@ -391,17 +380,15 @@ class Cookies extends Base
     public function get($offset)
     {
         if (isset($this->deleted[$offset])) {
-
             return null;
         }
-        if (isset($this->cache[$offset])) {
 
+        if (isset($this->cache[$offset])) {
             return $this->cache[$offset];
         }
-        if (strlen($this->iv) &&  isset($this->cookie['scs-' . $offset])) {
 
-            return Crypt::decrypt($this->cookie['scs-' . $offset], 
-                                  Conf::f('secret_key'), $this->iv);
+        if (isset($this->cookie['scs-' . $offset])) {
+            return Crypt::decrypt($this->cookie['scs-' . $offset], Conf::f('secret_key'));
         }
 
         return null;
