@@ -36,7 +36,74 @@ class DummyViews
     }
 }
 
-class MiddlewareTest extends TestCase
+class MiddlewareTranslationTest extends TestCase
+{
+    public function setUp()
+    {
+        parent::setUp();
+
+        // Dummy view to test the middleware
+        Conf::set('urls', array(
+            array(
+                'regex' => '#^/$#',
+                'view' => array(__NAMESPACE__ . '\DummyViews', 'simple'),
+            ),
+        ));
+
+        // Register the middleware to be tested
+        Conf::set('middleware_classes', array(
+            '\photon\middleware\Translation'
+        ));
+
+        // Register the languages availables in the application
+        Conf::set('languages', array('fr', 'en', 'dk'));
+    }
+
+    public function tearDown()
+    {
+        parent::tearDown();
+    }
+
+    /*
+     *  A website with no session backend
+     *  A new user with no cookie and no accept-language
+     *  He must get the page content in the default language and get a cookie with this language
+     */
+    public function testDefaultLanguage()
+    {
+        $req = HTTP::baseRequest('GET', '/');
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
+        $this->assertEquals(200, $resp->status_code);
+        $this->assertEquals($req->i18n_code, 'fr');
+        $this->assertArrayHasKey('Vary', $resp->headers);
+        $this->assertArrayHasKey('Content-Language', $resp->headers);
+        $this->assertArrayHasKey('lang', $resp->COOKIE);
+        $this->assertEquals('fr', $resp->COOKIE['lang']);
+    }
+
+    /*
+     *  A website with no session backend
+     *  A new user with no cookie but with accept-language
+     *  He must get the page content in the requested language and get a cookie with this language
+     */
+    public function testLanguageFromHttpHeaders()
+    {
+        $req = HTTP::baseRequest('GET', '/', '', '', array(), array('accept-language' => 'dk'));
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
+        $this->assertEquals(200, $resp->status_code);
+        $this->assertEquals($req->i18n_code, 'dk');
+        $this->assertArrayHasKey('Vary', $resp->headers);
+        $this->assertArrayHasKey('Content-Language', $resp->headers);
+        $this->assertArrayHasKey('lang', $resp->COOKIE);
+        $this->assertEquals('dk', $resp->COOKIE['lang']);
+    }
+
+    // FFS : Add tests with sessions
+}
+
+class MiddlewareSecurityTest extends TestCase
 {
     public function setUp()
     {
