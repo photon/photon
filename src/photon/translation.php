@@ -105,7 +105,7 @@ class Translation
             return $singular;
         }
 
-        return self::$loaded[self::$current_lang][$singular]['msgstr'];
+        return self::$loaded[self::$current_lang][$singular]['msgstr'][0];
     }
 
     /**
