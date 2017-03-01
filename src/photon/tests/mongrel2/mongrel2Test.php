@@ -78,14 +78,6 @@ class mongrel2Test extends TestCase
         $this->assertEquals(false, is_resource($datafile));
     }
 
-    public function testInMemoryParsing()
-    {
-        $message = file_get_contents(__DIR__ . '/../data/example.payload');
-        $mess = mongrel2\Message::parse($message);
-        $this->assertEquals($mess->path, '/handlertest/foo');
-        $this->assertEquals(21894, strlen($mess->body));
-    }
-
     public function testConnectionRecv()
     {
         $this->markTestIncomplete('To rewrite');

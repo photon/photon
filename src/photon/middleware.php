@@ -292,7 +292,6 @@ class Security
     }
 }
 
-
 /**
 * Translation middleware.
 *

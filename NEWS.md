@@ -2,7 +2,10 @@
 
 ## New Features
 - Add support for PHP 7.0 and 7.1
-- Use PO parser from https://github.com/raulferras/PHP-po-parser
+- Use PO parser from https://github.com/raulferras/PHP-po-parser  
+  Source code is duplicated because the last version is not tagged yet.
+- A translation middleware to setup language from : session, cookie, or http headers.  
+  Enable it by adding `\photon\middleware\translation` in your middleware configuration.
 
 ## Changes
 - Tests are executed with the last version of PHPUnit 5.x, the 6.x release require to drop support of PHP 5.6
@@ -10,11 +13,17 @@
 - HSTS force https redirect, while ssl_redirect is not set
 - All photon tests case must extends \photon\test\TestCase
 - Fix \photon\translation\Translation::getAcceptedLanguage to works with PHP 5.x and 7.x
-- The class \photon\crypto\Crypt do not use mcrypt anymore, we use openssl configured with AES-256-CBC
+- The class \photon\crypto\Crypt do not use mcrypt anymore, we use openssl configured with AES-256-CBC.  
+  Previous data encoded can not be decoded with the new class.  
+  Usage of the mcrypt ext (deprecated in PHP 7.1, will be removed in PHP 7.2).
+- Cleanup function outside classes call only one time in a class
 
 ## Removes
-- The class \photon\crypto\Hash, use build in php function : password_hash and password_verify
-- Usage of the mcrypt ext (deprecated in PHP 7.1, will be removed in PHP 7.2)
+- Remove of the class \photon\crypto\Hash.  
+  The class photon\auth\ConfigBackend use now built-in php function : password_hash and password_verify
+- Remove of the class \photon\commandline\Parser.  
+  We recommend to use a CLI Parser from a dedicated project like nategood/commando
+- Cleanup PHP Pear stuff
 
 # Photon 1.1.0 - Wed, 08 Jun 2016 09:29:33 +0000
 
