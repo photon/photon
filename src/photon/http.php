@@ -273,14 +273,14 @@ class Request
                 $parser = new \photon\http\multipartparser\MultiPartParser($mess->headers, $mess->body);
                 foreach ($parser->parse() as $part) {
                     if ('FIELD' === $part['of_type']) {
-                        add_to_post($this->POST, $part['name'], $part['data']);
+                        $this->add_to_post($part['name'], $part['data']);
                     } else {
-                        add_file_to_post($this->FILES, $part['name'], $part);
+                        $this->add_file_to_post($part['name'], $part);
                     }
                 }
             } else if (false !== mb_strstr($this->mess->headers->{'content-type'}, 'application/x-www-form-urlencoded')) {
                 $this->BODY = substr(stream_get_contents($mess->body), 0, -1);
-                $this->POST = parse_str($this->BODY);
+                $this->parse_form_urlencoded($this->BODY);
             } else {
                 $this->BODY =& $mess->body;
             }
@@ -289,6 +289,76 @@ class Request
         }
         $this->COOKIE = CookieHandler::parse($this->mess->headers, 
                                              Conf::f('secret_key', ''));
+    }
+
+    /**
+     * Simple form url encoded decoding of a string.
+     *
+     * This is only needed for POST requests.
+     * 
+     * @param $payload Encoded string
+     * @return array Decoded string
+     */
+    private function parse_form_urlencoded($payload)
+    {
+        foreach (explode('&', $payload) as $field) {
+            $data = explode('=', trim($field));
+            if (count($data) == 2) {
+                $this->add_to_post($data[0], urldecode($data[1]));
+            }
+        }
+    }
+
+    /**
+     * Add the current value to the corresponding POST key.
+     *
+     * When you submit a form with a POST request, multiple values have to
+     * be handled as an array. For example, if you submit a select with
+     * multiple values.
+     *
+     * This function takes care of adding the value as array or not to the
+     * variables.
+     *
+     * @param &$post The POST array, modified by reference.
+     * @param $key The field name
+     * @param $value The field value
+     */
+    private function add_to_post($key, $value)
+    {
+        if (!isset($this->POST[$key])) {
+            $this->POST[$key] = $value;
+        } elseif (is_array($this->POST[$key])) {
+            $this->POST[$key][] = $value;
+        } else {
+            // Defined and not an array, we need to convert and add
+            $this->POST[$key] = array($this->POST[$key], $value);
+        }
+    }
+
+    /**
+     * Add the current file upload to the corresponding FILES key.
+     *
+     * When you submit a form with a POST request, multiple values have to
+     * be handled as an array. For example, if you submit a select with
+     * multiple values.
+     *
+     * This function takes care of adding the value as array or not to the
+     * variables.
+     *
+     * @param &$post The FILES array, modified by reference.
+     * @param $key The field name
+     * @param $value The field value
+     */
+    private function add_file_to_post($key, $value)
+    {
+        if (!isset($this->FILES[$key])) {
+            $this->FILES[$key] = $value;
+        } elseif (is_array($this->FILES[$key]) && !isset($this->FILES[$key]['data'])) {
+            $this->FILES[$key][] = $value;
+        } else {
+            // Defined and not an array, we need to convert and add
+            $this->FILES[$key] = array($this->FILES[$key], $value);
+        }
     }
 
     /**
@@ -573,74 +643,6 @@ class HeaderTool
 }
 
 
-/**
- * Add the current value to the corresponding POST key.
- *
- * When you submit a form with a POST request, multiple values have to
- * be handled as an array. For example, if you submit a select with
- * multiple values.
- *
- * This function takes care of adding the value as array or not to the
- * variables.
- *
- * @param &$post The POST array, modified by reference.
- * @param $key The field name
- * @param $value The field value
- */
-function add_to_post(&$post, $key, $value)
-{
-    if (!isset($post[$key])) {
-        $post[$key] = $value;
-    } elseif (is_array($post[$key])) {
-        $post[$key][] = $value;
-    } else {
-        // Defined and not an array, we need to convert and add
-        $post[$key] = array($post[$key], $value);
-    }
-}
 
-/**
- * Add the current file upload to the corresponding FILES key.
- *
- * When you submit a form with a POST request, multiple values have to
- * be handled as an array. For example, if you submit a select with
- * multiple values.
- *
- * This function takes care of adding the value as array or not to the
- * variables.
- *
- * @param &$post The FILES array, modified by reference.
- * @param $key The field name
- * @param $value The field value
- */
-function add_file_to_post(&$post, $key, $value)
-{
-    if (!isset($post[$key])) {
-        $post[$key] = $value;
-    } elseif (is_array($post[$key]) && !isset($post[$key]['data'])) {
-        $post[$key][] = $value;
-    } else {
-        // Defined and not an array, we need to convert and add
-        $post[$key] = array($post[$key], $value);
-    }
-}
 
-/**
- * Simple form url encoded decoding of a string.
- *
- * This is only needed for POST requests.
- * 
- * @param $payload Encoded string
- * @return array Decoded string
- */
-function parse_str($payload)
-{
-    $post = array();
-    foreach (explode('&', $payload) as $field) {
-        $data = explode('=', trim($field));
-        if (count($data) == 2) {
-            add_to_post($post, $data[0], urldecode($data[1]));
-        }
-    }
-    return $post;
-}
+
