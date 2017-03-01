@@ -34,10 +34,6 @@ const SUB_ADDR = 'tcp://127.0.0.1:5997';
 
 class Exception extends \Exception {}
 
-class Broker
-{
-}
-
 /**
  * The runner connects to the tasks and send the work.
  */
@@ -47,6 +43,7 @@ class Runner
     static $sockets = array();
     static $types = array();
     public $id = '';
+
     /**
      * It connects to the tasks on creation by default.
      *
