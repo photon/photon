@@ -73,9 +73,41 @@ class cryptoTest extends TestCase
     {
         $key = 'foobar';
         $data = 'very secret';
+
         $encrypted = Crypt::encrypt($data, $key);
         $this->assertNotEquals($data, $encrypted);
+
         $decrypted = Crypt::decrypt($encrypted, $key);
         $this->assertEquals($data, $decrypted);
+    }
+
+    public function testEncryptDecryptDefaultKey()
+    {
+        $data = 'very secret';
+        $encrypted = Crypt::encrypt($data);
+        $this->assertNotEquals($data, $encrypted);
+
+        $decrypted = Crypt::decrypt($encrypted);
+        $this->assertEquals($data, $decrypted);
+    }
+
+    public function testEncryptNoKey()
+    {
+        $conf = Conf::dump();
+        unset($conf['secret_key']);
+        Conf::load($conf);
+
+        $this->setExpectedException('\photon\crypto\Exception');
+        $encrypted = Crypt::encrypt('data');
+    }
+
+    public function testDecryptNoKey()
+    {
+        $conf = Conf::dump();
+        unset($conf['secret_key']);
+        Conf::load($conf);
+
+        $this->setExpectedException('\photon\crypto\Exception');
+        $decrypted = Crypt::decrypt('crypted');
     }
 }
