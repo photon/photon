@@ -201,72 +201,6 @@ class ShowConfig extends Base
 }
 
 /**
- * Initialisation of a new project.
- *
- * A new project includes the simple "Hello Wordl!" demo
- * application. You can use the m2config command to then get the
- * corresponding Mongrel2 configuration file to test your application.
- *
- */
-class Init extends Base
-{
-    public $project_dir = ''; /**< Store the full path to the project files */
-
-    /**
-     * Generate the default files for the project.
-     * recursively copies the data/project_template directory
-     * renames __APPNAME__ along the way
-     * @return void
-     */
-    public function generateFiles()
-    {
-        // recursively copy the project_template directory
-        $src_directory =  __DIR__ . '/data/project_template';
-        $src_directory_length = strlen($src_directory) + 1;
-        $dir_iterator = new \RecursiveIteratorIterator(
-                          new \RecursiveDirectoryIterator($src_directory), 
-                          \RecursiveIteratorIterator::SELF_FIRST);
-        foreach($dir_iterator as $src_filepath) {
-            if (substr(basename($src_filepath), 0, 1) == '.') {
-                continue; // ignore '.', '..', '.DS_Store', '.*'
-            }
-            // build the destination filepath
-            $dest_directory_rel_path = substr($src_filepath, $src_directory_length);
-            $dest_filepath = $this->project_dir . '/' . $dest_directory_rel_path;
-            // make the directory or copy the file
-            if (is_dir($src_filepath)) {
-                // make sure the dest directory exists
-                if (!file_exists($dest_filepath)) {
-                    if (!mkdir($dest_filepath)) {
-                        throw new Exception(sprintf('Failed to make directory %s', $dest_filepath));
-                    }
-                }
-            } else {
-                // copy the file
-                if (!copy($src_filepath, $dest_filepath)) {
-                    throw new Exception(sprintf('Failed to copy: %s to %s.', $src_filepath, $dest_filepath));
-                }
-            }
-        }
-
-        $this->info(sprintf('Default project created in: %s.', $this->project_dir));
-        $this->info('A README file is in the project to explain how to start mongrel2 and your photon project.');
-        $this->info('Have fun! The Photon Project Team.');
-    }
-
-    /**
-     * Run the command.
-     */
-     public function run()
-     {
-         $this->project_dir = $this->cwd . '/';
-
-         // copy the application template
-         $this->generateFiles();
-     }
-}
-
-/**
  * Base class for the Server and Task.
  *
  * It redefines some of the methods to take into account if the process
@@ -349,7 +283,6 @@ class Server extends Service
     }
 
 }
-
 
 /**
  * Task.

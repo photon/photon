@@ -24,7 +24,7 @@
 - Remove of the class \photon\commandline\Parser.  
   We recommend to use a CLI Parser from a dedicated project like nategood/commando
 - Cleanup PHP Pear stuff
-
+- The project init command. The template is still available in a dedicated repo (photon/project-template)
 # Photon 1.1.0 - Wed, 08 Jun 2016 09:29:33 +0000
 
 ## Changes

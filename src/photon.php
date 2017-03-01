@@ -58,10 +58,7 @@ namespace photon
             $parser->addOption($name, $option);
         }
 
-        $cmds = array('init' =>
-           array('desc' => 'generate the skeleton of a new Photon project in the current folder',
-                 ),
-                      'pot' =>
+        $cmds = array('pot' =>
            array('desc' => 'generate a standard gettext template file for the project (.pot)',
                  'opts' => array('potfile' =>
                                  array('long_name'   => '--pot-file',
