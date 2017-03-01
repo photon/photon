@@ -57,12 +57,13 @@
 namespace 
 {
     include_once __DIR__ . '/autoload.php';
-    $tmp =  (is_dir(__DIR__ . '/../../tmp')) 
-        ? realpath(__DIR__ . '/../../tmp')
-        : sys_get_temp_dir();
-    $config = array('runtests' => true,
-                    'tmp_folder' => $tmp,
-                    'debug' => true,
-                    'secret_key' => 'SECRET_KEY');
+
+    $config = array(
+        'runtests' => true,
+        'tmp_folder' => sys_get_temp_dir(),
+        'debug' => true,
+        'secret_key' => 'SECRET_KEY',
+    );
+
     \photon\config\Container::load($config);
 }
