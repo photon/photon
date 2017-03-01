@@ -229,7 +229,7 @@ class Compiler
                                        Conf::f('template_modifiers', array()));
         Event::send('\photon\template\compiler\Compiler::construct_load_modifiers', null, $this->_modifier);
 
-        foreach ($this->_allowedTags as $name=>$model) {
+        foreach ($this->_allowedTags as $name => $model) {
             $this->_extraTags[$name] = new $model();
         }
 
