@@ -288,9 +288,26 @@ class Form implements \Iterator, \ArrayAccess
         $top_errors = (isset($this->errors['__all__']))
             ? $this->errors['__all__']
             : array();
-        array_walk($top_errors, '\photon\form\htmlspecialchars_array');
+        $this->htmlspecialchars($top_errors);
 
-        return new SafeString(render_errors_as_html($top_errors), true);
+        return new SafeString($this->render_errors_as_html($top_errors), true);
+    }
+
+    public function render_errors_as_html($errors)
+    {
+        $tmp = array();
+        foreach ($errors as $err) {
+            $tmp[] = '<li>' . $err . '</li>';
+        }
+
+        return '<ul class="errorlist">' . implode("\n", $tmp) . '</ul>';
+    }
+
+    private function htmlspecialchars(&$items)
+    {
+        array_walk($items, function (&$item, $key) {
+            $item = htmlspecialchars($item, ENT_COMPAT, 'UTF-8');
+        });
     }
 
     /**
@@ -323,7 +340,7 @@ class Form implements \Iterator, \ArrayAccess
                                   $help_text_html, $errors_on_separate_row)
     {
         $top_errors = (isset($this->errors['__all__'])) ? $this->errors['__all__'] : array();
-        array_walk($top_errors, '\photon\form\htmlspecialchars_array');
+        $this->htmlspecialchars($top_errors);
         $output = array();
         $hidden_fields = array();
 
@@ -350,7 +367,7 @@ class Form implements \Iterator, \ArrayAccess
 
         if (count($top_errors)) {
             $errors = sprintf($error_row,
-                              render_errors_as_html($top_errors));
+                              $this->render_errors_as_html($top_errors));
             array_unshift($output, $errors);
         }
         if (count($hidden_fields)) {
@@ -384,7 +401,7 @@ class Form implements \Iterator, \ArrayAccess
     {
             $bf = new BoundField($this, $field, $name);
             $bf_errors = $bf->errors;
-            array_walk($bf_errors, '\photon\form\htmlspecialchars_array');
+            $this->htmlspecialchars($bf_errors);
             if ($field->widget->is_hidden) {
                 foreach ($bf_errors as $_e) {
                     $top_errors[] = sprintf(__('(Hidden field %1$s) %2$s'),
@@ -393,7 +410,7 @@ class Form implements \Iterator, \ArrayAccess
                 $hidden_fields[] = $bf; // Not rendered
             } else {
                 if ($errors_on_separate_row && count($bf_errors)) {
-                    $output[] = sprintf($error_row, render_errors_as_html($bf_errors));
+                    $output[] = sprintf($error_row, $this->render_errors_as_html($bf_errors));
                 }
                 $label = htmlspecialchars($bf->label, ENT_COMPAT, 'UTF-8');
                 if ($this->label_suffix) {
@@ -412,7 +429,7 @@ class Form implements \Iterator, \ArrayAccess
                 }
                 $errors = '';
                 if (!$errors_on_separate_row && count($bf_errors)) {
-                    $errors = render_errors_as_html($bf_errors);
+                    $errors = $this->render_errors_as_html($bf_errors);
                 }
                 $output[] = sprintf($normal_row, $errors, $label,
                                     $bf->render_w(), $help_text);
@@ -612,7 +629,7 @@ class BoundField
         $this->name = $name;
         $this->html_name = $this->form->addPrefix($name);
         if ($this->field->label == '') {
-            $this->label = mb_ereg_replace('/\_/', '/ /', mb_ucfirst($name));
+            $this->label = mb_ereg_replace('/\_/', '/ /', $this->mb_ucfirst($name));
         } else {
             $this->label = $this->field->label;
         }
@@ -620,6 +637,11 @@ class BoundField
         if (isset($this->form->errors[$name])) {
             $this->errors = $this->form->errors[$name];
         }
+    }
+
+    private function mb_ucfirst($str)
+    {
+        return mb_strtoupper(mb_substr($str, 0, 1)) . mb_substr($str, 1);
     }
 
     public function render_w($widget=null, $attrs=array())
@@ -702,7 +724,7 @@ class BoundField
      */
     public function fieldErrors()
     {
-        return new SafeString(render_errors_as_html($this->errors), true);
+        return new SafeString($this->form->render_errors_as_html($this->errors), true);
     }
 
     /**
@@ -750,25 +772,3 @@ class FieldProxy
     }
 }
 
-
-
-
-function mb_ucfirst($str)
-{
-    return mb_strtoupper(mb_substr($str, 0, 1)) . mb_substr($str, 1);
-}
-
-function htmlspecialchars_array(&$item, $key)
-{
-    $item = htmlspecialchars($item, ENT_COMPAT, 'UTF-8');
-}
-
-function render_errors_as_html($errors)
-{
-    $tmp = array();
-    foreach ($errors as $err) {
-        $tmp[] = '<li>' . $err . '</li>';
-    }
-
-    return '<ul class="errorlist">' . implode("\n", $tmp) . '</ul>';
-}
