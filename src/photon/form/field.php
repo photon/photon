@@ -120,21 +120,25 @@ class Field
             if ($key !== 'widget_attrs')
                 $this->$key = $m[$key];
         }
+
         // Set the default error messages
         $this->error_messages = array_merge(
                         array('required' => __('This field is required.'),
                               'invalid' => __('Enter a valid value.')),
                         $this->error_messages);
+
         // Set the widget to be an instance and not the string name.
         $widget_name = $this->widget;
         $attrs = (isset($params['widget_attrs']))
             ? $params['widget_attrs']
             : array();
         $widget = new $widget_name($attrs);
+
         $attrs = $this->widgetAttrs($widget);
         if (count($attrs)) {
             $widget->attrs = array_merge($widget->attrs, $attrs);
         }
+
         $this->widget = $widget;
 
         if ($this->required === true) {
@@ -161,6 +165,7 @@ class Field
 
             return $nv;
         }
+
         $value = $this->toPhp($value);
         $this->validate($value);
         $this->runValidators($value);
@@ -211,6 +216,7 @@ class Field
         if (in_array($value, $this->empty_values, true)) {
             return;
         }
+
         $errors = array();
         foreach ($this->validators as $v) {
             try {
@@ -224,6 +230,7 @@ class Field
                 }
             }
         }
+
         if (count($errors)) {
             throw new Invalid($errors);
         }
@@ -250,6 +257,7 @@ class Varchar extends Field
     public function __construct($params=array())
     {
         parent::__construct($params);
+
         // we add the min/max length validators
         if (null !== $this->min_length) {
             $min = $this->min_length;
@@ -257,6 +265,7 @@ class Varchar extends Field
                 return validator\Text::minLength($value, $min);
             };
         }
+
         if (null !== $this->max_length) {
             $max = $this->max_length;
             $this->validators[] = function ($value) use ($max) {
@@ -277,6 +286,7 @@ class Varchar extends Field
             if (in_array($value, $this->empty_values, true)) {
                 return '';
             }
+
             return $value;
         } else {
             foreach($value as $key => &$val) {
@@ -297,12 +307,14 @@ class Boolean extends Field
 
     public function toPhp($value)
     {
-        $value = (in_array($value, array('off', 'n', 'false', 'False', '0'), true))
-            ? false : (bool) $value;
+        $allow = array('off', 'n', 'false', 'False', '0');
+        $value = in_array($value, $allow, true) ? false : (bool)$value;
+
         if (!$value and $this->required) {
             // This is because false is not in the empty value list.
             throw new Invalid($this->error_messages['required'], 'required');
         }
+
         return $value;
     }
 }
@@ -323,6 +335,7 @@ class Date extends Varchar
     {
         $this->input_formats = en_formats\DATE_INPUT_FORMATS;
         $this->error_messages['invalid'] = __('Enter a valid date.');
+
         parent::__construct($params);
     }
 
@@ -331,15 +344,18 @@ class Date extends Varchar
         if (in_array($value, $this->empty_values, true)) {
             return '';
         }
+
         if (is_object($value) 
             && 'photon\datetime\Date' === get_class($value)) {
             return $value;
         }
+
         foreach (explode('||', $this->input_formats) as $format) {
             if (false !== ($date = \photon\datetime\Date::fromFormat($format, $value))) {
                 return $date;
             }
         }
+
         throw new Invalid($this->error_messages['invalid']);
     }
 }
@@ -352,6 +368,7 @@ class Datetime extends Varchar
     {
         $this->input_formats = en_formats\DATETIME_INPUT_FORMATS;
         $this->error_messages['invalid'] = __('Enter a valid date and time.');
+
         parent::__construct($params);
     }
 
@@ -360,16 +377,19 @@ class Datetime extends Varchar
         if (in_array($value, $this->empty_values, true)) {
             return '';
         }
+
         if (is_object($value) 
             && 'photon\datetime\DateTime' === get_class($value)) {
             return $value;
         }
+
         foreach (explode('||', $this->input_formats) as $format) {
             $date = \photon\datetime\DateTime::fromFormat($format, $value);
             if (false !== $date) {
                 return $date;
             }
         }
+
         throw new Invalid($this->error_messages['invalid']);
     }
 }
@@ -404,6 +424,7 @@ class Email extends Varchar
     public function __construct($params=array())
     {
         parent::__construct($params);
+
         $this->validators[] = function ($value) {
             return validator\Net::email($value);
         };
@@ -419,6 +440,7 @@ class Email extends Varchar
         if (get_class($widget) != 'photon\form\widget\HiddenInput') {
             $widget->input_type = 'email';
         }
+
         return array();
     }
 }
@@ -432,6 +454,7 @@ class IntegerNumber extends Varchar
     {
         $this->error_messages['invalid'] = __('Enter a whole number.');
         parent::__construct($params);
+
         // We add the min/max value validators
         if (null !== $this->min_value) {
             $min = $this->min_value;
@@ -440,6 +463,7 @@ class IntegerNumber extends Varchar
             };
             $this->widget->attrs['min'] = $min;
         }
+
         if (null !== $this->max_value) {
             $max = $this->max_value;
             $this->validators[] = function ($value) use ($max) {
@@ -454,12 +478,15 @@ class IntegerNumber extends Varchar
         if (is_int($value)) {
             return $value;
         }
+
         if (in_array($value, $this->empty_values, true)) {
             return null;
         }
+
         if (!preg_match('/^([+\-]{0,1}\d+)$/', $value)) {
             throw new Invalid($this->error_messages['invalid']);
         }
+
         return (int) $value;
     }
 
@@ -468,6 +495,7 @@ class IntegerNumber extends Varchar
         if (get_class($widget) != 'photon\form\widget\HiddenInput') {
             $widget->input_type = 'number';
         }
+
         return array();
     }
 }
@@ -491,13 +519,16 @@ class FloatNumber extends IntegerNumber
         if (is_float($value)) {
             return $value;
         }
+
         if (in_array($value, $this->empty_values, true)) {
             return null;
         }
+
         // Here we are too lax, but we force to float down the line.
         if (!is_numeric($value)) {
             throw new Invalid($this->error_messages['invalid']);
         }
+
         return (float) $value;
     }
 }
@@ -519,6 +550,7 @@ class File extends Field
         $this->error_messages['empty'] = __('The submitted file is empty.');
         $this->error_messages['big'] = __('The submitted file is too big, limit is %1$d octets.');
         $this->error_messages['max_length'] = __('Ensure this filename has at most %1$d characters (it has %2$d).');
+
         parent::__construct($params);
     }
 
@@ -527,9 +559,11 @@ class File extends Field
         if (in_array($value, $this->empty_values, true)) {
             return null;
         }
+
         if (!isset($value['filename']) || !isset($value['size'])) {
             throw new Invalid($this->error_messages['invalid']);
         }
+
         $filename = $value['filename'];
         $size = $value['size'];
 
@@ -539,9 +573,11 @@ class File extends Field
             throw new Invalid(sprintf($this->error_messages['max_length'],
                                       $this->max_length, strlen($filename)));
         }
+
         if (0 === strlen($filename)) {
             throw new Invalid($this->error_messages['invalid']);
         }
+
         if (0 === $size) {
             throw new Invalid($this->error_messages['empty']);
         }
@@ -560,9 +596,11 @@ class IPv4 extends Varchar
     public function __construct($params=array())
     {
         parent::__construct($params);
+
         $this->validators[] = function ($value) {
             return validator\Net::ipAddress($value, FILTER_FLAG_IPV4);
         };
+
         $this->widget->attrs['pattern'] = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
     }
 }
@@ -572,6 +610,7 @@ class IPv6 extends Varchar
     public function __construct($params=array())
     {
         parent::__construct($params);
+
         $this->validators[] = function ($value) {
             return validator\Net::ipAddress($value, FILTER_FLAG_IPV6);
         };
@@ -583,6 +622,7 @@ class IPv4v6 extends Varchar
     public function __construct($params=array())
     {
         parent::__construct($params);
+
         $this->validators[] = function ($value) {
             return validator\Net::ipAddress($value, FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6);
         };
@@ -594,6 +634,7 @@ class MacAddress extends Varchar
     public function __construct($params=array())
     {
         parent::__construct($params);
+
         $this->validators[] = function ($value) {
             return validator\Net::macAddress($value);
         };
@@ -606,9 +647,11 @@ class EUI48 extends Varchar
     public function __construct($params=array())
     {
         parent::__construct($params);
+
         $this->validators[] = function ($value) {
             return validator\Net::eui48($value);
         };
+
         $this->widget->attrs['pattern'] = '([0-9A-Fa-f]{2}[:-]{0,1}){5}[0-9A-Fa-f]{2}';
     }
 }
@@ -618,9 +661,11 @@ class EUI64 extends Varchar
     public function __construct($params=array())
     {
         parent::__construct($params);
+
         $this->validators[] = function ($value) {
             return validator\Net::eui64($value);
         };
+
         $this->widget->attrs['pattern'] = '([0-9A-Fa-f]{2}[:-]{0,1}){7}[0-9A-Fa-f]{2}';
     }
 }
