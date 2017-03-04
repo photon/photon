@@ -325,7 +325,7 @@ class Connection
     public function deliver($uuid, $listeners, $payload)
     {
         if (129 > count($listeners)) {
-            return $this->send($socket, $uuid, \join(' ', $listeners), $payload);
+            return $this->send($uuid, \join(' ', $listeners), $payload);
         }
 
         // We need to send multiple times the data. We are going to send
@@ -334,7 +334,7 @@ class Connection
         // with Mongrel2. This value can be changed in the configuration. 
         $a = 1;
         foreach (array_chunk($listeners, 128) as $chunk) {
-            $a = $a & (int) $this->send($socket, $uuid, \join(' ', $chunk),  $payload);
+            $a = $a & (int) $this->send($uuid, \join(' ', $chunk),  $payload);
         }
 
         return (bool) $a;
