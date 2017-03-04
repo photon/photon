@@ -34,6 +34,13 @@ class DummyZMQSocket
     public $payload = false;
     public $maxsend = null;
 
+    public function __construct($payload=null)
+    {
+        if ($payload !== null) {
+            $this->setNextRecv($payload);
+        }
+    }
+
     public function setNextRecv($payload)
     {
         $this->payload = $payload;
@@ -59,14 +66,6 @@ class DummyZMQSocket
     }
 }
 
-class DummyResponse
-{
-    public function sendIterable($mess, $conn)
-    {
-        return true;
-    }
-}
-
 class mongrel2Test extends TestCase
 {
     public function testMessage()
@@ -83,12 +82,11 @@ class mongrel2Test extends TestCase
 
     public function testConnectionRecv()
     {
-        $this->markTestIncomplete('To rewrite');
+        $payload = file_get_contents(__DIR__ . '/../data/example.payload');
 
-        $socket = new DummyZMQSocket();
-        $socket->setNextRecv(file_get_contents(__DIR__ . '/../data/example.payload'));
+        $conn = new mongrel2\Connection('tcp://127.0.0.1:12345');
+        $conn->pull_socket = new DummyZMQSocket($payload);
 
-        $conn = new mongrel2\Connection($socket, null);
         $mess = $conn->recv();
         $this->assertEquals($mess->path, '/handlertest/foo');
     }
@@ -98,8 +96,7 @@ class mongrel2Test extends TestCase
         $payload = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 421:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"GET","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},0:';
 
         $conn = new mongrel2\Connection('tcp://127.0.0.1:12345');
-        $conn->pull_socket = new DummyZMQSocket();
-        $conn->pull_socket->setNextRecv($payload);
+        $conn->pull_socket = new DummyZMQSocket($payload);
 
         $mess = $conn->recv();
         $this->assertEquals($mess->path, '/handlertest/foo');
@@ -107,11 +104,11 @@ class mongrel2Test extends TestCase
 
     public function testConnectionRecvJson()
     {
-        $this->markTestIncomplete('To rewrite');
+        $payload = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 422:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"JSON","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},7:"HELLO"';
 
-        $socket = new DummyZMQSocket();
-        $socket->setNextRecv('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 422:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"JSON","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},7:"HELLO"');
-        $conn = new mongrel2\Connection($socket, null);
+        $conn = new mongrel2\Connection('tcp://127.0.0.1:12345');
+        $conn->pull_socket = new DummyZMQSocket($payload);
+
         $mess = $conn->recv();
         $this->assertEquals($mess->path, '/handlertest/foo');
         $this->assertEquals($mess->body, 'HELLO');
@@ -122,17 +119,16 @@ class mongrel2Test extends TestCase
      */
     public function testBigHeaders()
     {
-        $this->markTestIncomplete('To rewrite');
-
         $headers = array('METHOD' => 'JSON');
         for ($i=1; $i<=100; $i++) {
             $headers['X-Dummy-' . $i] = str_repeat(chr($i % 26 + 64), 100);
         }
         $headers = json_encode($headers);
-        $msg = sprintf('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo %d:%s,%d:%s,',  strlen($headers), $headers, 7, '"HELLO"');
-        $socket = new DummyZMQSocket();
-        $socket->setNextRecv($msg);
-        $conn = new mongrel2\Connection($socket, null);
+        $payload = sprintf('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo %d:%s,%d:%s,',  strlen($headers), $headers, 7, '"HELLO"');
+
+        $conn = new mongrel2\Connection('tcp://127.0.0.1:12345');
+        $conn->pull_socket = new DummyZMQSocket($payload);
+
         $mess = $conn->recv();
         $this->assertEquals($mess->path, '/handlertest/foo');
         $this->assertEquals($mess->body, 'HELLO');
@@ -140,43 +136,30 @@ class mongrel2Test extends TestCase
 
     public function testConnectionSend()
     {
-        $this->markTestIncomplete('To rewrite');
+        $req = \photon\test\HTTP::baseRequest();
 
-        $socket_pull = new DummyZMQSocket();
-        $socket_pub = new DummyZMQSocket();
-        $conn = new mongrel2\Connection($socket_pull, $socket_pub);
-        $req = (object) array('sender' => '34f9ceee-cd52-4b7f-b197-88bf2f0ec378',
-                              'conn_id' => '6');
-        $this->assertEquals(true, $conn->reply($req, 'Hello !'));
-        $this->assertEquals(true, $conn->deliver('34f9ceee-cd52-4b7f-b197-88bf2f0ec378', array('1', '2', '3'), 'Hello !'));
+        $conn = new mongrel2\Connection('tcp://127.0.0.1:12345', 'tcp://127.0.0.1:12346');
+        $conn->pull_socket = new DummyZMQSocket();
+        $conn->pub_socket = new DummyZMQSocket();
+
+        $rc = $conn->reply($req->mess, 'Hello !');
+        $this->assertEquals($rc, true);
     }
 
     public function testConnectionDeliver()
     {
-        $this->markTestIncomplete('To rewrite');
+        $req = \photon\test\HTTP::baseRequest();
 
-        $socket_pull = new DummyZMQSocket();
-        $socket_pub = new DummyZMQSocket();
-        $conn = new mongrel2\Connection($socket_pull, $socket_pub);
-        $req = (object) array('sender' => '34f9ceee-cd52-4b7f-b197-88bf2f0ec378',
-                              'conn_id' => '6');
-        $this->assertEquals(true, $conn->reply($req, 'Hello !'));
+        $conn = new mongrel2\Connection('tcp://127.0.0.1:12345', 'tcp://127.0.0.1:12346');
+        $conn->pull_socket = new DummyZMQSocket();
+        $conn->pub_socket = new DummyZMQSocket();
+
         $connection_ids = range(1, 300);
-        $this->assertEquals(true, $conn->deliver('34f9ceee-cd52-4b7f-b197-88bf2f0ec378', $connection_ids, 'Hello !'));
+        $rc = $conn->deliver('34f9ceee-cd52-4b7f-b197-88bf2f0ec378', $connection_ids, 'Hello !');
+        $this->assertEquals($rc, true);
+
         $conn->pub_socket->maxsend = 2;
-        $this->assertEquals(false, $conn->deliver('34f9ceee-cd52-4b7f-b197-88bf2f0ec378', $connection_ids, 'Hello !'));
-    }
-
-    public function testReplyResponse()
-    {
-        $this->markTestIncomplete('To rewrite');
-
-        $response = new DummyResponse();
-        $socket_pull = new DummyZMQSocket();
-        $socket_pub = new DummyZMQSocket();
-        $conn = new mongrel2\Connection($socket_pull, $socket_pub);
-        $mess = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 422:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"JSON","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},7:"HELLO"';
-        $conn->replyResponse($mess, $response);
-        $this->assertEquals(false, false);
+        $rc = $conn->deliver('34f9ceee-cd52-4b7f-b197-88bf2f0ec378', $connection_ids, 'Hello !');
+        $this->assertEquals($rc, false);
     }
 }
