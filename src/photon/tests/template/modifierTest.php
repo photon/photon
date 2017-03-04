@@ -127,12 +127,11 @@ class modifierTest extends TestCase
 
     public function testStrftime()
     {
-        $this->markTestIncomplete('Update this test to deal with locales on travis...');
+        setlocale(LC_TIME, 'UTC');
 
-        setlocale(LC_ALL, 'fr_FR.UTF-8');
         $in = 1234567890;
         $out = Modifier::strftime($in, '%d/%m/%Y %H:%M:%S');
-        $this->assertEquals($out, '14/02/2009 00:31:30');
+        $this->assertEquals($out, '13/02/2009 23:31:30');
     }
     
     public function testDateFormat()
