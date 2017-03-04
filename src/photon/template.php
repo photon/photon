@@ -101,9 +101,10 @@ class Renderer
                 throw new Exception('Error when loading compiled template.');
             }
         } catch (\Exception $e) {
-            ob_clean();
+            ob_end_clean();
             throw $e;
         }
+
         $a = ob_get_contents();
         ob_end_clean();
 
