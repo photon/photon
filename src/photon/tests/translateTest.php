@@ -21,7 +21,7 @@
 # ***** END LICENSE BLOCK ***** */
 
 
-namespace photon\tests\translations\translate;
+namespace photon\tests\TranslateTest;
 
 use \photon\test\TestCase;
 use \photon\translation\Translation;
@@ -32,12 +32,12 @@ class TranslateTest extends TestCase
     public function setUp()
     {
         parent::setUp();
-        set_include_path(realpath(__DIR__ . '/../data/') . PATH_SEPARATOR . get_include_path());
+        set_include_path(realpath(__DIR__ . '/data/') . PATH_SEPARATOR . get_include_path());
     }
 
     public function testGetPluralForm()
     {
-        $po = file_get_contents(__DIR__ . '/../data/fr.po');
+        $po = file_get_contents(__DIR__ . '/data/fr.po');
         $french = Translation::plural_to_php($po);
         $this->assertEquals(1, $french(2));
         $this->assertEquals(0, $french(1));
@@ -70,7 +70,7 @@ class TranslateTest extends TestCase
 
     public function testLoadPoFile()
     {
-        Translation::readPoFile('fr', __DIR__ . '/../data/fr.po');
+        Translation::readPoFile('fr', __DIR__ . '/data/fr.po');
     }
 
     public function testLoadLocale()
