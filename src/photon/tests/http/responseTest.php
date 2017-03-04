@@ -35,9 +35,9 @@ class ResponseTest extends TestCase
 {
     public function testJsonResponse()
     {
-        $json = new response\Json(array('foo', 'bar'));
-        $this->assertEquals(json_encode(array('foo', 'bar')),
-                            $json->render());
+        $obj = array('foo', 'bar');
+        $json = new response\Json($obj);
+        $this->assertEquals(json_encode($obj), $json->render());
     }
 
     public function testNotModified()
@@ -48,7 +48,7 @@ class ResponseTest extends TestCase
 
     public function testNotSupported()
     {
-        $request = (object) array('method' => 'POST', 'path' => '/toto');
+        $request = \photon\test\HTTP::baseRequest('POST','/toto');
         $res = new response\NotSupported($request);
         $this->assertSame(0, strpos($res->content, 'HTTP method POST is not supported for the URL /toto.'));
     }
@@ -61,7 +61,7 @@ class ResponseTest extends TestCase
 
     public function testRedirectToLogin()
     {
-        $request = (object) array('method' => 'POST', 'path' => '/toto');
+        $request = \photon\test\HTTP::baseRequest('POST','/toto');
         $res = new response\RedirectToLogin($request, '/login');
         $this->assertSame(302, $res->status_code);
         Conf::set('urls', array(
@@ -76,14 +76,15 @@ class ResponseTest extends TestCase
 
     public function testSendIterable()
     {
-        $this->markTestIncomplete('To rewrite');
+        $payload = file_get_contents(__DIR__ . '/../data/example.payload');
 
-        $iter = array('a', 'b');
-        $socket = new DummyZMQSocket();
-        $socket->setNextRecv(file_get_contents(__DIR__ . '/../data/example.payload'));
-        $conn = new mongrel2\Connection($socket, $socket);
+        $conn = new mongrel2\Connection('tcp://127.0.0.1:12345', 'tcp://127.0.0.1:12346');
+        $conn->pull_socket = new DummyZMQSocket($payload);
+        $conn->pub_socket = new DummyZMQSocket();
+
         $mess = $conn->recv();
 
+        $iter = array('a', 'b');
         $res = new http\Response($iter);
         $res->sendIterable($mess, $conn);
         $res->sendIterable($mess, $conn, false);
