@@ -151,6 +151,21 @@ class MiddlewareSecurityTest extends TestCase
         $this->assertEquals(302, $resp->status_code);
     }
 
+
+    // SSL Redirection enable (manually)
+    public function testSSLRedirectToSamePath()
+    {
+        Conf::set('middleware_security', array(
+            'ssl_redirect' => true,
+        ));
+
+        $req = HTTP::baseRequest('GET', '/foo/bar/');
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
+        $this->assertEquals(302, $resp->status_code);
+        $this->assertEquals('https://test.example.com/foo/bar/', $resp->headers['Location']);
+    }
+
     // HTTP Strict Transport Security disable (default)
     public function testHSTS_defaultConfig()
     {
