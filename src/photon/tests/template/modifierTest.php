@@ -127,7 +127,11 @@ class modifierTest extends TestCase
 
     public function testStrftime()
     {
-        setlocale(LC_TIME, 'UTC');
+        $rc = setlocale(LC_TIME, 'UTC');
+        if ($rc !== true) {
+            $this->markTestIncomplete('UTC locale not available');
+            return;
+        }
 
         $in = 1234567890;
         $out = Modifier::strftime($in, '%d/%m/%Y %H:%M:%S');
