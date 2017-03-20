@@ -126,10 +126,11 @@ namespace photon
                                        'action'      => 'StoreString',
                                        'help_name'   => 'path/config.prod.php',
                                        'description' => 'path to the configuration file used in production'),
-                                 'composer' =>
-                                 array('long_name'   => '--composer',
-                                       'action'      => 'StoreTrue',
-                                       'description' => 'Build a phar for the composer version of photon'),
+                                 'stub' =>
+                                 array('long_name'   => '--stub',
+                                       'action'      => 'StoreString',
+                                       'help_name'   => 'path/pharstub.php',
+                                       'description' => 'Use the provided custom pharstub instead of the photon pharstub.'),
                                  'exclude_files' =>
                                  array('long_name'   => '--exclude-files',
                                        'action'      => 'StoreString',

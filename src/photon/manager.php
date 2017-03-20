@@ -576,26 +576,28 @@ class Packager extends Base
         @unlink($phar_name);
         $phar = new \Phar($phar_name, 0);
         $phar->startBuffering();
-        
-        $this->verbose("Use composer : " . (($this->composer) ? "Yes" : "No"));
-        
-        if ($this->composer !== true) {
-            // Old style PEAR Mode
-            $this->addPhotonFiles($phar);
-        }
+    
+        // Add project content
         $this->addProjectFiles($phar);
-        
-        $this->CompileAddTemplates($phar, 
-                                   Conf::f('template_folders', array()));
+
+        // Add compiled tempate
+        $this->CompileAddTemplates($phar, Conf::f('template_folders', array()));
+
+        // Add optional configuration file
         if (null !== $this->conf_file) {
             $phar->addFile($this->conf_file, 'config.php');
             $phar['config.php']->compress(\Phar::GZ);
         }
         
-        $stubFilename = ($this->composer === true) ? 'pharstub-composer.php' : 'pharstub.php';
-        $stub = file_get_contents($this->photon_path . '/photon/data/' . $stubFilename);
-        $phar->setStub(sprintf($stub, 
-                               $phar_name, $phar_name, $phar_name, $phar_name));
+        // Add phar stub
+        $stubContent = '';
+        if ($this->stub !== null) {
+            $stubContent = file_get_contents($this->stub);
+        } else {
+            $stubContent = file_get_contents($this->photon_path . '/photon/data/pharstub.php');
+            $stubContent = sprintf($stubContent, $phar_name, $phar_name, $phar_name, $phar_name);
+        }
+        $phar->setStub($stubContent);
         
         $phar->stopBuffering();
     }
@@ -619,56 +621,9 @@ class Packager extends Base
                 $phar->addFile($path, $file);
             }
 
-            if (substr($file, -4) === '.php') {
-                $phar[$file]->compress(\Phar::GZ);
-            }
-        }
-    }
-
-    /**
-     * Add the photon files to the phar.
-     */
-    public function addPhotonFiles(&$phar)
-    {
-        foreach ($this->getPhotonFiles() as $file => $path) {
-            $phar->addFile($path, $file);
             $phar[$file]->compress(\Phar::GZ);
         }
-
-        $photon = file($this->photon_path . '/photon.php');
-        foreach ($photon as &$line) {
-            if (trim($line) == 'include_once __DIR__ . \'/photon/autoload.php\';') {
-                $line = '    include_once \'photon/autoload.php\';'."\n";
-            } else
-            if (false !== mb_strstr($line, '@version@')) {
-                $this->info("Photon run from source, not a PEAR install");
-                $output = '';
-                $return_var = 0;
-                $command = 'git --git-dir="'. $this->photon_path .'/../.git" log -1 --format="%h"';
-                exec($command, $output, $return_var);
-                if ($return_var !== 0) {
-                    throw new Exception('Can\'t get the last commit id.');
-                }
-                $this->info('Photon version is ' . \end($output));
-                $line = str_replace('@version@', 'commit ' . \end($output), $line);
-            }
-        }
-        array_shift($photon); // Remove shebang
-        $phar->addFromString('photon.php', implode('', $photon));
-        $phar['photon.php']->compress(\Phar::GZ);
-        $this->verbose('[PHOTON GENERATE] photon.php');
-
-        $auto = file($this->photon_path . '/photon/autoload.php');
-        foreach ($photon as &$line) {
-            if (0 === strpos(trim($line), 'set_include_path')) {
-                $line = '';
-            }
-        }
-        $phar->addFromString('photon/autoload.php', implode('', $auto));
-        $phar['photon/autoload.php']->compress(\Phar::GZ);
-        $this->verbose('[PHOTON GENERATE] photon/autoload.php');
     }
-
 
     /**
      * Get the project files.
@@ -723,49 +678,6 @@ class Packager extends Base
         }
 
         return $files;
-    }
-
-    /**
-     * Returns the list of files for Photon.
-     *
-     * This is an array with the key being the path to use in the phar
-     * and the value the path on disk. photon.php and
-     * photon/autoload.php are not included.
-     *
-     * @return array files
-     */
-    public function getPhotonFiles()
-    {
-        $out = array();
-        $files = new \RecursiveIteratorIterator(
-                     new \RecursiveDirectoryIterator($this->photon_path),
-                     \RecursiveIteratorIterator::SELF_FIRST);
-        foreach ($files as $disk_path => $file) {
-            if (!$files->isFile()) {
-                continue;
-            }
-            $phar_path = substr($disk_path, strlen($this->photon_path) + 1);
-            if (false !== strpos($phar_path, 'photon/tests/')) {
-                $this->verbose("[PHOTON IGNORE] " . $phar_path);
-                continue;
-            }
-            if (false !== strpos($phar_path, 'photon/data/project_template')) {
-                $this->verbose("[PHOTON IGNORE] " . $phar_path);
-                continue;
-            }
-            if ($phar_path == 'photon/autoload.php') {
-                $this->verbose("[PHOTON IGNORE] " . $phar_path);
-                continue;
-            }
-            if ($phar_path == 'photon.php') {
-                $this->verbose("[PHOTON IGNORE] " . $phar_path);
-                continue;
-            }
-            $out[$phar_path] = $disk_path;
-            $this->verbose("[PHOTON ADD] " . $phar_path);
-        }        
-
-        return $out;
     }
 
     /**
