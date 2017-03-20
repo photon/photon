@@ -281,6 +281,9 @@ class Request
             } else if (false !== mb_strstr($this->mess->headers->{'content-type'}, 'application/x-www-form-urlencoded')) {
                 $this->BODY = substr(stream_get_contents($mess->body), 0, -1);
                 $this->parse_form_urlencoded($this->BODY);
+            } else if (false !== mb_strstr($this->mess->headers->{'content-type'}, 'application/json')) {
+                $this->BODY = substr(stream_get_contents($mess->body), 0, -1);
+                $this->JSON = json_decode($this->BODY);
             } else {
                 $this->BODY =& $mess->body;
             }

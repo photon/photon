@@ -104,14 +104,17 @@ class mongrel2Test extends TestCase
 
     public function testConnectionRecvJson()
     {
-        $payload = '34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo 422:{"PATH":"/handlertest/foo","user-agent":"curl/7.19.7 (i486-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15","host":"localhost:6767","accept":"*/*","content-type":"multipart/form-data; boundary=----------------------------b9069e918c9e","x-forwarded-for":"::1","content-length":"21894","METHOD":"JSON","VERSION":"HTTP/1.1","URI":"/handlertest/foo?toto=titi","QUERY":"toto=titi","PATTERN":"/handlertest"},7:"HELLO"';
+        $payload = '06a11cf0-1eb6-11e3-8224-0800200c9a66 4 /api/1.0/project/ 640:{"PATH":"/api/1.0/project/","x-forwarded-for":"127.0.0.1","content-type":"application/json","accept-language":"en-US,en;q=0.5","connection":"keep-alive","accept-encoding":"gzip, deflate","content-length":"12","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","user-agent":"Mozilla/5.0 (X11; Linux x86_64; rv:50.0) Gecko/20100101 Firefox/50.0","host":"127.0.0.1","cookie":"rock_format=json; sid=czo0MDoiZDEyZWJlY2ZiZmEwYzIwMzUyNGI4ZTc0MWI5NzhjOTdlNTg0M2ZhMyI7.JDFmXQObWzt0EpTmNkNUvWHWfns","METHOD":"POST","VERSION":"HTTP/1.1","URI":"/api/1.0/project/","PATTERN":"/api/","URL_SCHEME":"http","REMOTE_ADDR":"127.0.0.1"},12:{"test": 42},';
 
         $conn = new mongrel2\Connection('tcp://127.0.0.1:12345');
         $conn->pull_socket = new DummyZMQSocket($payload);
 
         $mess = $conn->recv();
-        $this->assertEquals($mess->path, '/handlertest/foo');
-        $this->assertEquals($mess->body, 'HELLO');
+        $this->assertEquals($mess->path, '/api/1.0/project/');
+
+        $req = new \photon\http\Request($mess);
+        $this->assertEquals($req->getHeader('content-type', null), 'application/json');
+        $this->assertEquals($req->JSON->test, 42);
     }
 
     /**
@@ -119,19 +122,19 @@ class mongrel2Test extends TestCase
      */
     public function testBigHeaders()
     {
-        $headers = array('METHOD' => 'JSON');
-        for ($i=1; $i<=100; $i++) {
-            $headers['X-Dummy-' . $i] = str_repeat(chr($i % 26 + 64), 100);
-        }
+        $headers = array('METHOD' => 'POST');
         $headers = json_encode($headers);
-        $payload = sprintf('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo %d:%s,%d:%s,',  strlen($headers), $headers, 7, '"HELLO"');
+
+        $body = array('a' => 1);
+        $body = json_encode($body);
+
+        $payload = sprintf('34f9ceee-cd52-4b7f-b197-88bf2f0ec378 6 /handlertest/foo %d:%s,%d:%s,',  strlen($headers), $headers, strlen($body), $body);
 
         $conn = new mongrel2\Connection('tcp://127.0.0.1:12345');
         $conn->pull_socket = new DummyZMQSocket($payload);
 
         $mess = $conn->recv();
         $this->assertEquals($mess->path, '/handlertest/foo');
-        $this->assertEquals($mess->body, 'HELLO');
     }
 
     public function testConnectionSend()
