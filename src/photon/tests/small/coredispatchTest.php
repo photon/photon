@@ -23,6 +23,7 @@
 
 namespace photon\tests\small\coredispatchTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 use \photon\mongrel2\Message as Message;
 
@@ -85,19 +86,9 @@ class DummyViews
     }
 }
 
-class coreurlTest extends \PHPUnit_Framework_TestCase
+class coreurlTest extends TestCase
 {
     protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
 
     public function testSimpleDispatch()
     {

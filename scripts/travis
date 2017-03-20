@@ -41,6 +41,10 @@ case "$TRAVIS_PHP_VERSION" in
     printf "yes\nyes\nno\nyes\n" | pecl install pecl_http-2.5.5
     ;;
 
+"7.0" | "7.1")
+    printf "yes\nyes\nno\nyes\n" | C_INCLUDE_PATH=/usr/include/gnutls pecl install pecl_http
+    ;;
+
 *)
     echo "This version of PHP is not supported, abording"
     exit 1
@@ -65,6 +69,8 @@ echo "============ env ============"
 env
 echo "============ locale ============"
 locale -a
+echo "============ phpunit ============"
+phpunit --version
 echo "============ php ini ============"
 php -ini
 echo "============ php exts ============"

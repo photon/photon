@@ -53,7 +53,7 @@ namespace photon\template\tag;
  * It requires at least one method to do something, either start or
  * genStart. Most of the tags are only defining the start() method.
  */
-class Tag
+abstract class Tag
 {
     /**
      * Runtime context. Nothing in it at compilation time.

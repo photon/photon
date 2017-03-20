@@ -4,24 +4,24 @@
 
 ## PHP Versions
 
-- 5.x is supported and tested under travis
-- 7.x do not works
+- 5.6 is supported and tested under travis
+- 7.0, 7.1 is supported and tested under travis
 
 ## Available extensions (Particules)
 
 Each extensions have their own release cycle which is not synchronized with the Photon core.
 
-### Sessions
+### Sessions
 - [MongoDB backend for session storage](https://github.com/photon/session-mongodb)
 - [Memcached backend for session storage](https://github.com/photon/session-memcached)
 
-### Template
+### Template
 - [Template extension to filter Markdown text to HTML](https://github.com/photon/template-markdown)
 
-### Log
+### Log
 - [Syslog backend for photon](https://github.com/photon/log-syslog)
 
-### Utils
+### Utils
 - [A worker to send large content without filling the RAM](https://github.com/photon/template-markdown)
 - [Various useful tools for MongoDB](https://github.com/photon/utils-mongodb)
 

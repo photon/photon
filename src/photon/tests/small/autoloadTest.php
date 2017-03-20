@@ -23,9 +23,10 @@
 
 namespace photon\tests\small\autoloadTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 
-class autoloadTest extends \PHPUnit_Framework_TestCase
+class autoloadTest extends TestCase
 {
     public function testAutoLoadFunc()
     {

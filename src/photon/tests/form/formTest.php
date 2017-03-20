@@ -23,6 +23,7 @@
 
 namespace photon\tests\form\formTest;
 
+use \photon\test\TestCase;
 use \photon\form\field;
 use \photon\form\Form;
 use \photon\form\Invalid;
@@ -81,7 +82,7 @@ class Hidden extends Form
 {
     public function initFields($extra=array())
     {
-        $this->fields['hidden'] = new field\Integer(
+        $this->fields['hidden'] = new field\IntegerNumber(
                      array('widget' => '\photon\form\widget\HiddenInput',
                            'required' => true));
     }
@@ -91,7 +92,7 @@ class HiddenAnd extends Form
 {
     public function initFields($extra=array())
     {
-        $this->fields['hidden'] = new field\Integer(
+        $this->fields['hidden'] = new field\IntegerNumber(
                      array('widget' => '\photon\form\widget\HiddenInput',
                            'required' => true));
         $this->fields['login'] = new field\Varchar(
@@ -111,7 +112,7 @@ class NotRequired extends Form
 {
     public function initFields($extra=array())
     {
-        $this->fields['i'] = new field\Integer();
+        $this->fields['i'] = new field\IntegerNumber();
     }
 }
 
@@ -119,19 +120,19 @@ class WithFieldsets extends Form
 {
     public function initFields($extra=array())
     {
-        $this->fields['a'] = new field\Integer(array(
+        $this->fields['a'] = new field\IntegerNumber(array(
             'required' => true,
             'min_value' => 1,
             'max_value' => 1,
         ));
 
         $this->fieldsets['Section 1'] = array(
-            'i' => new field\Integer(array(
+            'i' => new field\IntegerNumber(array(
                 'required' => true,
                 'min_value' => 2,
                 'max_value' => 2,
             )),
-            'j' => new field\Integer(array(
+            'j' => new field\IntegerNumber(array(
                 'required' => false,
                 'min_value' => 3,
                 'max_value' => 3,
@@ -139,12 +140,12 @@ class WithFieldsets extends Form
         );
 
         $this->fieldsets['Section 2'] = array(
-            'k' => new field\Integer(array(
+            'k' => new field\IntegerNumber(array(
                 'required' => true,
                 'min_value' => 4,
                 'max_value' => 4,
             )),
-            'l' => new field\Integer(array(
+            'l' => new field\IntegerNumber(array(
                 'required' => false,
                 'min_value' => 5,
                 'max_value' => 5,
@@ -153,7 +154,7 @@ class WithFieldsets extends Form
     }
 }
 
-class FormTest extends \PHPUnit_Framework_TestCase
+class FormTest extends TestCase
 {
     public function testNotImplemented()
     {

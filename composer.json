@@ -22,18 +22,18 @@
         }
     ],
     "require": {
-        "php": "~5.3",
+        "php": "~5.3 | ~7.0",
         "pear/console_commandline": "~1.2",
         "ext-zmq": "~1.0",
-        "ext-http": ">=1.7.5 | ~2.0",
-        "ext-xdebug": "~2.1"
+        "ext-http": ">=1.7.5 | ~2.0 | ~3.0"
     },
     "suggest": {
         "pear/Mail": "Send mail in photon project",
         "pear/Mail_Mime": "Send mail in photon project"
     },
     "require-dev": {
-        "phpunit/phpunit": "~4.1"
+        "phpunit/phpunit": "~5.0",
+        "ext-xdebug": "~2.1"
     },
     "bin": [
         "scripts/hnu"

@@ -33,24 +33,6 @@ namespace photon\mongrel2;
 class Exception extends \Exception {}
 
 /**
- * Parse a netstring.
- *
- * The only problem with this function is that you have many copies of
- * the data in memory and this can create a bit of memory consumption.
- *
- */
-function parse_netstring($ns)
-{
-    list($len, $rest) = \explode(':', $ns, 2);
-    unset($ns);
-    $len = (int) $len;
-    return array(
-        \substr($rest, 0, $len),
-        \substr($rest, $len + 1)
-    );
-}
-
-/**
  * Wraps the Mongrel2 message to the application server.
  */
 class Message
@@ -63,9 +45,6 @@ class Message
                    *  body, an empty string or a decoded JSON string.
                    */
 
-    /**
-     * Called by self::parse
-     */
     public function __construct($sender, $conn_id, $path, $headers, $body)
     {
         $this->sender = $sender;
@@ -92,17 +71,6 @@ class Message
         if (is_resource($this->body)) {
             @fclose($this->body);
         }
-    }
-
-    public static function parse($msg)
-    {
-        list($sender, $conn_id, $path, $msg) = \explode(' ', $msg, 4);
-        list($headers, $msg) = parse_netstring($msg);
-        list($body, ) = parse_netstring($msg);
-        unset($msg);
-        $headers = \json_decode($headers);
-
-        return new Message($sender, $conn_id, $path, $headers, $body);
     }
 }
 
@@ -273,7 +241,7 @@ class Connection
         // the moment.
         if ('JSON' === $headers->METHOD) {
             // small request normally
-            list($body,) = parse_netstring(stream_get_contents($fp));
+            list($body,) = $this->parse_netstring(stream_get_contents($fp));
             $body = json_decode($body);
             fclose($fp);
         } elseif ('POST' === $headers->METHOD 
@@ -357,7 +325,7 @@ class Connection
     public function deliver($uuid, $listeners, $payload)
     {
         if (129 > count($listeners)) {
-            return $this->send($socket, $uuid, \join(' ', $listeners), $payload);
+            return $this->send($uuid, \join(' ', $listeners), $payload);
         }
 
         // We need to send multiple times the data. We are going to send
@@ -366,10 +334,28 @@ class Connection
         // with Mongrel2. This value can be changed in the configuration. 
         $a = 1;
         foreach (array_chunk($listeners, 128) as $chunk) {
-            $a = $a & (int) $this->send($socket, $uuid, \join(' ', $chunk),  $payload);
+            $a = $a & (int) $this->send($uuid, \join(' ', $chunk),  $payload);
         }
 
         return (bool) $a;
+    }
+
+    /**
+     * Parse a netstring.
+     *
+     * The only problem with this function is that you have many copies of
+     * the data in memory and this can create a bit of memory consumption.
+     *
+     */
+    private function parse_netstring($ns)
+    {
+        list($len, $rest) = \explode(':', $ns, 2);
+        unset($ns);
+        $len = (int) $len;
+        return array(
+            \substr($rest, 0, $len),
+            \substr($rest, $len + 1)
+        );
     }
 }
 

@@ -1,9 +1,0 @@
-#!/bin/sh
-
-ln -s ../src/photon.php
-ln -s ../src/photon
-ln -s ../README
-ln -s ../LICENSE
-ln -s ../scripts/hnu
-
-echo "Done"

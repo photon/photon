@@ -34,10 +34,6 @@ const SUB_ADDR = 'tcp://127.0.0.1:5997';
 
 class Exception extends \Exception {}
 
-class Broker
-{
-}
-
 /**
  * The runner connects to the tasks and send the work.
  */
@@ -47,6 +43,7 @@ class Runner
     static $sockets = array();
     static $types = array();
     public $id = '';
+
     /**
      * It connects to the tasks on creation by default.
      *
@@ -164,7 +161,7 @@ class Runner
  * @see SyncTask 
  * @see AsyncTask
  */
-class BaseTask
+abstract class BaseTask
 {
     /**
      * Name of your task.
@@ -260,18 +257,12 @@ class BaseTask
      * SyncTask for examples. In fact, you should create your task by
      * extending SyncTask and AsyncTask most of the time.
      */
-    public function setupCom()
-    {
-        throw new Exception('Not implemented.');
-    }
+    abstract public function setupCom();
 
     /**
      * This is the work method you need to implement.
      */
-    public function work($socket)
-    {
-        throw new Exception('Not implemented.');
-    }
+    abstract public function work($socket);
 
     /**
      * If you want to perform operations on a regular basis.

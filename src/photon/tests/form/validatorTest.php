@@ -23,10 +23,11 @@
 
 namespace photon\tests\form\validatorTest;
 
+use \photon\test\TestCase;
 use \photon\form\Invalid;
 use \photon\form\validator;
 
-class ValidatorTest extends \PHPUnit_Framework_TestCase
+class ValidatorTest extends TestCase
 {
     public function testEmail()
     {

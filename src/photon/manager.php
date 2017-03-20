@@ -201,72 +201,6 @@ class ShowConfig extends Base
 }
 
 /**
- * Initialisation of a new project.
- *
- * A new project includes the simple "Hello Wordl!" demo
- * application. You can use the m2config command to then get the
- * corresponding Mongrel2 configuration file to test your application.
- *
- */
-class Init extends Base
-{
-    public $project_dir = ''; /**< Store the full path to the project files */
-
-    /**
-     * Generate the default files for the project.
-     * recursively copies the data/project_template directory
-     * renames __APPNAME__ along the way
-     * @return void
-     */
-    public function generateFiles()
-    {
-        // recursively copy the project_template directory
-        $src_directory =  __DIR__ . '/data/project_template';
-        $src_directory_length = strlen($src_directory) + 1;
-        $dir_iterator = new \RecursiveIteratorIterator(
-                          new \RecursiveDirectoryIterator($src_directory), 
-                          \RecursiveIteratorIterator::SELF_FIRST);
-        foreach($dir_iterator as $src_filepath) {
-            if (substr(basename($src_filepath), 0, 1) == '.') {
-                continue; // ignore '.', '..', '.DS_Store', '.*'
-            }
-            // build the destination filepath
-            $dest_directory_rel_path = substr($src_filepath, $src_directory_length);
-            $dest_filepath = $this->project_dir . '/' . $dest_directory_rel_path;
-            // make the directory or copy the file
-            if (is_dir($src_filepath)) {
-                // make sure the dest directory exists
-                if (!file_exists($dest_filepath)) {
-                    if (!mkdir($dest_filepath)) {
-                        throw new Exception(sprintf('Failed to make directory %s', $dest_filepath));
-                    }
-                }
-            } else {
-                // copy the file
-                if (!copy($src_filepath, $dest_filepath)) {
-                    throw new Exception(sprintf('Failed to copy: %s to %s.', $src_filepath, $dest_filepath));
-                }
-            }
-        }
-
-        $this->info(sprintf('Default project created in: %s.', $this->project_dir));
-        $this->info('A README file is in the project to explain how to start mongrel2 and your photon project.');
-        $this->info('Have fun! The Photon Project Team.');
-    }
-
-    /**
-     * Run the command.
-     */
-     public function run()
-     {
-         $this->project_dir = $this->cwd . '/';
-
-         // copy the application template
-         $this->generateFiles();
-     }
-}
-
-/**
  * Base class for the Server and Task.
  *
  * It redefines some of the methods to take into account if the process
@@ -349,7 +283,6 @@ class Server extends Service
     }
 
 }
-
 
 /**
  * Task.
@@ -643,26 +576,28 @@ class Packager extends Base
         @unlink($phar_name);
         $phar = new \Phar($phar_name, 0);
         $phar->startBuffering();
-        
-        $this->verbose("Use composer : " . (($this->composer) ? "Yes" : "No"));
-        
-        if ($this->composer !== true) {
-            // Old style PEAR Mode
-            $this->addPhotonFiles($phar);
-        }
+    
+        // Add project content
         $this->addProjectFiles($phar);
-        
-        $this->CompileAddTemplates($phar, 
-                                   Conf::f('template_folders', array()));
+
+        // Add compiled tempate
+        $this->CompileAddTemplates($phar, Conf::f('template_folders', array()));
+
+        // Add optional configuration file
         if (null !== $this->conf_file) {
             $phar->addFile($this->conf_file, 'config.php');
             $phar['config.php']->compress(\Phar::GZ);
         }
         
-        $stubFilename = ($this->composer === true) ? 'pharstub-composer.php' : 'pharstub.php';
-        $stub = file_get_contents($this->photon_path . '/photon/data/' . $stubFilename);
-        $phar->setStub(sprintf($stub, 
-                               $phar_name, $phar_name, $phar_name, $phar_name));
+        // Add phar stub
+        $stubContent = '';
+        if ($this->stub !== null) {
+            $stubContent = file_get_contents($this->stub);
+        } else {
+            $stubContent = file_get_contents($this->photon_path . '/photon/data/pharstub.php');
+            $stubContent = sprintf($stubContent, $phar_name, $phar_name, $phar_name, $phar_name);
+        }
+        $phar->setStub($stubContent);
         
         $phar->stopBuffering();
     }
@@ -686,56 +621,9 @@ class Packager extends Base
                 $phar->addFile($path, $file);
             }
 
-            if (substr($file, -4) === '.php') {
-                $phar[$file]->compress(\Phar::GZ);
-            }
-        }
-    }
-
-    /**
-     * Add the photon files to the phar.
-     */
-    public function addPhotonFiles(&$phar)
-    {
-        foreach ($this->getPhotonFiles() as $file => $path) {
-            $phar->addFile($path, $file);
             $phar[$file]->compress(\Phar::GZ);
         }
-
-        $photon = file($this->photon_path . '/photon.php');
-        foreach ($photon as &$line) {
-            if (trim($line) == 'include_once __DIR__ . \'/photon/autoload.php\';') {
-                $line = '    include_once \'photon/autoload.php\';'."\n";
-            } else
-            if (false !== mb_strstr($line, '@version@')) {
-                $this->info("Photon run from source, not a PEAR install");
-                $output = '';
-                $return_var = 0;
-                $command = 'git --git-dir="'. $this->photon_path .'/../.git" log -1 --format="%h"';
-                exec($command, $output, $return_var);
-                if ($return_var !== 0) {
-                    throw new Exception('Can\'t get the last commit id.');
-                }
-                $this->info('Photon version is ' . \end($output));
-                $line = str_replace('@version@', 'commit ' . \end($output), $line);
-            }
-        }
-        array_shift($photon); // Remove shebang
-        $phar->addFromString('photon.php', implode('', $photon));
-        $phar['photon.php']->compress(\Phar::GZ);
-        $this->verbose('[PHOTON GENERATE] photon.php');
-
-        $auto = file($this->photon_path . '/photon/autoload.php');
-        foreach ($photon as &$line) {
-            if (0 === strpos(trim($line), 'set_include_path')) {
-                $line = '';
-            }
-        }
-        $phar->addFromString('photon/autoload.php', implode('', $auto));
-        $phar['photon/autoload.php']->compress(\Phar::GZ);
-        $this->verbose('[PHOTON GENERATE] photon/autoload.php');
     }
-
 
     /**
      * Get the project files.
@@ -790,49 +678,6 @@ class Packager extends Base
         }
 
         return $files;
-    }
-
-    /**
-     * Returns the list of files for Photon.
-     *
-     * This is an array with the key being the path to use in the phar
-     * and the value the path on disk. photon.php and
-     * photon/autoload.php are not included.
-     *
-     * @return array files
-     */
-    public function getPhotonFiles()
-    {
-        $out = array();
-        $files = new \RecursiveIteratorIterator(
-                     new \RecursiveDirectoryIterator($this->photon_path),
-                     \RecursiveIteratorIterator::SELF_FIRST);
-        foreach ($files as $disk_path => $file) {
-            if (!$files->isFile()) {
-                continue;
-            }
-            $phar_path = substr($disk_path, strlen($this->photon_path) + 1);
-            if (false !== strpos($phar_path, 'photon/tests/')) {
-                $this->verbose("[PHOTON IGNORE] " . $phar_path);
-                continue;
-            }
-            if (false !== strpos($phar_path, 'photon/data/project_template')) {
-                $this->verbose("[PHOTON IGNORE] " . $phar_path);
-                continue;
-            }
-            if ($phar_path == 'photon/autoload.php') {
-                $this->verbose("[PHOTON IGNORE] " . $phar_path);
-                continue;
-            }
-            if ($phar_path == 'photon.php') {
-                $this->verbose("[PHOTON IGNORE] " . $phar_path);
-                continue;
-            }
-            $out[$phar_path] = $disk_path;
-            $this->verbose("[PHOTON ADD] " . $phar_path);
-        }        
-
-        return $out;
     }
 
     /**

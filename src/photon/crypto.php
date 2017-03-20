@@ -27,44 +27,9 @@
  */
 namespace photon\crypto;
 
+use photon\config\Container as Conf;
+
 class Exception extends \Exception {}
-
-/**
- * Utility function for hashing.
- */
-class Hash
-{
-    /**
-     * Returns a good salt with the right work factor for blowfish.
-     *
-     * @see http://www.postgresql.org/docs/8.3/static/pgcrypto.html
-     */
-    public static function getBlowfishSalt($workfactor='07')
-    {
-        $salt = base64_encode(mcrypt_create_iv(18, MCRYPT_RAND));
-        // The base64 encoding results in a 24 character length string
-        // without '=' padding.
-        // + is not accepted in the salt, we reduce a bit the
-        // randomness by converting the "+" to a ".".
-        $salt = substr(str_replace('+', '.', $salt), 0, 22);
-        
-        return '$2a$' . $workfactor . '$' . $salt;
-    }
-
-    /**
-     * bcrypt a password.
-     *
-     * This is a one way hash. It automatically generate a good salt
-     * and work factor for you.
-     *
-     * @param $password Clear text password
-     * @return string Hashed password including the salt
-     */
-    public static function hashPass($password)
-    {
-        return crypt($password, self::getBlowfishSalt());
-    }
-}
 
 /**
  * Small wrapper on top of mcrypt.
@@ -75,37 +40,51 @@ class Hash
  */
 class Crypt
 {
-    public static function getiv($cipher='twofish', $mode='cfb')
+    public static function encrypt($data, $passphrase=null)
     {
-        $td = mcrypt_module_open($cipher, '', $mode, '');
-        $iv = mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
-        mcrypt_module_close($td);
+        if ($passphrase === null) {
+            $passphrase = Conf::f('secret_key', null);
+            if ($passphrase === null) {
+                throw new Exception('No passphrase');
+            }
+        }
 
-        return $iv;
+        $key = hash('sha256', $passphrase);
+        $ivsize = openssl_cipher_iv_length('aes-256-cbc');
+        $iv = openssl_random_pseudo_bytes($ivsize);
+        
+        $ciphertext = openssl_encrypt(
+            $data,
+            'aes-256-cbc',
+            $key,
+            OPENSSL_RAW_DATA,
+            $iv
+        );
+        
+        return $iv . $ciphertext;
     }
 
-    public static function encrypt($data, $key, $iv, $cipher='twofish', $mode='cfb')
+    public static function decrypt($data, $passphrase=null)
     {
-        $td = mcrypt_module_open($cipher, '', $mode, '');
-        $key = substr($key, 0, mcrypt_enc_get_key_size($td));
-        mcrypt_generic_init($td, $key, $iv);
-        $crypted = mcrypt_generic($td, $data);
-        mcrypt_generic_deinit($td);
-        mcrypt_module_close($td);
+        if ($passphrase === null) {
+            $passphrase = Conf::f('secret_key', null);
+            if ($passphrase === null) {
+                throw new Exception('No passphrase');
+            }
+        }
 
-        return $crypted;
-    }
-
-    public static function decrypt($data, $key, $iv, $cipher='twofish', $mode='cfb')
-    {
-        $td = mcrypt_module_open($cipher, '', $mode, '');
-        $key = substr($key, 0, mcrypt_enc_get_key_size($td));
-        mcrypt_generic_init($td, $key, $iv);
-        $decrypted = rtrim(mdecrypt_generic($td, $data), "\0");
-        mcrypt_generic_deinit($td);
-        mcrypt_module_close($td);
-
-        return $decrypted;
+        $key = hash('sha256', $passphrase);
+        $ivsize = openssl_cipher_iv_length('aes-256-cbc');
+        $iv = mb_substr($data, 0, $ivsize, '8bit');
+        $ciphertext = mb_substr($data, $ivsize, null, '8bit');
+        
+        return openssl_decrypt(
+            $ciphertext,
+            'aes-256-cbc',
+            $key,
+            OPENSSL_RAW_DATA,
+            $iv
+        );
     }
 }
 
@@ -163,7 +142,7 @@ class Sign
                 $is_compressed = true;
             }
         }
-        $base64d = urlsafe_b64encode($serialized);
+        $base64d = self::urlsafe_b64encode($serialized);
         if ($is_compressed) {
             $base64d = '.' . $base64d;
         }
@@ -186,7 +165,7 @@ class Sign
             $base64d = substr($base64d, 1);
             $decompress = true;
         }
-        $serialized = urlsafe_b64decode($base64d);
+        $serialized = self::urlsafe_b64decode($base64d);
         if ($decompress) {
             $serialized = gzinflate($serialized);
         }
@@ -247,33 +226,35 @@ class Sign
      */
     public static function base64_hmac($value, $key)
     {
-        return urlsafe_b64encode(\hash_hmac('sha1', $value, $key, true));
+        return self::urlsafe_b64encode(\hash_hmac('sha1', $value, $key, true));
+    }
+
+    /**
+     * URL safe base 64 encoding.
+     *
+     * Compatible with python base64's urlsafe methods.
+     *
+     * @link http://www.php.net/manual/en/function.base64-encode.php#63543
+     */
+    private static function urlsafe_b64encode($string) 
+    {
+        return \str_replace(array('+','/','='), array('-','_',''),
+                            \base64_encode($string));
+    }
+
+    /**
+     * URL safe base 64 decoding.
+     */
+    private static function urlsafe_b64decode($string) 
+    {
+        $data = \str_replace(array('-','_'), array('+','/'),
+                             $string);
+        $mod4 = \strlen($data) % 4;
+        if ($mod4) {
+            $data .= \substr('====', $mod4);
+        }
+        return \base64_decode($data);
     }
 }
 
-/**
- * URL safe base 64 encoding.
- *
- * Compatible with python base64's urlsafe methods.
- *
- * @link http://www.php.net/manual/en/function.base64-encode.php#63543
- */
-function urlsafe_b64encode($string) 
-{
-    return \str_replace(array('+','/','='), array('-','_',''),
-                        \base64_encode($string));
-}
 
-/**
- * URL safe base 64 decoding.
- */
-function urlsafe_b64decode($string) 
-{
-    $data = \str_replace(array('-','_'), array('+','/'),
-                         $string);
-    $mod4 = \strlen($data) % 4;
-    if ($mod4) {
-        $data .= \substr('====', $mod4);
-    }
-    return \base64_decode($data);
-}

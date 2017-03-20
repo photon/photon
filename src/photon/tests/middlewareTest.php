@@ -23,6 +23,7 @@
 
 namespace photon\tests\middlewareTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 use \photon\core\Dispatcher;
 use \photon\test\HTTP;
@@ -35,13 +36,78 @@ class DummyViews
     }
 }
 
-class MiddlewareTest extends \PHPUnit_Framework_TestCase
+class MiddlewareTranslationTest extends TestCase
 {
-    protected $conf;
-
     public function setUp()
     {
-        $this->conf = Conf::dump();
+        parent::setUp();
+
+        // Dummy view to test the middleware
+        Conf::set('urls', array(
+            array(
+                'regex' => '#^/$#',
+                'view' => array(__NAMESPACE__ . '\DummyViews', 'simple'),
+            ),
+        ));
+
+        // Register the middleware to be tested
+        Conf::set('middleware_classes', array(
+            '\photon\middleware\Translation'
+        ));
+
+        // Register the languages availables in the application
+        Conf::set('languages', array('fr', 'en', 'dk'));
+    }
+
+    public function tearDown()
+    {
+        parent::tearDown();
+    }
+
+    /*
+     *  A website with no session backend
+     *  A new user with no cookie and no accept-language
+     *  He must get the page content in the default language and get a cookie with this language
+     */
+    public function testDefaultLanguage()
+    {
+        $req = HTTP::baseRequest('GET', '/');
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
+        $this->assertEquals(200, $resp->status_code);
+        $this->assertEquals($req->i18n_code, 'fr');
+        $this->assertArrayHasKey('Vary', $resp->headers);
+        $this->assertArrayHasKey('Content-Language', $resp->headers);
+        $this->assertArrayHasKey('lang', $resp->COOKIE);
+        $this->assertEquals('fr', $resp->COOKIE['lang']);
+    }
+
+    /*
+     *  A website with no session backend
+     *  A new user with no cookie but with accept-language
+     *  He must get the page content in the requested language and get a cookie with this language
+     */
+    public function testLanguageFromHttpHeaders()
+    {
+        $req = HTTP::baseRequest('GET', '/', '', '', array(), array('accept-language' => 'dk'));
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
+        $this->assertEquals(200, $resp->status_code);
+        $this->assertEquals($req->i18n_code, 'dk');
+        $this->assertArrayHasKey('Vary', $resp->headers);
+        $this->assertArrayHasKey('Content-Language', $resp->headers);
+        $this->assertArrayHasKey('lang', $resp->COOKIE);
+        $this->assertEquals('dk', $resp->COOKIE['lang']);
+    }
+
+    // FFS : Add tests with sessions
+}
+
+class MiddlewareSecurityTest extends TestCase
+{
+    public function setUp()
+    {
+        parent::setUp();
 
         // Dummy view to test the middleware
         Conf::set('urls', array(
@@ -59,7 +125,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
 
     public function tearDown()
     {
-        Conf::load($this->conf);
+        parent::tearDown();
         \photon\middleware\Security::clearConfig();
     }
 
@@ -85,6 +151,21 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(302, $resp->status_code);
     }
 
+
+    // SSL Redirection enable (manually)
+    public function testSSLRedirectToSamePath()
+    {
+        Conf::set('middleware_security', array(
+            'ssl_redirect' => true,
+        ));
+
+        $req = HTTP::baseRequest('GET', '/foo/bar/');
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
+        $this->assertEquals(302, $resp->status_code);
+        $this->assertEquals('https://test.example.com/foo/bar/', $resp->headers['Location']);
+    }
+
     // HTTP Strict Transport Security disable (default)
     public function testHSTS_defaultConfig()
     {
@@ -105,7 +186,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $req = HTTP::baseRequest('GET', '/');
         $dispatcher = new \photon\core\Dispatcher;
         list($req, $resp) = $dispatcher->dispatch($req);
-        $this->assertEquals(200, $resp->status_code);
+        $this->assertEquals(302, $resp->status_code);
         $this->assertArrayHasKey('Strict-Transport-Security', $resp->headers);
     }
 

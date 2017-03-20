@@ -23,31 +23,19 @@
 
 namespace photon\tests\authTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 use \photon\auth\ConfigBackend;
 use \photon\auth\Middleware;
 use \photon\auth\AnonymousUser;
-use \photon\crypto\Hash;
 
-class SessionTest extends \PHPUnit_Framework_TestCase
+class SessionTest extends TestCase
 {
-    protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
-
     public function testConfigBackend()
     {
         Conf::set('auth_config_users', 
                   array('foo' => 'hashed',
-                        'foobar' => Hash::hashPass('secret')));;
+                        'foobar' => password_hash('secret', PASSWORD_DEFAULT)));;
         $user = ConfigBackend::loadUser('foo');
         $this->assertEquals('foo', $user->login);
         $user = ConfigBackend::loadUser('dummy');
@@ -58,7 +46,7 @@ class SessionTest extends \PHPUnit_Framework_TestCase
     {
         Conf::set('auth_config_users', 
                   array('foo' => 'hashed',
-                        'foobar' => Hash::hashPass('secret')));;
+                        'foobar' => password_hash('secret', PASSWORD_DEFAULT)));;
 
         $auth = array('login' => 'foobar',
                       'password' => 'secret');
@@ -80,7 +68,7 @@ class SessionTest extends \PHPUnit_Framework_TestCase
     {
         Conf::set('auth_config_users', 
                   array('foo' => 'hashed',
-                        'foobar' => Hash::hashPass('secret')));
+                        'foobar' => password_hash('secret', PASSWORD_DEFAULT)));
         $req = \photon\test\HTTP::baseRequest();
         $mid = new Middleware();
         $this->assertEquals(false, $mid->process_request($req));
@@ -103,7 +91,7 @@ class SessionTest extends \PHPUnit_Framework_TestCase
     {
         Conf::set('auth_config_users', 
                   array('foo' => 'hashed',
-                        'foobar' => Hash::hashPass('secret')));
+                        'foobar' => password_hash('secret', PASSWORD_DEFAULT)));
         $user = \photon\auth\Auth::authenticate(array('login' => 'foobar', 
                                                       'password' => 'secret'));
         $this->assertEquals('foobar', $user->login);

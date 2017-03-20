@@ -67,20 +67,18 @@ class Translation
     public static function setLocale($lang)
     {
         self::$current_lang = $lang;
-        $lang5 = $lang.'_'.strtoupper($lang);
+        $lang5 = $lang . '_' . strtoupper($lang);
 
-        $new_locale = setlocale(LC_TIME, 
-                                array($lang.'.UTF-8', $lang5.'.UTF-8', 
-                                      $lang, $lang5));
+        $new_locale = setlocale(LC_TIME, array($lang . '.UTF-8', $lang5 . '.UTF-8', $lang, $lang5));
         setlocale(LC_CTYPE, $new_locale);
         setlocale(LC_COLLATE, $new_locale);
         setlocale(LC_MESSAGES, $new_locale);
         setlocale(LC_MONETARY, $new_locale);
 
         if (isset(self::$loaded[$lang])) {
-
             return; // We consider that it was already loaded.
         }
+
         self::loadLocale($lang);
     }
     
@@ -97,6 +95,43 @@ class Translation
     }
 
     /**
+     * Get the singular version of a string in the current language
+     *
+     * @param string $singular
+     */
+    public static function singular($singular)
+    {
+        if (isset(self::$loaded[self::$current_lang][$singular]['msgstr']) === false) {
+            return $singular;
+        }
+
+        return self::$loaded[self::$current_lang][$singular]['msgstr'][0];
+    }
+
+    /**
+     * Get the singular or plural version of a string in the current language
+     *
+     * @param string $singular
+     * @param string $plural
+     * @param int $count
+     */
+    public static function plural($singular, $plural, $count)
+    {
+        if (isset(Translation::$plural_forms[Translation::$current_lang])) {
+            $cl = Translation::$plural_forms[Translation::$current_lang];
+            $idx = $cl($count);
+        } else {
+            $idx = (int) ($count != 1);  // Default to English form
+        }
+
+        if (isset(self::$loaded[self::$current_lang][$singular]['msgstr'][$idx])) {
+            return self::$loaded[self::$current_lang][$singular]['msgstr'][$idx];
+        }
+
+        return ($count === 1) ? $singular : $plural;
+    }
+
+    /**
      * Load the locales of a lang.
      *
      * It does not activate the locale.
@@ -109,34 +144,25 @@ class Translation
     {
         $locale_folders = Conf::f('locale_folders', array());
         $path_folders = Dir::getIncludePath();
-        $loaded = array();
 
         self::$loaded[$lang] = array();
 
         if ($photon) {
-            $pofile = sprintf('%s/locale/%s/photon.po', __DIR__, $lang); 
+            $pofile = sprintf('%s/locale/%s/photon.po', __DIR__, $lang);
             if (file_exists($pofile)) {
-                self::$loaded[$lang] += self::readPoFile($pofile);
-                $loaded[] = $pofile;
+                self::readPoFile($lang, $pofile);
             }
         }
 
         foreach ($locale_folders as $locale_folder) {
             foreach ($path_folders as $path_folder) {
-                $pofile = sprintf('%s/%s/%s.po', 
-                                  $path_folder, $locale_folder, $lang);
+                $pofile = sprintf('%s/%s/%s.po', $path_folder, $locale_folder, $lang);
                 if (file_exists($pofile)) {
-                    self::$loaded[$lang] += self::readPoFile($pofile);
-                    $loaded[] = $pofile;
+                    self::readPoFile($lang, $pofile);
                     break;
                 }
             }
         }
-        if (count($loaded)) {
-            self::$plural_forms[$lang] = plural_to_php(file_get_contents($loaded[0]));
-        }
-
-        return $loaded;
     }
     
     /**
@@ -154,47 +180,72 @@ class Translation
      */
     public static function getAcceptedLanguage($available, $accepted='')
     {
+        // No accepted header or empty, fallback on first available in the application
         if (0 === strlen($accepted)) {
-
             return $available[0];
         }
-        // We get and sort the accepted in priority order
-        $accepted = array_map(function($item) { return explode(';', $item); }, 
-                              explode(',', $accepted));
-        usort($accepted, 
-              function($a, $b) {
-                  $sa = (count($a) == 1) ? 1.0 : (float) substr($a[1], 2);
-                  $sb = (count($b) == 1) ? 1.0 : (float) substr($b[1], 2);
-                  if ($sa == $sb) {
-                      return 1;
-                  }
-                  return ($sa < $sb) ? 1 : -1;
-              });
+
+        // Parse accepted languages
+        $accepted = explode(',', $accepted);
+        $accepted = array_map(function($item) {
+            return array_map("trim", explode(';', $item));
+        }, $accepted);
+
+        // Sort accepted languages
+        usort($accepted, function($a, $b) {
+            // Get score for both language
+            $sa = isset($a[1]) ? (float) substr($a[1], 2) : 1.0;
+            $sb = isset($b[1]) ? (float) substr($b[1], 2) : 1.0;
+
+            // Draw case, prefers the more localized (fr_FR > fr)
+            if ($sa === $sb) {
+                $la = strlen($a[0]);
+                $lb = strlen($b[0]);
+
+                if ($la === $lb) {
+                    // PHP 7.x usort insert $a then $b if the function return 0
+                    // PHP 5.x usort insert $b then $a if the function return 0
+                    if (version_compare(PHP_VERSION, '7.0.0', 'le')) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                } else if ($la < $lb) {
+                    return 1;
+                }
+
+                return -1;
+            }
+
+            // Sort on score
+            return ($sa < $sb) ? 1 : -1;
+        });
+
         // We convert to have the correct xx_XX format for the "long" langs.
         $accepted = array_map(function($item) { 
-                $lang = explode('-', trim($item[0]));
-                if (1 === count($lang)) {
-                    return $lang[0];
-                } 
-                return $lang[0] . '_' . strtoupper($lang[1]);
-            }, 
-            $accepted);
+            $lang = explode('-', trim($item[0]));
+            if (1 === count($lang)) {
+                return $lang[0];
+            } 
+            return $lang[0] . '_' . strtoupper($lang[1]);
+        }, $accepted);
+
         foreach ($accepted as $lang) {
             if (in_array($lang, $available)) {
-
                 return $lang;
             }
         }
+
         foreach ($accepted as $lang) {
             // for the xx-XX cases we may have only the "main" language
             // form like xx is available
             $lang = substr($lang, 0, 2);
             if (in_array($lang, $available)) {
-
                 return $lang;
             }
         }
 
+        // Requested language not found, fallback on first available in the application
         return $available[0];
     }
 
@@ -207,259 +258,84 @@ class Translation
         foreach ($words as $key=>$word) {
             $string = mb_ereg_replace('%%'.$key.'%%', $word, $string, 'm');
         }
+
         return $string;
     }
 
-    public static function readPoFile($file)
+    public static function readPoFile($lang, $file)
     {
-        return self::parsePoContent(file_get_contents($file));
+        if (isset(self::$loaded[$lang]) === false) {
+            self::$loaded[$lang] = array();
+        };
+
+        $poHandler = new \photon\translation\po\FileHandler($file);
+        $poParser = new \photon\translation\po\PoParser($poHandler);
+        self::$loaded[$lang] += $poParser->parse();
+        self::$plural_forms[$lang] = self::plural_to_php(implode("\n", $poParser->getHeaders()));
+    }
+
+    public static function readPoString($lang, $poText)
+    {
+        if (isset(self::$loaded[$lang]) === false) {
+            self::$loaded[$lang] = array();
+        };
+
+        $poHandler = new \photon\translation\po\StringHandler($poText);
+        $poParser = new \photon\translation\po\PoParser($poHandler);
+        self::$loaded[$lang] += $poParser->parse();
+        self::$plural_forms[$lang] = self::plural_to_php(implode("\n", $poParser->getHeaders()));
     }
 
     /**
-     * Read a .po file.
+     * Extract the plural form from the .po file and convert to PHP.
      *
-     * Based on the work by Matthias Bauer with some little cosmetic fixes.
-     *
-     * @source http://wordpress-soc-2007.googlecode.com/svn/trunk/moeffju/php-msgfmt/msgfmt-functions.php
-     * @copyright 2007 Matthias Bauer
-     * @author Matthias Bauer
-     * @license http://opensource.org/licenses/lgpl-license.php GNU Lesser General Public License 2.1
-     * @license http://opensource.org/licenses/apache2.0.php Apache License 2.0
+     * @param $po Content of the po file as string (or at least the headers)
+     * @return anonymous function
      */
-    public static function parsePoContent($fc)
+    public static function plural_to_php($po)
     {
-        // normalize newlines
-        $fc = str_replace(array("\r\n", "\r"), array("\n", "\n"), $fc);
+        $forms = '';
 
-
-        $hash = array(); // results array
-        $temp = array();
-        // state
-        $state = null;
-        $fuzzy = false;
-
-        // iterate over lines
-        foreach (explode("\n", $fc) as $line) {
-            $line = trim($line);
-            if ($line === '')
-                continue;
-            if (false === strpos($line, ' ')) {
-                $key = $line;
-                $data = '';
-            } else { 
-                list($key, $data) = explode(' ', $line, 2);
-            }
-            switch ($key) {
-            case '#,' : // flag...
-                $fuzzy= in_array('fuzzy', preg_split('/,\s*/', $data));
-            case '#' : // translator-comments
-            case '#.' : // extracted-comments
-            case '#:' : // reference...
-            case '#|' : // msgid previous-untranslated-string
-            case '#~' : // deprecated translations
-                // start a new entry
-                if (sizeof($temp) && array_key_exists('msgid', $temp) && array_key_exists('msgstr', $temp)) {
-                    if (!$fuzzy)
-                        $hash[]= $temp;
-                    $temp= array ();
-                    $state= null;
-                    $fuzzy= false;
-                }
-                break;
-            case 'msgctxt' :
-                // context
-            case 'msgid' :
-                // untranslated-string
-            case 'msgid_plural' :
-                // untranslated-string-plural
-                $state= $key;
-                $temp[$state]= $data;
-                break;
-            case 'msgstr' :
-                // translated-string
-                $state= 'msgstr';
-                $temp[$state][]= $data;
-                break;
-            default :
-                if (strpos($key, 'msgstr[') !== False) {
-                    // translated-string-case-n
-                    $state= 'msgstr';
-                    $temp[$state][]= $data;
-                } else {
-                    // continued lines
-                    switch ($state) {
-                    case 'msgctxt' :
-                    case 'msgid' :
-                    case 'msgid_plural' :
-                        $temp[$state] .= "\n" . $line;
-                        break;
-                    case 'msgstr' :
-                        $temp[$state][sizeof($temp[$state]) - 1] .= "\n" . $line;
-                        break;
-                    default :
-                        // parse error
-                        return False;
-                    }
-                }
-                break;
-            }
+        // Find the "Plural-Forms: ...\n" string
+        if (preg_match('/\"plural-forms: ([^\\\\]+)/i', $po, $matches)) {
+            $forms = trim($matches[1]);
+        } else {
+            $forms = 'nplurals=2; plural=(n != 1);'; // English
         }
 
-        // add final entry
-        if ($state == 'msgstr')
-            $hash[] = $temp;
-
-        // Cleanup data, merge multiline entries, reindex hash for ksort
-        $temp = $hash;
-        $hash = array ();
-        foreach ($temp as $entry) {
-            foreach ($entry as &$v) {
-                $v = poCleanHelper($v);
-                if ($v === False) {
-                    // parse error
-                    return False;
-                }
+        // Add parentheses for the evaluation order.
+        $out = '';
+        $p = 0; // Number of currently open parentheses
+        $l = strlen($forms);
+        if (';' !== $forms[$l - 1]) {
+            $forms .=  ';';
+            $l++;
+        }
+        for ($i=0; $i<$l; $i++) {
+            $ch = $forms[$i];
+            switch ($ch) {
+            case '?':
+                $out .= ' ? (';
+                $p++;
+                break;
+            case ':':
+                $out .= ') : (';
+                break;
+            case ';':
+                // End of expression, close the parentheses
+                $out .= str_repeat(')', $p) . ';';
+                $p = 0;
+                break;
+            default:
+                $out .= $ch;
             }
-            if (isset($entry['msgid_plural'])) {
-                $hash[$entry['msgid'].'#'.$entry['msgid_plural']]= $entry['msgstr'];
-            } else {
-                $hash[$entry['msgid']]= $entry['msgstr'];
-            }
         }
-        return $hash;
+        // now, we convert the variables to php variables
+        $out = str_replace(array('n', 'plural='), 
+                           array('$n', '$plural='), 
+                           $out);
+        $out .= ' return (int) $plural;';
+
+        return create_function('$n', $out);
     }
-}
-
-
-// /**
-//  * Translation middleware.
-//  *
-//  * Load the translation of the website based on the useragent.
-//  */
-// class Middleware
-// {
-//     /**
-//      * Process the request.
-//      *
-//      * Find which language to use. By priority:
-//      * 1. a session value
-//      * 2. a cookie
-//      * 3. the browser Accept-Language header
-//      *
-//      * @param $request The request
-//      * @return bool false
-//      */
-//     function process_request(&$request)
-//     {
-//         $lang = false;
-//         if (!empty($request->session)) {
-//             $lang = $request->session->getData('language', false);
-//             if ($lang && !in_array($lang, Conf::f('languages', array('en')))) {
-//                 $lang = false;
-//             }
-//         }
-//         if ($lang === false && !empty($request->COOKIE[Conf::f('lang_cookie', 'lang')])) {
-//             $lang = $request->COOKIE[Conf::f('lang_cookie', 'lang')];
-//             if ($lang && !in_array($lang, Conf::f('languages', array('en')))) {
-//                 $lang = false;
-//             }
-//         }
-//         if ($lang === false) {
-//             // will default to 'en'
-//             $lang = Translation::getAcceptedLanguage(Conf::f('languages', array('en')));
-//         }
-//         Translation::loadSetLocale($lang);
-//         $request->language_code = $lang;
-//         return false;
-//     }
-
-//     /**
-//      * Process the response of a view.
-//      *
-//      */
-//     function process_response($request, $response)
-//     {
-//         $vary_h = array();
-//         if (!empty($response->headers['Vary'])) {
-//             $vary_h = preg_split('/\s*,\s*/', $response->headers['Vary'],
-//                                  -1, PREG_SPLIT_NO_EMPTY);
-//         }
-//         if (!in_array('accept-language', $vary_h)) {
-//             $vary_h[] = 'accept-language';
-//         }
-//         $response->headers['Vary'] = implode(', ', $vary_h);
-//         $response->headers['Content-Language'] = $request->language_code;
-//         return $response;
-//     }
-// }
-
-function poCleanHelper($x) 
-{
-	if (is_array($x)) {
-		foreach ($x as $k => $v) {
-			$x[$k] = poCleanHelper($v);
-		}
-	} else {
-		if ($x[0] == '"') {
-			$x = substr($x, 1, -1);
-        }
-		$x = str_replace("\"\n\"", '', $x);
-		$x = str_replace('$', '\\$', $x);
-		$x = @eval("return \"$x\";");
-	}
-	return $x;
-}
-
-
-/**
- * Extract the plural form from the .po file and convert to PHP.
- *
- * Thank you the latest PHP version, this function returns a function :)
- *
- * @param $po Content of the po file as string (or at least the headers)
- * @return anonymous function
- */
-function plural_to_php($po)
-{
-    $forms = '';
-    // Find the "Plural-Forms: ...\n" string
-    if (preg_match('/\"plural-forms: ([^\\\\]+)/i', $po, $matches)) {
-        $forms = trim($matches[1]);
-    } else {
-        $forms = 'nplurals=2; plural=(n != 1);'; // English
-    }
-    // Add parentheses for the evaluation order.
-    $out = '';
-    $p = 0; // Number of currently open parentheses
-    $l = strlen($forms);
-    if (';' !== $forms[$l - 1]) {
-        $forms .=  ';';
-        $l++;
-    }
-    for ($i=0; $i<$l; $i++) {
-        $ch = $forms[$i];
-        switch ($ch) {
-        case '?':
-            $out .= ' ? (';
-            $p++;
-            break;
-        case ':':
-            $out .= ') : (';
-            break;
-        case ';':
-            // End of expression, close the parentheses
-            $out .= str_repeat(')', $p) . ';';
-            $p = 0;
-            break;
-        default:
-            $out .= $ch;
-        }
-    }
-    // now, we convert the variables to php variables
-    $out = str_replace(array('n', 'plural='), 
-                       array('$n', '$plural='), 
-                       $out);
-    $out .= ' return (int) $plural;';
-
-    return create_function('$n', $out);
 }
