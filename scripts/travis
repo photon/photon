@@ -69,6 +69,8 @@ echo "============ env ============"
 env
 echo "============ locale ============"
 locale -a
+echo "============ phpunit ============"
+phpunit --version
 echo "============ php ini ============"
 php -ini
 echo "============ php exts ============"
