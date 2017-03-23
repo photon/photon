@@ -30,7 +30,8 @@ namespace photon\views;
 
 use \photon\shortcuts;
 use \photon\core\URL as URL;
-use \photon\http\response\Redirect as Redirect;
+use \photon\http\response\Redirect;
+use \photon\http\response\NotModified;
 use \photon\translation\Translation;
 
 /**
@@ -125,30 +126,17 @@ class AssetDir
 
         $file = $phar[$path];
         $crc32 = dechex($file->getCRC32());
-        $modified = $file->getMTime();
-        // Get the headers
-        $if_modified_since = 0;
-        if (isset($request->headers->{'if-modified-since'})) {
-            $date = \DateTime::createFromFormat(\DateTime::RFC2822, $request->headers->{'if-modified-since'});
-            $if_modified_since = ($date) ? $date->getTimestamp() : 0;
-        }
+
         $comps = explode('.', $file);
         $ext = array_pop($comps);
-        $mime = (isset(self::$mimes[$ext])) 
-            ? self::$mimes[$ext] : 'application/octet-stream';
+        $mime = isset(self::$mimes[$ext]) ? self::$mimes[$ext] : 'application/octet-stream';
 
-        if ($request->getHeader('if-none-match') == $crc32) {
-
-            return new \photon\http\response\NotModified('', $mime);
+        $etag = $request->getHeader('if-none-match', null);
+        if ($etag == $crc32) {
+            return new NotModified('', $mime);
         }
-        if ($modified <= $if_modified_since) {
 
-            return new \photon\http\response\NotModified('', $mime);
-        }
-        $res = new \photon\http\Response(file_get_contents($file),
-                                         $mime);
-        $res->headers['Date'] = date('r');
-        $res->headers['Last-Modified'] = date('r', $modified);
+        $res = new \photon\http\Response(file_get_contents($file), $mime);
         $res->headers['ETag'] = $crc32;
         $res->headers['Cache-Control'] = 'max-age=604800';
         
