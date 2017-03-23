@@ -150,7 +150,7 @@ class AssetDir
         $res->headers['Date'] = date('r');
         $res->headers['Last-Modified'] = date('r', $modified);
         $res->headers['ETag'] = $crc32;
-        $res->headers['Expires'] = date('r', $modified + 3600);
+        $res->headers['Cache-Control'] = 'max-age=604800';
         
         return $res;
     }
