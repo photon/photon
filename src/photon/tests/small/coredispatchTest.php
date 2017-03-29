@@ -93,14 +93,14 @@ class coreurlTest extends TestCase
     public function testSimpleDispatch()
     {
         Conf::set('urls', array(
-                                array('regex' => '#^/home/(.+)/$#',
-                                      'view' => function () { return false; },
-                                      'name' => 'home',
-                                      ),
-                                ));
-        $headers = (object) array('METHOD' => 'GET');
-        $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
-        $req = new \photon\http\Request($msg);
+            array('regex' => '#^/home/(.+)/$#',
+                  'view' => function () { return false; },
+                  'name' => 'home',
+                  ),
+            )
+        );
+
+        $req = \photon\test\HTTP::baseRequest('GET', '/home/foo/');
         $dispatcher = new \photon\core\Dispatcher;
         list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals(false, $resp);
@@ -109,14 +109,14 @@ class coreurlTest extends TestCase
     public function testSimpleDispatchView()
     {
         Conf::set('urls', array(
-                                array('regex' => '#^/home/(.+)/$#',
-                                      'view' => array('\photon\tests\small\coredispatchTest\DummyViews', 'simple'),
-                                      'name' => 'home',
-                                      ),
-                                ));
-        $headers = (object) array('METHOD' => 'GET');
-        $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
-        $req = new \photon\http\Request($msg);
+            array('regex' => '#^/home/(.+)/$#',
+                  'view' => array('\photon\tests\small\coredispatchTest\DummyViews', 'simple'),
+                  'name' => 'home',
+                  ),
+            )
+        );
+
+        $req = \photon\test\HTTP::baseRequest('GET', '/home/foo/');
         $dispatcher = new \photon\core\Dispatcher;
         list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals('SIMPLE', $resp->content);
@@ -125,15 +125,15 @@ class coreurlTest extends TestCase
     public function testSimpleDispatchViewParams()
     {
         Conf::set('urls', array(
-                                array('regex' => '#^/home/(.+)/$#',
-                                      'view' => array('\photon\tests\small\coredispatchTest\DummyViews', 'withParams'),
-                                      'name' => 'home',
-                                      'params' => 'OK',
-                                      ),
-                                ));
-        $headers = (object) array('METHOD' => 'GET');
-        $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
-        $req = new \photon\http\Request($msg);
+            array('regex' => '#^/home/(.+)/$#',
+                  'view' => array('\photon\tests\small\coredispatchTest\DummyViews', 'withParams'),
+                  'name' => 'home',
+                  'params' => 'OK',
+                  ),
+            )
+        );
+
+        $req = \photon\test\HTTP::baseRequest('GET', '/home/foo/');
         $dispatcher = new \photon\core\Dispatcher;
         list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals('WITHPARAMS:OK', $resp->content);
@@ -142,14 +142,14 @@ class coreurlTest extends TestCase
     public function testSimpleDispatchViewPreconditions()
     {
         Conf::set('urls', array(
-                                array('regex' => '#^/home/(.+)/$#',
-                                      'view' => array('\photon\tests\small\coredispatchTest\DummyViews', 'withPreconditions'),
-                                      'name' => 'home',
-                                      ),
-                                ));
-        $headers = (object) array('METHOD' => 'GET');
-        $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
-        $req = new \photon\http\Request($msg);
+            array('regex' => '#^/home/(.+)/$#',
+                  'view' => array('\photon\tests\small\coredispatchTest\DummyViews', 'withPreconditions'),
+                  'name' => 'home',
+                  ),
+            )
+        );
+
+        $req = \photon\test\HTTP::baseRequest('GET', '/home/foo/');
         $dispatcher = new \photon\core\Dispatcher;
         list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals('WITHPRE:OK', $resp->content);
@@ -158,14 +158,14 @@ class coreurlTest extends TestCase
     public function testSimpleDispatchViewAnswerPreconditions()
     {
         Conf::set('urls', array(
-                                array('regex' => '#^/home/(.+)/$#',
-                                      'view' => array('\photon\tests\small\coredispatchTest\DummyViews', 'withAnswerPreconditions'),
-                                      'name' => 'home',
-                                      ),
-                                ));
-        $headers = (object) array('METHOD' => 'GET');
-        $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
-        $req = new \photon\http\Request($msg);
+            array('regex' => '#^/home/(.+)/$#',
+                  'view' => array('\photon\tests\small\coredispatchTest\DummyViews', 'withAnswerPreconditions'),
+                  'name' => 'home',
+                  ),
+            )
+        );
+
+        $req = \photon\test\HTTP::baseRequest('GET', '/home/foo/');
         $dispatcher = new \photon\core\Dispatcher;
         list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals('CAUGHT', $resp->content);
@@ -185,9 +185,8 @@ class coreurlTest extends TestCase
                                       'params' => 'OK',
                                       ),
                                 ));
-        $headers = (object) array('METHOD' => 'GET');
-        $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
-        $req = new \photon\http\Request($msg);
+
+        $req = \photon\test\HTTP::baseRequest('GET', '/home/foo/');
         $dispatcher = new \photon\core\Dispatcher;
         list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals('WITHPARAMS:OK', $resp->content);
@@ -199,16 +198,16 @@ class coreurlTest extends TestCase
     public function testSimpleDispatchMiddleware()
     {
         Conf::set('urls', array(
-                                array('regex' => '#^/home/(.+)/$#',
-                                      'view' => function () { return false; },
-                                      'name' => 'home',
-                                      ),
-                                ));
-        Conf::set('middleware_classes', 
-                  array('\photon\tests\small\coredispatchTest\DummyMiddleware'));
-        $headers = (object) array('METHOD' => 'GET');
-        $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
-        $req = new \photon\http\Request($msg);
+            array('regex' => '#^/home/(.+)/$#',
+                  'view' => function () { return false; },
+                  'name' => 'home',
+                  ),
+            )
+        );
+
+        Conf::set('middleware_classes', array('\photon\tests\small\coredispatchTest\DummyMiddleware'));
+
+        $req = \photon\test\HTTP::baseRequest('GET', '/home/foo/');
         $dispatcher = new \photon\core\Dispatcher;
         list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals(false, $resp);
@@ -217,16 +216,16 @@ class coreurlTest extends TestCase
     public function testSimpleDispatchMiddlewarePreempt()
     {
         Conf::set('urls', array(
-                                array('regex' => '#^/home/(.+)/$#',
-                                      'view' => function () { return false; },
-                                      'name' => 'home',
-                                      ),
-                                ));
-        Conf::set('middleware_classes', 
-                  array('photon\tests\small\coredispatchTest\DummyMiddlewarePreempt'));
-        $headers = (object) array('METHOD' => 'GET');
-        $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
-        $req = new \photon\http\Request($msg);
+            array('regex' => '#^/home/(.+)/$#',
+                  'view' => function () { return false; },
+                  'name' => 'home',
+                  ),
+            )
+        );
+
+        Conf::set('middleware_classes', array('photon\tests\small\coredispatchTest\DummyMiddlewarePreempt'));
+
+        $req = \photon\test\HTTP::baseRequest('GET', '/home/foo/');
         $dispatcher = new \photon\core\Dispatcher;
         list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals('OK', $resp->content);
@@ -234,22 +233,26 @@ class coreurlTest extends TestCase
 
     public function testViewFailure()
     {
+        // Part 1
         Conf::set('urls', array(
-                                array('regex' => '#^/home/(.+)/$#',
-                                      'view' => function () { throw new \Exception(); },
-                                      'name' => 'home',
-                                      ),
-                                ));
-        $headers = (object) array('METHOD' => 'GET');
-        $msg = new Message('dummy', 'dummy', '/home/foo/', $headers, '');
-        $req = new \photon\http\Request($msg);
+            array('regex' => '#^/home/(.+)/$#',
+                  'view' => function () { throw new \Exception(); },
+                  'name' => 'home',
+                  ),
+            )
+        );
+
+        $req = \photon\test\HTTP::baseRequest('GET', '/home/foo/');
         $dispatcher = new \photon\core\Dispatcher;
         list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertNotEquals(false, strpos($resp->content, 'coredispatchTest'));
+
+        // Part 2
         Conf::set('debug', false);
         Conf::set('template_force_compilation', true);
         Conf::set('template_folders', array(dirname(__FILE__)));
-        $req = new \photon\http\Request($msg);
+
+        $req = \photon\test\HTTP::baseRequest('GET', '/home/foo/');
         $dispatcher = new \photon\core\Dispatcher;
         list($req, $resp) = $dispatcher->dispatch($req);
         // Ensure the answer contains a string in the 500.html template
@@ -259,14 +262,14 @@ class coreurlTest extends TestCase
     public function testViewNotFound()
     {
         Conf::set('urls', array(
-                                array('regex' => '#^/home/(.+)/$#',
-                                      'view' => function () { throw new \Exception(); },
-                                      'name' => 'home',
-                                      ),
-                                ));
-        $headers = (object) array('METHOD' => 'GET', 'PATH' => '/home/');
-        $msg = new Message('dummy', 'dummy', '/home/', $headers, '');
-        $req = new \photon\http\Request($msg);
+            array('regex' => '#^/home/(.+)/$#',
+                  'view' => function () { throw new \Exception(); },
+                  'name' => 'home',
+                  ),
+            )
+        );
+
+        $req = \photon\test\HTTP::baseRequest('GET', '/home/');
         $dispatcher = new \photon\core\Dispatcher;
         list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertNotEquals(false, strpos($resp->content, 'not found'));
@@ -289,9 +292,7 @@ class coreurlTest extends TestCase
 
         Conf::set('urls', $views);
 
-        $headers = (object) array('METHOD' => 'GET');
-        $msg = new Message('dummy', 'dummy', '/hello/home/foo/', $headers, '');
-        $req = new \photon\http\Request($msg);
+        $req = \photon\test\HTTP::baseRequest('GET', '/hello/home/foo/');
         $dispatcher = new \photon\core\Dispatcher;
         list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals(false, $resp);
