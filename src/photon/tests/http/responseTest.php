@@ -120,6 +120,35 @@ class ResponseTest extends TestCase
         $this->assertSame(400, $res->status_code);
     }
 
+    public function testAuthorizationRequired()
+    {
+        $res = new response\AuthorizationRequired;
+        $this->assertSame(401, $res->status_code);
+    }
+
+    public function testRequestEntityTooLarge()
+    {
+        $res = new response\RequestEntityTooLarge;
+        $this->assertSame(413, $res->status_code);
+
+        $res = new response\RequestEntityTooLarge('user message');
+        $this->assertSame(413, $res->status_code);
+    }
+
+
+    public function testInternalServerError()
+    {
+        $res = new response\InternalServerError('/');
+        $this->assertSame(500, $res->status_code);
+    }
+
+    public function testServerError()
+    {
+        $res = new response\ServerError(new \Exception);
+        $this->assertSame(500, $res->status_code);
+    }
+
+
     public function testNotImplemented()
     {
         $res = new response\NotImplemented('/');
