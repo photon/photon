@@ -1,4 +1,4 @@
-# Photon 2.0.0 - FFS
+# Photon 2.0.0 - Thu, 06 Apr 2017 14:41:33 +0000
 
 ## New Features
 - Add support for PHP 7.0 and 7.1
@@ -6,11 +6,14 @@
   Source code is duplicated because the last version is not tagged yet.
 - A translation middleware to setup language from : session, cookie, or http headers.  
   Enable it by adding `\photon\middleware\translation` in your middleware configuration.
+- Allow custom pharstub from user
+- Add automatic decode of json body, in $request->JSON
 
 ## Changes
 - Tests are executed with the last version of PHPUnit 5.x, the 6.x release require to drop support of PHP 5.6
 - The class \photon\form\field\Float, the name is reserved in PHP 7.x so we rename it FloatNumber
 - HSTS force https redirect, while ssl_redirect is not set
+- HSTS redirect to the same path
 - All photon tests case must extends \photon\test\TestCase
 - Fix \photon\translation\Translation::getAcceptedLanguage to works with PHP 5.x and 7.x
 - The class \photon\crypto\Crypt do not use mcrypt anymore, we use openssl configured with AES-256-CBC.  
@@ -25,6 +28,7 @@
   We recommend to use a CLI Parser from a dedicated project like nategood/commando
 - Cleanup PHP Pear stuff
 - The project init command. The template is still available in a dedicated repo (photon/project-template)
+
 # Photon 1.1.0 - Wed, 08 Jun 2016 09:29:33 +0000
 
 ## Changes
