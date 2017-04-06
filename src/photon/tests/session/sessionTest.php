@@ -23,6 +23,7 @@
 
 namespace photon\tests\session\sessionTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 
 class DummyStore
@@ -49,20 +50,8 @@ class DummyStore
     }
 }
 
-class SessionTest extends \PHPUnit_Framework_TestCase
+class SessionTest extends TestCase
 {
-    protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
-
     /**
      * Just testing the high level interface.
      */

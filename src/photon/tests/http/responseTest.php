@@ -23,32 +23,21 @@
 
 namespace photon\tests\http\responseTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 use \photon\http\response;
 use \photon\http;
 use \photon\mongrel2;
-use \photon\tests\mongrel2\mongrel2Test\DummyZMQSocket;
+use \photon\tests\mongrel2Test\DummyZMQSocket;
 
 
-class ResponseTest extends \PHPUnit_Framework_TestCase
+class ResponseTest extends TestCase
 {
-    protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
-
     public function testJsonResponse()
     {
-        $json = new response\Json(array('foo', 'bar'));
-        $this->assertEquals(json_encode(array('foo', 'bar')),
-                            $json->render());
+        $obj = array('foo', 'bar');
+        $json = new response\Json($obj);
+        $this->assertEquals(json_encode($obj), $json->render());
     }
 
     public function testNotModified()
@@ -59,7 +48,7 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
 
     public function testNotSupported()
     {
-        $request = (object) array('method' => 'POST', 'path' => '/toto');
+        $request = \photon\test\HTTP::baseRequest('POST','/toto');
         $res = new response\NotSupported($request);
         $this->assertSame(0, strpos($res->content, 'HTTP method POST is not supported for the URL /toto.'));
     }
@@ -72,7 +61,7 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
 
     public function testRedirectToLogin()
     {
-        $request = (object) array('method' => 'POST', 'path' => '/toto');
+        $request = \photon\test\HTTP::baseRequest('POST','/toto');
         $res = new response\RedirectToLogin($request, '/login');
         $this->assertSame(302, $res->status_code);
         Conf::set('urls', array(
@@ -87,14 +76,15 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
 
     public function testSendIterable()
     {
-        $this->markTestIncomplete('To rewrite');
+        $payload = file_get_contents(__DIR__ . '/../data/example.payload');
 
-        $iter = array('a', 'b');
-        $socket = new DummyZMQSocket();
-        $socket->setNextRecv(file_get_contents(__DIR__ . '/../data/example.payload'));
-        $conn = new mongrel2\Connection($socket, $socket);
+        $conn = new mongrel2\Connection('tcp://127.0.0.1:12345', 'tcp://127.0.0.1:12346');
+        $conn->pull_socket = new DummyZMQSocket($payload);
+        $conn->pub_socket = new DummyZMQSocket();
+
         $mess = $conn->recv();
 
+        $iter = array('a', 'b');
         $res = new http\Response($iter);
         $res->sendIterable($mess, $conn);
         $res->sendIterable($mess, $conn, false);
@@ -129,6 +119,35 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
         $res = new response\BadRequest('/');
         $this->assertSame(400, $res->status_code);
     }
+
+    public function testAuthorizationRequired()
+    {
+        $res = new response\AuthorizationRequired;
+        $this->assertSame(401, $res->status_code);
+    }
+
+    public function testRequestEntityTooLarge()
+    {
+        $res = new response\RequestEntityTooLarge;
+        $this->assertSame(413, $res->status_code);
+
+        $res = new response\RequestEntityTooLarge('user message');
+        $this->assertSame(413, $res->status_code);
+    }
+
+
+    public function testInternalServerError()
+    {
+        $res = new response\InternalServerError('/');
+        $this->assertSame(500, $res->status_code);
+    }
+
+    public function testServerError()
+    {
+        $res = new response\ServerError(new \Exception);
+        $this->assertSame(500, $res->status_code);
+    }
+
 
     public function testNotImplemented()
     {

@@ -153,10 +153,9 @@ class Dispatcher
         } catch (\Exception $e) {
             Event::send('\photon\core\Dispatcher::dispatchException', null, $e);
             if (true !== Conf::f('debug', false)) {
-                $response = new \photon\http\response\ServerError($e, $req);
+                $response = new \photon\http\response\ServerError($e);
             } else {
-                $response = new \photon\http\response\ServerErrorDebug($e->getMessage());
-                $response->setContent($e, $req);
+                $response = new \photon\http\response\ServerErrorDebug($e, $req);
             }
         }
 

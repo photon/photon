@@ -90,40 +90,25 @@ function photonLoadFunction($func)
 /**
  * Translate a string.
  *
- * @param $str String to be translated
+ * @param $singular String to be translated
  * @return string Translated string
  */
-function __($str)
+function __($singular)
 {
-    // FFS: Add use here
-    return (!empty(Translation::$loaded[Translation::$current_lang][$str][0]))
-        ? Translation::$loaded[Translation::$current_lang][$str][0]
-        : $str;
+    return Translation::singular($singular);
 }
 
 /**
  * Translate the plural form of a string.
  *
- * @param $sing Singular form of the string
- * @param $plur Plural form of the string
- * @param $n Number of elements
+ * @param $singular Singular form of the string
+ * @param $plural Plural form of the string
+ * @param $count Number of elements
  * @return string Translated string
  */
-function _n($sing, $plur, $n)
+function _n($singular, $plural, $count)
 {
-    if (isset(Translation::$plural_forms[Translation::$current_lang])) {
-        $cl = Translation::$plural_forms[Translation::$current_lang];
-        $idx = $cl($n);
-    } else {
-        $idx = (int) ($n != 1);  // Default to English form
-    }
-    $str = $sing . '#' . $plur;
-    if (!empty(Translation::$loaded[Translation::$current_lang][$str][$idx])) {
-
-        return Translation::$loaded[Translation::$current_lang][$str][$idx];
-    }
-
-    return ($n == 1) ? $sing : $plur;
+    return Translation::plural($singular, $plural, $count);
 }
 
 set_include_path(realpath(__DIR__ . '/../') . PATH_SEPARATOR . get_include_path());

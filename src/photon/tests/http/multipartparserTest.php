@@ -23,9 +23,10 @@
 
 
 namespace photon\tests\http\multipartparser;
-//include_once __DIR__ . '/../../http/multipartparser.php';
 
-class ParserTest extends \PHPUnit_Framework_TestCase
+use \photon\test\TestCase;
+
+class ParserTest extends TestCase
 {
     public function testVideoUploadFile()
     {

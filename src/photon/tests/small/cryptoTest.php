@@ -23,25 +23,14 @@
 
 namespace photon\tests\small\cryptoTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
-
 use \photon\crypto\Crypt;
-use \photon\crypto\Hash;
 use \photon\crypto\Sign;
 
-class cryptoTest extends \PHPUnit_Framework_TestCase
+class cryptoTest extends TestCase
 {
     protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
 
     public function testSimpleSign()
     {
@@ -84,19 +73,41 @@ class cryptoTest extends \PHPUnit_Framework_TestCase
     {
         $key = 'foobar';
         $data = 'very secret';
-        $iv = Crypt::getiv();
-        $encrypted = Crypt::encrypt($data, $key, $iv);
+
+        $encrypted = Crypt::encrypt($data, $key);
         $this->assertNotEquals($data, $encrypted);
-        $decrypted = Crypt::decrypt($encrypted, $key, $iv);
+
+        $decrypted = Crypt::decrypt($encrypted, $key);
         $this->assertEquals($data, $decrypted);
     }
 
-    public function testHashing()
+    public function testEncryptDecryptDefaultKey()
     {
-        $password = 'foobar';
-        $hashed = Hash::hashPass($password);
-        $this->assertNotEquals($password, $hashed);
-        $checked = crypt($password, $hashed);
-        $this->assertEquals($hashed, $checked);
+        $data = 'very secret';
+        $encrypted = Crypt::encrypt($data);
+        $this->assertNotEquals($data, $encrypted);
+
+        $decrypted = Crypt::decrypt($encrypted);
+        $this->assertEquals($data, $decrypted);
+    }
+
+    public function testEncryptNoKey()
+    {
+        $conf = Conf::dump();
+        unset($conf['secret_key']);
+        Conf::load($conf);
+
+        $this->setExpectedException('\photon\crypto\Exception');
+        $encrypted = Crypt::encrypt('data');
+    }
+
+    public function testDecryptNoKey()
+    {
+        $conf = Conf::dump();
+        unset($conf['secret_key']);
+        Conf::load($conf);
+
+        $this->setExpectedException('\photon\crypto\Exception');
+        $decrypted = Crypt::decrypt('crypted');
     }
 }

@@ -245,17 +245,14 @@ class RequestEntityTooLarge extends Response
      * @param Request The request object of the current page.
      * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.14
      */
-    public function __construct($request, $body=null)
+    public function __construct($body=null)
     {
         if ($body === null) {
-            $content = sprintf('The request is larger than the server is willing or able to process.' . "\n" .
-                               '413 - Request Entity Too Large');
-                               
-            parent::__construct($content, 'text/plain');
-        } else {
-            parent::__construct($body, 'text/plain');
+            $body = 'The request is larger than the server is willing or able to process.' . "\n" .
+                    '413 - Request Entity Too Large';
         }
-        
+
+        parent::__construct($body, 'text/plain');
         $this->status_code = 413;
     }
 }
@@ -350,7 +347,7 @@ class Json extends Response
  */
 class InternalServerError extends Response
 {
-    function __construct($exception, $mimetype=null)
+    function __construct()
     {
         $content = 'The server encountered an unexpected condition which prevented it from fulfilling your request.'."\n\n"
                 .'An email has been sent to the administrators, we will correct this error as soon as possible. Thank you for your comprehension.'
@@ -370,13 +367,8 @@ class InternalServerError extends Response
  */
 class ServerError extends Response
 {
-    public $exception;
-
     function __construct($exception, $mimetype=null)
     {
-        $this->exception = $exception;
-
-        $content = '';
         $admins = Conf::f('admins', array());
         if (count($admins) > 0) {
             // Get a nice stack trace and send it by emails.
@@ -389,6 +381,7 @@ class ServerError extends Response
                 $email->sendMail();
             }
         }
+
         try {
             $context = new template\Context(array('message' => $exception->getMessage()));
             $renderer = new template\Renderer('500.html');
@@ -400,6 +393,7 @@ class ServerError extends Response
                 .'An email has been sent to the administrators, we will correct this error as soon as possible. Thank you for your comprehension.'
                 ."\n\n".'500 - Internal Server Error';
         }
+
         parent::__construct($content, $mimetype);
         $this->status_code = 500;
     }
@@ -496,24 +490,18 @@ function pretty_server_error($e, $req)
  */
 class ServerErrorDebug extends Response
 {
-    public $exception;
-
     /**
      * Debug version of a server error.
      *
      * @param Exception The exception being raised.
      * @param $mimetype string Mime type
      */
-    function __construct($content, $mimetype=null)
+    function __construct($e, $req)
     {
-        parent::__construct($content, $mimetype);
-        $this->status_code = 500;
-    }
+        $content = html_pretty_server_error($e, $req);
 
-    function setContent($e, $req)
-    {
-        $this->exception = $e;
-        $this->content = html_pretty_server_error($e, $req);
+        parent::__construct($content, 'text/html');
+        $this->status_code = 500;
     }
 }
 

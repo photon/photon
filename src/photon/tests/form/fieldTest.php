@@ -27,11 +27,12 @@ include_once __DIR__ . '/../../locale/fr/formats.php';
 
 use photon\locale\fr\formats as fr_formats;
 
+use \photon\test\TestCase;
 use \photon\form\field;
 use \photon\form\Form;
 use \photon\form\Invalid;
 
-class FieldTest extends \PHPUnit_Framework_TestCase
+class FieldTest extends TestCase
 {
     /*
      *  Utils
@@ -61,8 +62,6 @@ class FieldTest extends \PHPUnit_Framework_TestCase
      */
     public function testVarcharField()
     {
-        $this->markTestIncomplete('Failed on travis, not on my laptop');
-
         $field = new field\Field();
         $this->assertEquals('abc', $field->clean('abc'));
 
@@ -90,8 +89,6 @@ class FieldTest extends \PHPUnit_Framework_TestCase
 
     public function testBooleanField()
     {
-        $this->markTestIncomplete('Failed on travis, not on my laptop');
-
         $params = array('required' => true);
         $field = new field\Boolean($params);
         $wrong_values = array(array('', 'required'));
@@ -221,12 +218,12 @@ class FieldTest extends \PHPUnit_Framework_TestCase
 
     public function testIntegerField()
     {
-        $field = new field\Integer();
+        $field = new field\IntegerNumber();
         $goods = array('1', '', '2', 234);
         $bads = array('++123', 'me@localhost');
         $this->validateSeries($field, $goods, $bads);
 
-        $field = new field\Integer(array('min_value' => -123,
+        $field = new field\IntegerNumber(array('min_value' => -123,
                                           'max_value' => 12));
         $bads = array(-124, 123);
         $goods = array(-123, 12, 0);
@@ -235,12 +232,12 @@ class FieldTest extends \PHPUnit_Framework_TestCase
 
     public function testFloatField()
     {
-        $field = new field\Float();
+        $field = new field\FloatNumber();
         $goods = array('1', '', '2', 234.234, '123789.987');
         $bads = array('++123', 'me@localhost');
         $this->validateSeries($field, $goods, $bads);
 
-        $field = new field\Float(array('min_value' => -123.0,
+        $field = new field\FloatNumber(array('min_value' => -123.0,
                                         'max_value' => 12.0));
         $bads = array(-124.0, 123.0);
         $goods = array(-123.0, 12.0, 0.0);

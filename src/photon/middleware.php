@@ -233,9 +233,9 @@ class Security
         $config = self::getConfig();
 
         // SSL Redirect
-        if ($config['ssl_redirect'] === true && isset($request->headers->URL_SCHEME) && isset($request->headers->host)) {
+        if (($config['ssl_redirect'] === true || $config['hsts'] === true) && isset($request->headers->URL_SCHEME) && isset($request->headers->host)) {
             if ($request->headers->URL_SCHEME === 'http') {
-                return new Redirect('https://' . $request->headers->host);
+                return new Redirect('https://' . $request->headers->host . $request->path);
             }
         }
         
@@ -291,3 +291,106 @@ class Security
         return $response;
     }
 }
+
+/**
+* Translation middleware.
+*
+* Load the translation of the website based on the useragent.
+*/
+class Translation
+{
+    private $sessionName = false;
+    private $cookieName = false;
+    private $langAvailable = false;
+
+    public function __construct()
+    {
+        $this->sessionName = Conf::f('lang_session', 'lang');
+        $this->cookieName = Conf::f('lang_cookie', 'lang');
+        $this->langAvailable = Conf::f('languages', array('en'));
+    }
+
+
+    /**
+    * Process the request.
+    *
+    * Find which language to use. By priority:
+    * 1. a session value
+    * 2. a cookie
+    * 3. the browser Accept-Language header
+    *
+    * @param $request The request
+    * @return bool false
+    */
+    public function process_request(&$request)
+    {
+        $lang = false;
+
+        // Session
+        if (!empty($request->session)) {
+            $lang = isset($request->session[$this->sessionName]) ? $request->session[$this->sessionName] : false;
+            if ($lang && !in_array($lang, $this->langAvailable)) {
+                $lang = false;
+            }
+        }
+        
+        // Cookie
+        if ($lang === false && isset($request->COOKIE[$this->cookieName])) {
+            $lang = $request->COOKIE[$this->cookieName];
+            if ($lang && !in_array($lang, $this->langAvailable)) {
+                $lang = false;
+            }
+        }
+
+        // HTTP Header
+        if ($lang === false && isset($request->headers->{'accept-language'})) {
+            $lang = \photon\translation\Translation::getAcceptedLanguage($this->langAvailable, $request->headers->{'accept-language'});
+        }
+
+        if ($lang === false) {
+            $lang = \photon\translation\Translation::getAcceptedLanguage($this->langAvailable);
+        }
+
+        if ($lang !== false) {
+            \photon\translation\Translation::setLocale($lang);
+            $request->i18n_code = $lang;
+        }
+
+        return false;
+    }
+
+    /**
+    * Process the response of a view.
+    *
+    */
+    public function process_response($request, $response)
+    {
+        if (isset($request->i18n_code) === false) {
+            return $response;
+        }
+
+        $vary_h = array();
+
+        // Save language in session or Cookie
+        if (isset($request->session)) {
+            $request->session[$this->sessionName] = $request->i18n_code;
+        } else {
+            $response->COOKIE[$this->cookieName] = $request->i18n_code;
+        }
+
+        // Update HTTP headers : Vary, Content-Language
+        if (!empty($response->headers['Vary'])) {
+            $vary_h = preg_split('/\s*,\s*/', $response->headers['Vary'], -1, PREG_SPLIT_NO_EMPTY);
+        }
+
+        if (!in_array('accept-language', $vary_h)) {
+            $vary_h[] = 'accept-language';
+        }
+
+        $response->headers['Vary'] = implode(', ', $vary_h);
+        $response->headers['Content-Language'] = $request->i18n_code;
+
+        return $response;
+    }
+}
+

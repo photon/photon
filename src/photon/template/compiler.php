@@ -66,7 +66,7 @@ class Compiler
      * could put something like: {$class} in a template, you need to
      * have the T_CLASS token as authorized variable.
      */
-    protected $_vartype = array(T_CHARACTER, T_CONSTANT_ENCAPSED_STRING,
+    protected $_vartype = array(T_VARIABLE, T_CONSTANT_ENCAPSED_STRING,
                                 T_DNUMBER, T_ENCAPSED_AND_WHITESPACE,
                                 T_LNUMBER, T_OBJECT_OPERATOR, T_STRING,
                                 T_WHITESPACE, T_ARRAY, T_CLASS, T_PRIVATE,
@@ -229,14 +229,13 @@ class Compiler
                                        Conf::f('template_modifiers', array()));
         Event::send('\photon\template\compiler\Compiler::construct_load_modifiers', null, $this->_modifier);
 
-        foreach ($this->_allowedTags as $name=>$model) {
+        foreach ($this->_allowedTags as $name => $model) {
             $this->_extraTags[$name] = new $model();
         }
 
         $this->_allowedInVar = array_merge($this->_vartype, $this->_op);
         $this->_allowedInExpr = array_merge($this->_vartype, $this->_op);
-        $this->_allowedAssign = array_merge($this->_vartype, $this->_assignOp,
-                                            $this->_op);
+        $this->_allowedAssign = array_merge($this->_vartype, $this->_assignOp, $this->_op);
 
         if ($options['load']) {
             $this->sourceFiles[] = $this->loadTemplateFile($this->_sourceFile);

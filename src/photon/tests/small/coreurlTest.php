@@ -23,22 +23,13 @@
 
 namespace photon\tests\small\coreurlTest;
 
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 use \photon\core\URL as URL;
 
-class coreurlTest extends \PHPUnit_Framework_TestCase
+class coreurlTest extends TestCase
 {
     protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
 
     public function testUrlGenerate()
     {

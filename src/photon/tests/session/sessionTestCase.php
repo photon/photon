@@ -22,9 +22,11 @@
 
 
 namespace photon\tests\session\sessionTestCase;
+
+use \photon\test\TestCase;
 use \photon\config\Container as Conf;
 
-abstract class SessionHighLevelTestCase extends \photon\test\TestCase
+abstract class SessionHighLevelTestCase extends TestCase
 {
     /*
      *  Simple page which do not used session

@@ -23,22 +23,10 @@
 
 namespace photon\tests\testTest;
 
-use \photon\config\Container as Conf;
+use \photon\test\TestCase;
 
-class testTest extends \PHPUnit_Framework_TestCase
+class testTest extends TestCase
 {
-    protected $conf;
-
-    public function setUp()
-    {
-        $this->conf = Conf::dump();
-    }
-
-    public function tearDown()
-    {
-        Conf::load($this->conf);
-    }
-
     /**
      * Just testing the high level interface.
      */
