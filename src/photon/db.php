@@ -61,7 +61,26 @@ class Connection
     }
 }
 
+/*
+ *  MongoDB driver (pecl mongodb)
+ *  See https://docs.mongodb.com/ecosystem/drivers/php/
+ *
+ *  require mongodb/mongodb to use it
+ */
 class MongoDB
+{
+    public static function get($def)
+    {
+        $client = new \MongoDB\Client($cfg['server'], $cfg['options'], $cfg['options']);
+        return $database = $client->{$cfg['database']};
+    }
+}
+
+/*
+ *  Legacy MongoDB driver (pecl mongo)
+ *  See https://docs.mongodb.com/ecosystem/drivers/php/
+ */
+class Mongo
 {
     public static function get($def)
     {
