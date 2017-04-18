@@ -71,8 +71,8 @@ class MongoDB
 {
     public static function get($def)
     {
-        $client = new \MongoDB\Client($cfg['server'], $cfg['options'], $cfg['options']);
-        return $database = $client->{$cfg['database']};
+        $client = new \MongoDB\Client($def['server'], $def['options'], $def['options']);
+        return $database = $client->{$def['database']};
     }
 }
 
