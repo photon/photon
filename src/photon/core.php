@@ -35,35 +35,27 @@ use photon\event\Event;
 class Exception extends \Exception {}
 class NotImplemented extends \Exception {}
 
-/**
- * Create cache for middleware
- */
-class MiddlewareCache
+abstract class Middleware
 {
-    private $middleware = array();
+    protected $classes;
+    protected $middleware;
 
-    /*
-     *  Create the cache for middleware
-     */
     public function __construct()
     {
-        // Create initial cache
-        $this->createCache();
-
-        // Reload cache if notified
-        Event::connect('Middleware::updated', array($this, 'createCache'));
+        $this->classes = array();
+        $this->middleware = array();
     }
 
     /**
-     * Create the cache from the photon configuration
+     * Create the middleware cache
      */
-    private function createCache()
+    protected function createCache()
     {
         // Clear previous middleware
         $this->middleware = array();
 
         // Load middleware
-        foreach (Conf::f('middleware_classes', array()) as $mw) {
+        foreach ($this->classes as $mw) {
             $obj = new $mw();
             $process_request = false;
             $process_response = false;
@@ -116,6 +108,34 @@ class MiddlewareCache
     }
 }
 
+/*
+ *  Dummy middleware
+ */
+class MiddlewareDummy extends Middleware
+{
+}
+
+/**
+ * Load middleware from the configuration
+ */
+class MiddlewareFromConfig extends Middleware
+{
+    /*
+     *  Create the cache for middleware
+     */
+    public function __construct($key='middleware_classes')
+    {
+        parent::__construct();
+
+        // Create initial cache
+        $this->classes = Conf::f($key, array());
+        $this->createCache();
+
+        // Reload cache if notified
+        Event::connect('Middleware::updated', array($this, 'createCache'));
+    }
+}
+
 
 /**
  * Dispatch a request to the correct handler.
@@ -125,11 +145,58 @@ class MiddlewareCache
  */
 class Dispatcher
 {
+    /*
+     *  Enable the debug mode of the dispatcher
+     *  During debug, the dispatcher show complete backtrace and may include sensitive data.
+     *  Ensure to set to false in production
+     */
+    private $debug = false;
+
+    /*
+     *  Middleware to apply to each requests
+     */
     private $mw = null;
 
-    public function __construct()
+    /*
+     *  Views definitions of the application
+     */
+    private $views = array();
+
+    /*
+     *  URL prefix
+     *  Usefull if you are hosted in a sub-folder of a domain
+     */
+    private $prefix = '';
+
+    /*
+     *  Timer configuration
+     */
+    public $timer = 'photon.dispatch';
+
+    public function __construct($views=null, $middleware=null, $prefix=null, $debug=null)
     {
-        $this->mw = new MiddlewareCache;
+        // Initialize views routing table
+        if ($views === null) {
+            $views = Conf::f('urls', array());
+        }
+        $this->views = $views;
+
+        // Initialize middleware
+        if ($middleware === null) {
+            $middleware = new MiddlewareFromConfig;
+        } 
+        $this->mw = $middleware;
+
+        if ($prefix === null) {
+            $prefix = Conf::f('base_urls', '');
+        }
+        $this->prefix = $prefix;
+
+        // Cache the debug status
+        if ($debug === null) {
+            $debug = Conf::f('debug', false);
+        }
+        $this->debug = (bool) $debug;
     }
 
     /**
@@ -141,7 +208,7 @@ class Dispatcher
      */
     public function dispatch($req)
     {
-        Timer::start('photon.dispatch');
+        Timer::start($this->timer);
 
         $response = false;
         try {
@@ -151,19 +218,23 @@ class Dispatcher
             }
             $response = $this->mw->process_response($req, $response);
         } catch (\Exception $e) {
+
             Event::send('\photon\core\Dispatcher::dispatchException', null, $e);
-            if (true !== Conf::f('debug', false)) {
-                $response = new \photon\http\response\ServerError($e);
+
+            // Render a HTTP 500 page
+            if ($this->debug) {
+                $response = new \photon\http\response\ServerErrorDebug($e->getMessage());
+                $response->setContent($e, $req);
             } else {
-                $response = new \photon\http\response\ServerErrorDebug($e, $req);
+                $response = new \photon\http\response\ServerError($e, $req);
             }
         }
 
         $view_name = isset($req->view[0]['name']) 
             ? $req->view[0]['name'] 
             : 'not_defined';
-        Log::perf(array('photon.dispatch', $req->uuid, 
-                        Timer::stop('photon.dispatch'),
+        Log::perf(array($this->timer, $req->uuid, 
+                        Timer::stop($this->timer),
                         $view_name,
                         array($req->method, $req->path)));
 
@@ -179,9 +250,9 @@ class Dispatcher
     private function match($req)
     {
         $checked = array();
-        $views = Conf::f('urls', array());
+        $views = $this->views;
         if ('@' !== $req->path[0]) {
-            $to_match = substr($req->path, strlen(Conf::f('base_urls', '')));
+            $to_match = substr($req->path, strlen($this->prefix));
         } else {
             $to_match = $req->path;
         }
