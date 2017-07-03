@@ -135,7 +135,6 @@ class Connection
 
         if ($this->pub_addr !== null) {
             $this->pub_socket = new \ZMQSocket($ctx, \ZMQ::SOCKET_PUB);
-            $this->pub_socket->setSockOpt(\ZMQ::SOCKOPT_IDENTITY, uniqid());
             $this->pub_socket->connect($this->pub_addr);
         } else {
             $this->pub_socket = null;

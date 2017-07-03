@@ -219,7 +219,7 @@ namespace
                 $params['project'] = $result->command->args['project'];
                 $params['conf_file'] = $result->command->options['conf_file'];
                 $params['exclude_files'] = $result->command->options['exclude_files'];
-                $params['composer'] = $result->command->options['composer'];
+                $params['stub'] = $result->command->options['stub'];
                 $m = new \photon\manager\Packager($params);
                 $m->run();
                 break;

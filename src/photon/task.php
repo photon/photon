@@ -303,7 +303,7 @@ abstract class BaseTask
     }
 }
 
-class AsyncTask extends BaseTask
+abstract class AsyncTask extends BaseTask
 {
     public $sub_addr = SUB_ADDR;
     public $ctl = null; /**< Socket getting the jobs. */
@@ -324,7 +324,7 @@ class AsyncTask extends BaseTask
  * This task will directly perform the operation and send an answer.
  *
  */
-class SyncTask extends BaseTask
+abstract class SyncTask extends BaseTask
 {
     public $sub_addr = SUB_ADDR;
     public $ctl = null; /**< Socket getting the jobs. */
