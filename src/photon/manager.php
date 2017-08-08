@@ -304,6 +304,11 @@ class Task extends Service
     public function runService()
     {
         $tasks = Conf::f('installed_tasks');
+        if (isset($tasks[$this->task]) === false) {
+            $this->info(sprintf('Unknown task %s', $this->task));
+            return false;
+        }
+
         $conf = Conf::f('photon_task_' . $this->task, array());
         $task = new $tasks[$this->task]($conf);
 
