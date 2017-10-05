@@ -16,20 +16,8 @@ fi
 #
 #   PHP-ZMQ is broken on travis, the extension do not report the correct version code
 #
-if [ "$TRAVIS_PHP_VERSION" == "5.3" -o "$TRAVIS_PHP_VERSION" == "5.4" ]; then
-    echo 'extension = "zmq.so"'     >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
-else
-    yes '' | pecl install zmq-1.1.3
-fi;
+yes '' | pecl install zmq-1.1.3
 
-#
-#   Enable pecl_http for PHP-5.4 because post-install do not
-#
-if [ "$TRAVIS_PHP_VERSION" == "5.4" ]; then
-    echo 'extension = "raphf.so"'   >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
-    echo 'extension = "propro.so"'  >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
-    echo 'extension = "http.so"'    >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
-fi;
 
 #
 #   Install pecl_http
