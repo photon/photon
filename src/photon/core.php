@@ -120,19 +120,27 @@ class MiddlewareDummy extends Middleware
  */
 class MiddlewareFromConfig extends Middleware
 {
+    private $key;
+
     /*
      *  Create the cache for middleware
      */
     public function __construct($key='middleware_classes')
     {
         parent::__construct();
+        $this->key = $key;
 
         // Create initial cache
-        $this->classes = Conf::f($key, array());
-        $this->createCache();
+        $this->reload();
 
         // Reload cache if notified
-        Event::connect('Middleware::updated', array($this, 'createCache'));
+        Event::connect('Middleware::updated', array($this, 'reload'));
+    }
+
+    public function reload()
+    {
+        $this->classes = Conf::f($this->key, array());
+        $this->createCache();
     }
 }
 
