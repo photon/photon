@@ -232,7 +232,6 @@ class Dispatcher
             // Render a HTTP 500 page
             if ($this->debug) {
                 $response = new \photon\http\response\ServerErrorDebug($e, $req);
-                $response->setContent($e, $req);
             } else {
                 $response = new \photon\http\response\ServerError($e);
             }
