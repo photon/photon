@@ -185,21 +185,22 @@ class Response
 
     function sendIterable($msg, $conn, $output_body=true)
     {
+        // Send the header
         $headers = $this->getHeaders();
+        $conn->send($msg->sender, $msg->conn_id, $headers);
 
         if (!$output_body) {
-            $conn->send($msg->sender, $msg->conn_id, $headers);            
-
             return;
         }
-        $out = $headers . "\r\n";
+
+        // Send the body
+        $conn->send($msg->sender, $msg->conn_id, "\r\n");
         foreach ($this->content as $chunk) {
-            $out .= $chunk;
-            $conn->send($msg->sender, $msg->conn_id, $out);            
-            $out = '';
+            $conn->send($msg->sender, $msg->conn_id, $chunk);
         }
 
-        return;
+        // Send a empty chunk to close connection
+        $conn->send($msg->sender, $msg->conn_id, '');
     }
 
     /**
