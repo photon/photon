@@ -367,12 +367,12 @@ class InternalServerError extends Response
  */
 class ServerError extends Response
 {
-    function __construct($exception, $mimetype=null)
+    function __construct($exception, $request, $mimetype=null)
     {
         $admins = Conf::f('admins', array());
         if (count($admins) > 0) {
             // Get a nice stack trace and send it by emails.
-            $stack = pretty_server_error($exception);
+            $stack = pretty_server_error($exception, $request);
             $subject = $exception->getMessage();
             $subject = substr(strip_tags(nl2br($subject)), 0, 50).'...';
             foreach ($admins as $admin) {
