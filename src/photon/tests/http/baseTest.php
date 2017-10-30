@@ -158,7 +158,7 @@ class baseTest extends TestCase
         );
 
         $e = new \Exception('Bad exception', 123);
-        $res = new \photon\http\response\ServerError($e);
+        $res = new \photon\http\response\ServerError($e, $req);
         $this->assertEquals("Server Error!\n", $res->content);
     }
 }

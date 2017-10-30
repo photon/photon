@@ -144,10 +144,10 @@ class ResponseTest extends TestCase
 
     public function testServerError()
     {
-        $res = new response\ServerError(new \Exception);
+        $request = \photon\test\HTTP::baseRequest('GET', '/');
+        $res = new response\ServerError(new \Exception, $request);
         $this->assertSame(500, $res->status_code);
     }
-
 
     public function testNotImplemented()
     {

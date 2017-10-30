@@ -233,7 +233,7 @@ class Dispatcher
             if ($this->debug) {
                 $response = new \photon\http\response\ServerErrorDebug($e, $req);
             } else {
-                $response = new \photon\http\response\ServerError($e);
+                $response = new \photon\http\response\ServerError($e, $req);
             }
         }
 
