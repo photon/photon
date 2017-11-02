@@ -571,7 +571,8 @@ class Packager extends Base
     public $conf_file; /**< Configuration file loaded in the phar */
     public $exclude_files = ''; /**< Exclude files from the packaging */
     public $composer = null; /**< Build a phar for the composer version of photon */
-    
+    public $stub = null; /**< Build a phar with a custom stub */
+
     public function run()
     {
         $this->loadConfig(); 
