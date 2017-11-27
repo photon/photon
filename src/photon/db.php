@@ -72,6 +72,26 @@ class MongoDB
     public static function get($def)
     {
         $client = new \MongoDB\Client($def['server'], $def['options'], $def['options']);
+
+        // Ensure the database is online
+        // The time limit in milliseconds for detecting when a replica set’s primary is unreachable is 10s
+        // https://docs.mongodb.com/v3.2/reference/replica-configuration/#rsconf.settings.electionTimeoutMillis
+        $retry=10;
+        while ($retry > 0) {
+            $retry--;
+
+            try {
+                $client->listDatabases();
+            } catch (\MongoDB\Driver\Exception\ConnectionTimeoutException $e) {
+                if ($retry === 0) {
+                    throw new Exception('No suitable servers found');
+                }
+
+                sleep(2);
+                continue;
+            }
+        }
+
         return $database = $client->{$def['database']};
     }
 }
