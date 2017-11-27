@@ -87,7 +87,9 @@ class MongoDB
             $retry--;
 
             try {
-                $client->listDatabases();
+                $manager = $client->getManager();
+                $manager->executeCommand('admin', new \MongoDB\Driver\Command(array('isMaster' => 1)));
+                break;
             } catch (\MongoDB\Driver\Exception\ConnectionTimeoutException $e) {
                 if ($retry === 0) {
                     throw new Exception('No suitable servers found');
