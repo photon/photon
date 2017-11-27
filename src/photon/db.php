@@ -54,7 +54,13 @@ class Connection
             }
 
             $engine = $defs[$db]['engine'];
-            self::$conns[$db] = $engine::get($defs[$db]);
+            $handler = $engine::get($defs[$db]);
+
+            if (isset($defs[$db]['cache']) && $defs[$db]['cache'] === true) {
+                self::$conns[$db] = $handler;
+            }
+
+            return $handler;
         }
 
         return self::$conns[$db];
@@ -74,7 +80,7 @@ class MongoDB
         $client = new \MongoDB\Client($def['server'], $def['options'], $def['options']);
 
         // Ensure the database is online
-        // The time limit in milliseconds for detecting when a replica set’s primary is unreachable is 10s
+        // The time limit in milliseconds for detecting when a replica set’s primary is unreachable: 10s
         // https://docs.mongodb.com/v3.2/reference/replica-configuration/#rsconf.settings.electionTimeoutMillis
         $retry=10;
         while ($retry > 0) {
