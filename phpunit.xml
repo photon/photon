@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit colors="true" bootstrap="vendor/photon/photon/src/photon/testbootstrap.php">
+<phpunit colors="true" bootstrap="src/photon/testbootstrap.php">
     <testsuites>
-        <testsuite name="MongoDB Session Tests for Photon">
-            <directory>vendor/photon/photon/src/photon/tests/</directory>
+        <testsuite name="Tests for Photon">
+            <directory>src/photon/tests/</directory>
         </testsuite>
     </testsuites>
     <filter>

@@ -5,3 +5,6 @@ build/hnu
 build/photon*
 docs/
 report/
+
+composer.lock
+vendor/

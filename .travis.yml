@@ -13,8 +13,6 @@ matrix:
 
 before_script:
   - ./scripts/travis
-  - composer init --no-interaction --stability=dev
-  - composer require "photon/photon:dev-master"
-  - composer require "phpunit/phpunit:~5.0"
+  - composer install
   
-script: php vendor/photon/photon/src/photon.php selftest
+script: ./vendor/bin/phpunit
