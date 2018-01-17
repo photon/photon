@@ -115,10 +115,10 @@ class Server
 
         // We are using polling to not block indefinitely and be able
         // to process the SIGTERM signal. The poll timeout is .5 second.
-        $timeout = 500; 
+        $timeout = 500;
         $to_read = $to_write = array();
         $gc = gc_enabled();
-        $i = 0; 
+        $i = 0;
         while (true) {
             $events = 0;
             try {
@@ -148,8 +148,7 @@ class Server
             pcntl_signal_dispatch();
             if ($gc && 500 < $i) {
                 $collected = gc_collect_cycles();
-                Log::debug(array('photon.server.start', 
-                                 'collected_cycles', $collected));
+                Log::debug(array('photon.server.start', 'collected_cycles', $collected));
                 $i = 0;
             }
         }
@@ -169,7 +168,7 @@ class Server
                    substr($rnd, 0, 8), substr($rnd, 8, 4),
                    substr($rnd, 12, 3), substr($rnd, 15, 3),
                    substr($rnd, 18, 12));
-        
+
         $mess = $conn->recv();
 
         if ($mess->is_disconnect()) {
@@ -186,7 +185,7 @@ class Server
             $req->conn = $conn;
 
             shortcuts\Server::setCurrentRequest($req);
-            
+
             list($req, $response) = $this->dispatcher->dispatch($req);
             // If the response is false, the view is simply not
             // sending an answer, most likely the work was pushed to
@@ -199,6 +198,19 @@ class Server
                     Log::debug(array('photon.process_request', $uuid,
                                      'SendIterable'));
                     $response->sendIterable($mess, $conn);
+                }
+
+                // Check if the connection need to be close
+                $http_version = $req->getHeader('VERSION', 'HTTP/1.0');
+                if ($http_version === 'HTTP/1.0') {
+                  $conn->close($mess);
+                }
+
+                if ($http_version === 'HTTP/1.1') {
+                  $action = $req->getHeader('connection', 'keep-alive');
+                  if ($action === 'close') {
+                    $conn->close($mess);
+                  }
                 }
             }
 

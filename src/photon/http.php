@@ -187,20 +187,20 @@ class Response
     {
         // Send the header
         $headers = $this->getHeaders();
-        $conn->send($msg->sender, $msg->conn_id, $headers);
+        $conn->reply($msg, $headers);
 
         if (!$output_body) {
             return;
         }
 
         // Send the body
-        $conn->send($msg->sender, $msg->conn_id, "\r\n");
+        $conn->reply($msg, "\r\n");
         foreach ($this->content as $chunk) {
-            $conn->send($msg->sender, $msg->conn_id, $chunk);
+            $conn->reply($msg, $chunk);
         }
 
         // Send a empty chunk to close connection
-        $conn->send($msg->sender, $msg->conn_id, '');
+        $conn->close($msg);
     }
 
     /**

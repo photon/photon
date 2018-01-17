@@ -157,7 +157,7 @@ class Connection
     {
         if ($this->ctrl_socket === null) {
             throw new Exception('Mongrel2 control socket not initialized');
-        }    
+        }
 
         if ($this->ctrl_waiting_answer === false) {
             $this->ctrl_socket->send($query);
@@ -191,7 +191,7 @@ class Connection
      * parsing the request to not load everything in memory.
      *
      */
-    public function recv() 
+    public function recv()
     {
         if ($this->pull_socket === null) {
             throw new Exception('Mongrel2 pull socket not initialized');
@@ -243,8 +243,8 @@ class Connection
             list($body,) = $this->parse_netstring(stream_get_contents($fp));
             $body = json_decode($body);
             fclose($fp);
-        } elseif ('POST' === $headers->METHOD 
-                  || (isset($headers->{'content-length'}) 
+        } elseif ('POST' === $headers->METHOD
+                  || (isset($headers->{'content-length'})
                       && 0 < (int) $headers->{'content-length'})) {
             // Here the parsing of the body should be done.
             //$body = stream_get_contents($fp);
@@ -253,14 +253,24 @@ class Connection
             list($len, $rest) = \explode(':', $line, 2);
             fseek($fp, -strlen($rest), SEEK_CUR);
             // The body is parsed in the \photon\http\Request class,
-            // only if needed. 
+            // only if needed.
             $body = $fp;
         } else {
             $body = '';
             fclose($fp);
-        } 
+        }
 
         return new Message($sender, $conn_id, $path, $headers, $body);
+    }
+
+    /**
+     * Ask mongrel2 to close the connection for this message
+     *
+     * @param $mess Message
+     */
+    public function close($mess)
+    {
+        $this->reply($mess, '');
     }
 
     /**
@@ -268,7 +278,7 @@ class Connection
      *
      * The listener is the one defined in the message.
      *
-     * @param $mess Message 
+     * @param $mess Message
      * @param $payload What to send to the listener
      * @return bool
      */
@@ -330,7 +340,7 @@ class Connection
         // We need to send multiple times the data. We are going to send
         // the data in series of 128 to the clients. 128 is the default
         // maximum number of listeners which can be addressed in one go
-        // with Mongrel2. This value can be changed in the configuration. 
+        // with Mongrel2. This value can be changed in the configuration.
         $a = 1;
         foreach (array_chunk($listeners, 128) as $chunk) {
             $a = $a & (int) $this->send($uuid, \join(' ', $chunk),  $payload);
@@ -357,4 +367,3 @@ class Connection
         );
     }
 }
-
