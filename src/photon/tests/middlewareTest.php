@@ -129,6 +129,95 @@ class MiddlewareSecurityTest extends TestCase
         \photon\middleware\Security::clearConfig();
     }
 
+    // X-Content-Type-Options
+    public function testContentTypeOptions()
+    {
+        // Enable (default)
+        \photon\middleware\Security::clearConfig();
+        $req = HTTP::baseRequest('GET', '/');
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
+        $this->assertArrayHasKey('X-Content-Type-Options', $resp->headers);
+        $this->assertEquals('nosniff', $resp->headers['X-Content-Type-Options']);
+
+        // Disable
+        \photon\middleware\Security::clearConfig();
+        Conf::set('middleware_security', array(
+            'nosniff' => false,
+        ));
+
+        $req = HTTP::baseRequest('GET', '/');
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
+        $this->assertArrayNotHasKey('X-Content-Type-Options', $resp->headers);
+    }
+
+    // X-Frame-Options
+    public function testFrameOptions()
+    {
+        // SAMEORIGIN (default)
+        \photon\middleware\Security::clearConfig();
+        $req = HTTP::baseRequest('GET', '/');
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
+        $this->assertArrayHasKey('X-Frame-Options', $resp->headers);
+        $this->assertEquals('SAMEORIGIN', $resp->headers['X-Frame-Options']);
+
+        // DENY
+        \photon\middleware\Security::clearConfig();
+        Conf::set('middleware_security', array(
+            'frame' => 'DENY',
+        ));
+        $req = HTTP::baseRequest('GET', '/');
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
+        $this->assertArrayHasKey('X-Frame-Options', $resp->headers);
+        $this->assertEquals('DENY', $resp->headers['X-Frame-Options']);
+
+        // Disabled
+        \photon\middleware\Security::clearConfig();
+        Conf::set('middleware_security', array(
+            'frame' => false,
+        ));
+        $req = HTTP::baseRequest('GET', '/');
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
+        $this->assertArrayNotHasKey('X-Frame-Options', $resp->headers);
+    }
+
+    // X-XSS-Protection
+    public function testXSSProtection()
+    {
+        // 1 (default)
+        \photon\middleware\Security::clearConfig();
+        $req = HTTP::baseRequest('GET', '/');
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
+        $this->assertArrayHasKey('X-XSS-Protection', $resp->headers);
+        $this->assertEquals('1', $resp->headers['X-XSS-Protection']);
+
+        // 1; mode=block
+        \photon\middleware\Security::clearConfig();
+        Conf::set('middleware_security', array(
+            'xss' => '1; mode=block',
+        ));
+        $req = HTTP::baseRequest('GET', '/');
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
+        $this->assertArrayHasKey('X-XSS-Protection', $resp->headers);
+        $this->assertEquals('1; mode=block', $resp->headers['X-XSS-Protection']);
+
+        // Disabled
+        \photon\middleware\Security::clearConfig();
+        Conf::set('middleware_security', array(
+            'xss' => false,
+        ));
+        $req = HTTP::baseRequest('GET', '/');
+        $dispatcher = new \photon\core\Dispatcher;
+        list($req, $resp) = $dispatcher->dispatch($req);
+        $this->assertArrayNotHasKey('X-XSS-Protection', $resp->headers);
+    }
+
     // SSL Redirection disable (default)
     public function testSSLRedirect_defaultConfig()
     {
@@ -150,7 +239,6 @@ class MiddlewareSecurityTest extends TestCase
         list($req, $resp) = $dispatcher->dispatch($req);
         $this->assertEquals(302, $resp->status_code);
     }
-
 
     // SSL Redirection enable (manually)
     public function testSSLRedirectToSamePath()

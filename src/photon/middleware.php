@@ -222,6 +222,9 @@ class Security
                 'report-uri' => false
             ),
             'ssl_redirect' => false,
+            'nosniff' => true,
+            'frame' => 'SAMEORIGIN',
+            'xss' => '1'
         );
 
         self::$config = array_replace_recursive($default, $config);
@@ -286,6 +289,24 @@ class Security
 
                 $response->headers['Public-Key-Pins'] = implode('; ', $value);
             }
+        }
+
+        // X-Content-Type-Options
+        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
+        if ($config['nosniff'] === true) {
+            $response->headers['X-Content-Type-Options'] = 'nosniff';
+        }
+
+        // X-Frame-Options
+        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
+        if (in_array($config['frame'], array('SAMEORIGIN', 'DENY'))) {
+            $response->headers['X-Frame-Options'] = $config['frame'];
+        }
+
+        // X-XSS-Protection
+        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection
+        if ($config['xss'] !== false) {
+            $response->headers['X-XSS-Protection'] = $config['xss'];
         }
 
         return $response;
