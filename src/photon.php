@@ -95,27 +95,6 @@ namespace photon
                                  )
                  ),
 
-                      'test' =>
-           array('desc' => 'run the tests of your project. Uses config.test.php as default config file',
-                 'opts' => array('directory' =>
-                                 array('long_name'   => '--coverage-html',
-                                       'action'      => 'StoreString',
-                                       'help_name'   => 'path/folder',
-                                       'description' => 'directory to store the code coverage report'),
-                                 'bootstrap' =>
-                                 array('long_name'   => '--bootstrap',
-                                       'action'      => 'StoreString',
-                                       'help_name'   => 'path/bootstrap.php',
-                                       'description' => 'bootstrap PHP file given to PHPUnit. By default the photon/testbootstrap.php file'))),
-
-                      'selftest' =>
-           array('desc' => 'run the Photon self test procedure',
-                 'opts' => array('directory' =>
-                                 array('long_name'   => '--coverage-html',
-                                       'action'      => 'StoreString',
-                                       'help_name'   => 'path/folder',
-                                       'description' => 'directory to store the code coverage report'))),
-
 
                       'package' =>
            array('desc' => 'package a project as a standalone .phar file',
@@ -180,41 +159,36 @@ namespace
                 $m = new \photon\manager\Init($params);
                 $m->run();
                 break;
+
             case 'show-config':
                 $m = new \photon\manager\ShowConfig($params);
                 $m->run();
                 break;
+
             case 'pot':
                 $params['potfile'] = isset($result->command->options['potfile']) ? $result->command->options['potfile'] : 'myproject.pot';
                 $m = new \photon\manager\PotGenerator($params);
                 exit($m->run());
                 break;
-            case 'test':
-                $params['directory'] = $result->command->options['directory'];
-                $params['bootstrap'] = $result->command->options['bootstrap'];
-                $m = new \photon\manager\RunTests($params);
-                exit($m->run());
-                break;
-            case 'selftest':
-                $params['directory'] = $result->command->options['directory'];
-                $m = new \photon\manager\SelfTest($params);
-                exit($m->run());
-                break;
+
             case 'serve':
                 $params += $result->command->options;
                 $m = new \photon\manager\Server($params);
                 exit($m->run()); 
                 break;
+
             case 'worker':
                 $params['task'] = $result->command->args['task'];
                 $m = new \photon\manager\Task($params);
                 exit($m->run());
                 break;
+
             case 'makekey':
                 $params['length'] = $result->command->options['length'];
                 $m = new \photon\manager\SecretKeyGenerator($params);
                 $m->run();
                 break;
+
             case 'package':
                 $params['project'] = $result->command->args['project'];
                 $params['conf_file'] = $result->command->options['conf_file'];
@@ -223,6 +197,7 @@ namespace
                 $m = new \photon\manager\Packager($params);
                 $m->run();
                 break;
+
             default:
                 // no command entered
                 print "No command entered, nothing to do.\n";
