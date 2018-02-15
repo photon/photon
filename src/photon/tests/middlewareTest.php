@@ -218,6 +218,29 @@ class MiddlewareSecurityTest extends TestCase
         $this->assertArrayNotHasKey('X-XSS-Protection', $resp->headers);
     }
 
+    // CSP
+    public function testCSP()
+    {
+      // Not set (default)
+      \photon\middleware\Security::clearConfig();
+      $req = HTTP::baseRequest('GET', '/');
+      $dispatcher = new \photon\core\Dispatcher;
+      list($req, $resp) = $dispatcher->dispatch($req);
+      $this->assertArrayNotHasKey('Content-Security-Policy', $resp->headers);
+
+      // Custom value
+      $csp = "default-src 'self'";
+      \photon\middleware\Security::clearConfig();
+      Conf::set('middleware_security', array(
+          'csp' => $csp,
+      ));
+      $req = HTTP::baseRequest('GET', '/');
+      $dispatcher = new \photon\core\Dispatcher;
+      list($req, $resp) = $dispatcher->dispatch($req);
+      $this->assertArrayHasKey('Content-Security-Policy', $resp->headers);
+      $this->assertEquals($csp, $resp->headers['Content-Security-Policy']);
+    }
+
     // SSL Redirection disable (default)
     public function testSSLRedirect_defaultConfig()
     {

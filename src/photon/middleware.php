@@ -1,4 +1,4 @@
-<?php 
+<?php
 /* -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /*
 # ***** BEGIN LICENSE BLOCK *****
@@ -52,7 +52,7 @@ class Gzip
         // taking into account the Accept-Encoding as it may not be
         // applied for it and thus a good browser afterward would not
         // benefit from the gzip version.
-        \photon\http\HeaderTool::updateVary($response, 
+        \photon\http\HeaderTool::updateVary($response,
                                             array('Accept-Encoding'));
 
         // Avoid gzipping if we've already got a content-encoding.
@@ -63,7 +63,7 @@ class Gzip
         $ctype = strtolower($response->headers['Content-Type']);
         // MSIE have issues with gzipped respones of various content types.
         if (false !== strpos(strtolower($request->getHeader('user-agent')), 'msie')) {
-            if (0 !== strpos($ctype, 'text/') 
+            if (0 !== strpos($ctype, 'text/')
                 || false !== strpos($ctype, 'javascript')) {
 
                 return $response;
@@ -77,8 +77,8 @@ class Gzip
         }
         $accept = $request->getHeader('accept-encoding');
         // deflate is the fastest, so first
-        $methods = array('deflate' => 'gzdeflate', 
-                         'gzip' => 'gzencode'); 
+        $methods = array('deflate' => 'gzdeflate',
+                         'gzip' => 'gzencode');
 
         foreach ($methods as $encoding => $encoder) {
             if (preg_match('/\b' . $encoding . '\b/i', $accept)) {
@@ -224,7 +224,8 @@ class Security
             'ssl_redirect' => false,
             'nosniff' => true,
             'frame' => 'SAMEORIGIN',
-            'xss' => '1'
+            'xss' => '1',
+            'csp' => false,
         );
 
         self::$config = array_replace_recursive($default, $config);
@@ -241,7 +242,7 @@ class Security
                 return new Redirect('https://' . $request->headers->host . $request->path);
             }
         }
-        
+
         return false;
     }
 
@@ -256,7 +257,7 @@ class Security
         // HTTP Strict Transport Security
         if ($config['hsts'] === true) {
             $opts = $config['hsts_options'];
-            
+
             $value = array(
                 'max-age=' . $opts['max-age']
             );
@@ -309,6 +310,12 @@ class Security
             $response->headers['X-XSS-Protection'] = $config['xss'];
         }
 
+        // CSP
+        // https://www.w3.org/TR/CSP2/
+        if ($config['csp'] !== false) {
+            $response->headers['Content-Security-Policy'] = $config['csp'];
+        }
+
         return $response;
     }
 }
@@ -354,7 +361,7 @@ class Translation
                 $lang = false;
             }
         }
-        
+
         // Cookie
         if ($lang === false && isset($request->COOKIE[$this->cookieName])) {
             $lang = $request->COOKIE[$this->cookieName];
@@ -414,4 +421,3 @@ class Translation
         return $response;
     }
 }
-
