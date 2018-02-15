@@ -1,3 +1,8 @@
+# Photon (develop)
+
+## Changes
+- Remove PEAR stuff from the hnu script, support only composer install
+
 # Photon 2.1.1 - Wed, 10 Jan 2018 22:27:00 +0000
 
 ## Changes
