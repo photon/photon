@@ -239,9 +239,82 @@ class NotSupported extends Response
     }
 }
 
+class NotAcceptable extends Response
+{
+    public function __construct()
+    {
+        $content = '406 - Not Acceptable';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 406;
+    }
+}
+
+class RequestTimeout extends Response
+{
+    public function __construct()
+    {
+        $content = '408 - Request Timeout';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 408;
+    }
+}
+
+class Conflict extends Response
+{
+    /**
+     * The 409 (Conflict) status code indicates that the request could not
+     * be completed due to a conflict with the current state of the target resource.
+     *
+     * @see https://tools.ietf.org/html/rfc7231#section-6.5.8
+     */
+    public function __construct()
+    {
+        $content = '409 - Conflict';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 409;
+    }
+}
+
+class Gone extends Response
+{
+    /**
+     * The 410 (Gone) status code indicates that access to the target
+     * resource is no longer available at the origin server and that this
+     * condition is likely to be permanent.
+     *
+     * @see https://tools.ietf.org/html/rfc7231#section-6.5.9
+     */
+    public function __construct()
+    {
+        $content = '410 - Gone';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 410;
+    }
+}
+
+class LengthRequired extends Response
+{
+    /**
+     * The 411 (Length Required) status code indicates that the server
+     * refuses to accept the request without a defined Content-Length.
+     *
+     * @see https://tools.ietf.org/html/rfc7231#section-6.5.10
+     */
+    public function __construct()
+    {
+        $content = '411 - Length Required';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 411;
+    }
+}
+
 class RequestEntityTooLarge extends Response
 {
     /**
+     * The 413 (Payload Too Large) status code indicates that the server is
+     * refusing to process a request because the request payload is larger
+     * than the server is willing or able to process.
+     *
      * @param Request The request object of the current page.
      * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.14
      */
@@ -257,6 +330,82 @@ class RequestEntityTooLarge extends Response
     }
 }
 
+/**
+ * Alias of RequestEntityTooLarge
+ * @see https://tools.ietf.org/html/rfc7231#section-6.5.11
+ */
+class PayloadTooLarge extends RequestEntityTooLarge {}
+
+class URITooLong extends Response
+{
+    /**
+     * The 414 (URI Too Long) status code indicates that the server is
+     * refusing to service the request because the request-target (Section
+     * 5.3 of [RFC7230]) is longer than the server is willing to interpret.
+     *
+     * @see https://tools.ietf.org/html/rfc7231#section-6.5.12
+     */
+    public function __construct()
+    {
+        $content = '414 - URI Too Long';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 414;
+    }
+}
+
+class UnsupportedMediaType extends Response
+{
+    /**
+     * The 415 (Unsupported Media Type) status code indicates that the
+     * origin server is refusing to service the request because the payload
+     * is in a format not supported by this method on the target resource.
+     *
+     * @see https://tools.ietf.org/html/rfc7231#section-6.5.13
+     */
+    public function __construct()
+    {
+        $content = '415 - Unsupported Media Type';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 415;
+    }
+}
+
+class ExpectationFailed extends Response
+{
+    /**
+     * The 417 (Expectation Failed) status code indicates that the
+     * expectation given in the request's Expect header field
+     * (Section 5.1.1) could not be met by at least one of the inbound
+     * servers.
+     *
+     * @see https://tools.ietf.org/html/rfc7231#section-6.5.14
+     */
+    public function __construct()
+    {
+        $content = '417 - Expectation Failed';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 417;
+    }
+}
+
+class UpgradeRequired extends Response
+{
+    /**
+     * The 426 (Upgrade Required) status code indicates that the server
+     * refuses to perform the request using the current protocol but might
+     * be willing to do so after the client upgrades to a different
+     * protocol.
+     *
+     * @see https://tools.ietf.org/html/rfc7231#section-6.5.14
+     */
+    public function __construct()
+    {
+        $content = '426 - Upgrade Required';
+        parent::__construct($content, 'text/plain');
+        $this->status_code = 426;
+    }
+}
+
 class NotImplemented extends Response
 {
     /**
@@ -267,7 +416,7 @@ class NotImplemented extends Response
      * @param Request The request object of the current page.
      * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.2
      */
-    public function __construct($request)
+    public function __construct($request=null)
     {
         $content = 'The server either does not recognize the request method, or it lacks the ability to fulfill the request' . "\n\n"
                    . '501 - Not Implemented';
@@ -288,7 +437,7 @@ class ServiceUnavailable extends Response
      * @param Request The request object of the current page.
      * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.4
      */
-    public function __construct($request, $retryAfter=300)
+    public function __construct($request=null, $retryAfter=300)
     {
         $content = 'The server is currently unable to handle the request' . "\n\n"
                    . '501 - Service Unavailable';
@@ -367,12 +516,12 @@ class InternalServerError extends Response
  */
 class ServerError extends Response
 {
-    function __construct($exception, $mimetype=null)
+    function __construct($exception, $request, $mimetype=null)
     {
         $admins = Conf::f('admins', array());
         if (count($admins) > 0) {
             // Get a nice stack trace and send it by emails.
-            $stack = pretty_server_error($exception);
+            $stack = pretty_server_error($exception, $request);
             $subject = $exception->getMessage();
             $subject = substr(strip_tags(nl2br($subject)), 0, 50).'...';
             foreach ($admins as $admin) {

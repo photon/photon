@@ -46,7 +46,7 @@ class ResponseTest extends TestCase
         $this->assertEquals('', $nm->content);
     }
 
-    public function testNotSupported()
+    public function testNotSupported2()
     {
         $request = \photon\test\HTTP::baseRequest('POST','/toto');
         $res = new response\NotSupported($request);
@@ -126,15 +126,82 @@ class ResponseTest extends TestCase
         $this->assertSame(401, $res->status_code);
     }
 
-    public function testRequestEntityTooLarge()
+    public function testForbidden()
     {
-        $res = new response\RequestEntityTooLarge;
+        $res = new response\Forbidden;
+        $this->assertSame(403, $res->status_code);
+    }
+
+    public function testNotFound()
+    {
+        $request = \photon\test\HTTP::baseRequest('GET', '/');
+        $res = new response\NotFound($request);
+        $this->assertSame(404, $res->status_code);
+    }
+
+    public function testNotSupported()
+    {
+        $request = \photon\test\HTTP::baseRequest('POST', '/');
+        $res = new response\NotSupported($request);
+        $this->assertSame(405, $res->status_code);
+    }
+
+    public function testNotAcceptable()
+    {
+        $res = new response\NotAcceptable;
+        $this->assertSame(406, $res->status_code);
+    }
+
+    public function testRequestTimeout()
+    {
+        $res = new response\RequestTimeout;
+        $this->assertSame(408, $res->status_code);
+    }
+
+    public function testGone()
+    {
+        $res = new response\Gone;
+        $this->assertSame(410, $res->status_code);
+    }
+
+    public function testLengthRequired()
+    {
+        $res = new response\LengthRequired;
+        $this->assertSame(411, $res->status_code);
+    }
+
+    public function testPayloadTooLarge()
+    {
+        $res = new response\PayloadTooLarge;
         $this->assertSame(413, $res->status_code);
 
-        $res = new response\RequestEntityTooLarge('user message');
+        $res = new response\RequestEntityTooLarge;
         $this->assertSame(413, $res->status_code);
     }
 
+    public function testURITooLong()
+    {
+        $res = new response\URITooLong;
+        $this->assertSame(414, $res->status_code);
+    }
+
+    public function testUnsupportedMediaType()
+    {
+        $res = new response\UnsupportedMediaType;
+        $this->assertSame(415, $res->status_code);
+    }
+
+    public function testExpectationFailed()
+    {
+        $res = new response\ExpectationFailed;
+        $this->assertSame(417, $res->status_code);
+    }
+
+    public function testUpgradeRequired()
+    {
+        $res = new response\UpgradeRequired;
+        $this->assertSame(426, $res->status_code);
+    }
 
     public function testInternalServerError()
     {
@@ -144,10 +211,10 @@ class ResponseTest extends TestCase
 
     public function testServerError()
     {
-        $res = new response\ServerError(new \Exception);
+        $request = \photon\test\HTTP::baseRequest('GET', '/');
+        $res = new response\ServerError(new \Exception, $request);
         $this->assertSame(500, $res->status_code);
     }
-
 
     public function testNotImplemented()
     {

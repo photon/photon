@@ -1,3 +1,28 @@
+# Photon (develop)
+
+## Changes
+- Remove PEAR stuff from the hnu script, support only composer install
+
+# Photon 2.1.1 - Wed, 10 Jan 2018 22:27:00 +0000
+
+## Changes
+- Always close the mongrel2 connection after a HTTP/1.0 request
+- Respect the connection header in HTTP/1.1 request
+
+# Photon 2.1.0 - Wed, 10 Jan 2018 11:42:00 +0000
+
+## New Features
+- Rename photon\db\MongoDB (pecl mongodb)
+- Update \photon\core\Dispatcher to be more reusable (i.e second dispatch layer in apps)
+- Add some new HTTP response: 406, 408, 409, 410, 411, 413, 414, 415, 417, 426
+- Update the Security middleware to support : Content-Security-Policy, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection
+
+## Changes
+- Rename photon\db\MongoDB to photon\db\Mongo (pecl mongo)
+- Allow to serve from phar a file starting by /
+- Allow a database connection to be not cached
+- Various fix
+
 # Photon 2.0.0 - Thu, 06 Apr 2017 14:41:33 +0000
 
 ## New Features
@@ -80,7 +105,7 @@
   Mongrel2 connection ID are too weak (integer auto-increment), and the handler can previouly publish
   a answer to multiple client request due mongrel2 connection ID colission.
 - server_conf configuration key are changed, old style declaration throw an execption.  
-  Example of new configuration 
+  Example of new configuration
 
           'server_conf' => array(
               array(

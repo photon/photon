@@ -15,13 +15,20 @@ Each extensions have their own release cycle which is not synchronized with the 
 - [MongoDB backend for session storage](https://github.com/photon/session-mongodb)
 - [Memcached backend for session storage](https://github.com/photon/session-memcached)
 
+### APIs
+- [Base class for Rest API with CORs](https://github.com/photon/api-json)
+
 ### Template
 - [Template extension to filter Markdown text to HTML](https://github.com/photon/template-markdown)
+
+### Emails
+- [Wrapper to use swift mail with photon templates](https://github.com/photon/email-swift)
 
 ### Log
 - [Syslog backend for photon](https://github.com/photon/log-syslog)
 
-### Utils
+### Various utils
+- [Wrapper for bshaffer oauth server](https://github.com/photon/oauth2-server)
 - [A worker to send large content without filling the RAM](https://github.com/photon/template-markdown)
 - [Various useful tools for MongoDB](https://github.com/photon/utils-mongodb)
 

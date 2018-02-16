@@ -91,7 +91,7 @@ class AssetDir
     /**
      * Serve a virtual directory from a phar archive.
      *
-     * The directory must be defined as phar://path/in/the/phar 
+     * The directory must be defined as phar://path/in/the/phar
      *
      * The url definition is loaded only once at the start of the
      * Photon server, this means that you can be smart and depending
@@ -99,17 +99,13 @@ class AssetDir
      * serve().
      *
      * @param $request Photon request
-     * @param $match first match the path. It must be relative - does not 
-     *               start with / and can contain only "A-Za-z0-9./-". 
+     * @param $match first match the path. It must contain only "A-Za-z0-9./-".
      *               if '..' is found in the match, it will not be accepted.
      * @param $directory Directory to serve
      */
     public function serveFromPhar($request, $match, $directory)
     {
-        if (preg_match('/[^A-Za-z0-9\-\_\.\/]/', $match[1])
-            || false !== strpos($match[1], '..')
-            || in_array(substr($match[1], 0, 1), array('.', '/'))) {
-
+        if (preg_match('/[^A-Za-z0-9\-\_\.\/]/', $match[1]) || false !== strpos($match[1], '..')) {
             return new \photon\http\response\Forbidden($request);
         }
 
@@ -118,7 +114,10 @@ class AssetDir
         $subFolder = ($subFolder[0] === '/') ? substr($subFolder, 1) : $subFolder;
 
         $phar = new \Phar($pharPath);
-        $path = $subFolder . '/' . $match[1];
+        if (substr($match[1], 0, 1) !== '/') {
+          $match[1] = '/' . $match[1];
+        }
+        $path = $subFolder . $match[1];
 
         if (!isset($phar[$path])) {
             throw new \photon\http\error\NotFound();
@@ -139,7 +138,7 @@ class AssetDir
         $res = new \photon\http\Response(file_get_contents($file), $mime);
         $res->headers['ETag'] = $crc32;
         $res->headers['Cache-Control'] = 'max-age=604800';
-        
+
         return $res;
     }
 
@@ -155,6 +154,11 @@ class AssetDir
      */
     public function serve($request, $match, $directory)
     {
+        // Detect request to the root folder and try to serve index.html
+        if ($match[1] === '/') {
+            $match[1] = 'index.html';
+        }
+
         // Handle phar content
         if (substr($directory, 0, 7) === 'phar://') {
             return self::serveFromPhar($request, $match, $directory);
@@ -167,12 +171,12 @@ class AssetDir
         }
         if (!file_exists($file) || !is_file($file)) {
             throw new \photon\http\error\NotFound();
-        }   
+        }
         // Now we have the file, we need to find the mime type to send
         // it correctly. We have a table to do it.
         $comps = explode('.', $file);
         $ext = array_pop($comps);
-        $mime = (isset(self::$mimes[$ext])) 
+        $mime = (isset(self::$mimes[$ext]))
             ? self::$mimes[$ext] : 'application/octet-stream';
         return new \photon\http\Response(file_get_contents($file),
                                          $mime);
@@ -672,3 +676,4 @@ class AssetDir
                            );
 
 }
+

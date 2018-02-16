@@ -75,7 +75,7 @@ class Server
      *
      * @return Photon request
      */
-    public function getCurrentRequest()
+    public static function getCurrentRequest()
     {
         return self::$request;
     }
@@ -85,7 +85,7 @@ class Server
      *
      * @param $request Photon request
      */
-    public function setCurrentRequest(&$request)
+    public static function setCurrentRequest(&$request)
     {
         self::$request = $request;
     }
@@ -95,7 +95,7 @@ class Server
      *
      * @param $request Photon request
      */
-    public function clearCurrentRequest()
+    public static function clearCurrentRequest()
     {
         self::$request = null;
     }
@@ -106,7 +106,7 @@ class Server
      *
      * @return Photon session handler
      */
-    public function getCurrentSession()
+    public static function getCurrentSession()
     {
         if (self::$request === null) {
             return null;
