@@ -1,7 +1,12 @@
-# Photon (develop)
+# Photon 2.2.0 - Fri, 16 Feb 2018 14:45:00 +0000
+
+## New Features
+- Update the Security middleware to support : Content-Security-Policy, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection
 
 ## Changes
 - Remove PEAR stuff from the hnu script, support only composer install
+- Remove \photon\manager\RunTests
+- Remove \photon\manager\SelfTest
 
 # Photon 2.1.1 - Wed, 10 Jan 2018 22:27:00 +0000
 
@@ -15,7 +20,6 @@
 - Rename photon\db\MongoDB (pecl mongodb)
 - Update \photon\core\Dispatcher to be more reusable (i.e second dispatch layer in apps)
 - Add some new HTTP response: 406, 408, 409, 410, 411, 413, 414, 415, 417, 426
-- Update the Security middleware to support : Content-Security-Policy, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection
 
 ## Changes
 - Rename photon\db\MongoDB to photon\db\Mongo (pecl mongo)
