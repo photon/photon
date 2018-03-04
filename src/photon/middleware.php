@@ -226,6 +226,7 @@ class Security
             'frame' => 'SAMEORIGIN',
             'xss' => '1',
             'csp' => false,
+            'referrer' => 'strict-origin-when-cross-origin'
         );
 
         self::$config = array_replace_recursive($default, $config);
@@ -314,6 +315,23 @@ class Security
         // https://www.w3.org/TR/CSP2/
         if ($config['csp'] !== false) {
             $response->headers['Content-Security-Policy'] = $config['csp'];
+        }
+
+        // Referrer
+        // https://www.w3.org/TR/referrer-policy/
+        $allowReferrers = array(
+            '',
+            'no-referrer',
+            'no-referrer-when-downgrade',
+            'same-origin',
+            'origin',
+            'strict-origin',
+            'origin-when-cross-origin',
+            'strict-origin-when-cross-origin',
+            'unsafe-url'
+        );
+        if (in_array($config['referrer'], $allowReferrers)) {
+            $response->headers['Referrer-Policy'] = $config['referrer'];
         }
 
         return $response;

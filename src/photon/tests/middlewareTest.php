@@ -241,6 +241,40 @@ class MiddlewareSecurityTest extends TestCase
       $this->assertEquals($csp, $resp->headers['Content-Security-Policy']);
     }
 
+    // Referrer-Policy
+    public function testReferrerPolicy()
+    {
+      // Default value (strict-origin-when-cross-origin)
+      \photon\middleware\Security::clearConfig();
+      $req = HTTP::baseRequest('GET', '/');
+      $dispatcher = new \photon\core\Dispatcher;
+      list($req, $resp) = $dispatcher->dispatch($req);
+      $this->assertArrayHasKey('Referrer-Policy', $resp->headers);
+      $this->assertEquals('strict-origin-when-cross-origin', $resp->headers['Referrer-Policy']);
+
+      // Custom value (no-referrer);
+      $rp = "no-referrer";
+      \photon\middleware\Security::clearConfig();
+      Conf::set('middleware_security', array(
+          'referrer' => $rp,
+      ));
+      $req = HTTP::baseRequest('GET', '/');
+      $dispatcher = new \photon\core\Dispatcher;
+      list($req, $resp) = $dispatcher->dispatch($req);
+      $this->assertArrayHasKey('Referrer-Policy', $resp->headers);
+      $this->assertEquals($rp, $resp->headers['Referrer-Policy']);
+
+      // Disabled
+      \photon\middleware\Security::clearConfig();
+      Conf::set('middleware_security', array(
+        'referrer' => false,
+      ));
+      $req = HTTP::baseRequest('GET', '/');
+      $dispatcher = new \photon\core\Dispatcher;
+      list($req, $resp) = $dispatcher->dispatch($req);
+      $this->assertArrayHasKey('Referrer-Policy', $resp->headers);
+    }
+
     // SSL Redirection disable (default)
     public function testSSLRedirect_defaultConfig()
     {
