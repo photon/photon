@@ -196,11 +196,13 @@ class Response
         // Send the body
         $conn->reply($msg, "\r\n");
         foreach ($this->content as $chunk) {
+            // Ignore empty chunk to avoid to close the mongrel2 connection
+            if (strlen($chunk) === 0) {
+                continue;
+            }
+
             $conn->reply($msg, $chunk);
         }
-
-        // Send a empty chunk to close connection
-        $conn->close($msg);
     }
 
     /**
