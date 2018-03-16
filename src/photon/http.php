@@ -30,7 +30,7 @@ class Exception extends \Exception {}
  * Response object to be constructed by the views.
  *
  * When constructing a view, the response object must be populated and
- * returned. The response is then displayed to the visitor. 
+ * returned. The response is then displayed to the visitor.
  * The interest of using a response object is that we can run a post
  * filter action on the response. For example you can run a filter that
  * is checking that all the output is valid HTML and write a logfile if
@@ -52,7 +52,7 @@ class Response
     public $content = '';
 
     /**
-     * To whom it should be delivered. 
+     * To whom it should be delivered.
      *
      * By default, it will delivered to the client issuing the
      * request, but one can set it to another client or an array of
@@ -152,7 +152,7 @@ class Response
      * @param string MimeType of the response (null) if not given will
      * default to the one given in the configuration 'mimetype'
      */
-    function __construct($content='', $mimetype='text/html; charset=utf-8')
+    public function __construct($content='', $mimetype='text/html; charset=utf-8')
     {
         $this->content = $content;
         $this->headers['Content-Type'] = $mimetype;
@@ -164,7 +164,7 @@ class Response
     /**
      * Render a response object.
      */
-    function render($output_body=true)
+    public function render($output_body=true)
     {
         if (200 <= $this->status_code &&
             204 != $this->status_code &&
@@ -183,8 +183,20 @@ class Response
         return $headers;
     }
 
-    function sendIterable($msg, $conn, $output_body=true)
+    public function sendIterable($msg, $conn, $output_body=true)
     {
+        if ($output_body !== true) {
+          $headers = $this->getHeaders();
+          $conn->reply($msg, $headers);
+          return;
+        }
+
+        // Use chunk encoding is requested, or if the content-length is not set
+        if ($this->getHeader('Transfer-Encoding') === 'chunked' || $this->getHeader('Content-Length', false) === false) {
+          $this->sendIterableChunked($msg, $conn);
+          return;
+        }
+
         // Send the header
         $headers = $this->getHeaders();
         $conn->reply($msg, $headers);
@@ -205,21 +217,55 @@ class Response
         }
     }
 
-    /**
-     * Get the headers.
-     *
+    /*
+     *  Send an iterable as answer
+     *  We use chunked transfert because most of the time we do not known payload size
      */
-    function getHeaders()
+    private function sendIterableChunked($msg, $conn)
+    {
+        // Send the header
+        $this->headers['Transfer-Encoding'] = 'chunked';
+        $headers = $this->getHeaders();
+        $conn->reply($msg, $headers);
+        $conn->reply($msg, "\r\n");
+
+        // Send the body
+        foreach ($this->content as $chunk) {
+            $sz = strlen($chunk);
+            if ($sz === 0) {
+                continue;
+            }
+
+            $conn->reply($msg, dechex($sz) . "\r\n" . $chunk);
+        }
+
+        // End of chunked encoding
+        $conn->reply($msg, "0\r\n\r\n");
+    }
+
+    /**
+     * Render the HTTP header.
+     */
+    public function getHeaders()
     {
         $hdrs = 'HTTP/1.1 ' . $this->status_code . ' ' .
                 $this->status_code_list[$this->status_code] . "\r\n";
         foreach ($this->headers as $header => $ch) {
             $hdrs .= $header . ': ' . $ch . "\r\n";
         }
-        $hdrs .=  CookieHandler::build($this->COOKIE, 
-                                       Conf::f('secret_key', ''));
+        $hdrs .= CookieHandler::build($this->COOKIE, Conf::f('secret_key', ''));
 
         return $hdrs;
+    }
+
+    /**
+     * Returns the given header or a default value.
+     */
+    public function getHeader($header, $default='')
+    {
+        return (isset($this->headers->$header))
+            ? $this->headers->$header
+            : $default;
     }
 }
 
@@ -242,7 +288,7 @@ class Request
     public $uuid = '';
     public $headers = null;
 
-    /** 
+    /**
      * Sender id set for the handler in the Mongrel2 conf.
      */
     public $sender = '';
@@ -293,7 +339,7 @@ class Request
         } else if ('JSON' === $this->mess->headers->METHOD) {
             $this->BODY = $this->mess->body;
         }
-        $this->COOKIE = CookieHandler::parse($this->mess->headers, 
+        $this->COOKIE = CookieHandler::parse($this->mess->headers,
                                              Conf::f('secret_key', ''));
     }
 
@@ -301,7 +347,7 @@ class Request
      * Simple form url encoded decoding of a string.
      *
      * This is only needed for POST requests.
-     * 
+     *
      * @param $payload Encoded string
      * @return array Decoded string
      */
@@ -398,10 +444,10 @@ class Request
  * <pre>
  * // Set the cookie 'foo' with value 'bar', all the meta data are
  * // default data.
- * $response->COOKIE['foo'] = 'bar'; 
+ * $response->COOKIE['foo'] = 'bar';
  * // Full control over the cookie info
- * $response->COOKIE->setCookie('foo', 'bar', [$expire = 0 [, string $path 
- *                               [, string $domain [, bool $secure = false 
+ * $response->COOKIE->setCookie('foo', 'bar', [$expire = 0 [, string $path
+ *                               [, string $domain [, bool $secure = false
  *                               [, bool $httponly = false ]]]]]] );
  * // Shortcut to delete a cookie.
  * $response->COOKIE->delCookie('foo');
@@ -429,13 +475,13 @@ class Cookie implements \ArrayAccess
      */
     private $delete = array();
 
-    public function __construct($cookies=array()) 
+    public function __construct($cookies=array())
     {
         foreach ($cookies as $name => $value) {
             $this->offsetSet($name, $value);
         }
     }
-    
+
     /**
      * Returns all the cookies in a list of arrays.
      *
@@ -454,7 +500,7 @@ class Cookie implements \ArrayAccess
      * The extension is that the value of the cookie can be any kind
      * of serializabled object. Beware for it not to be too big, but
      * it means that you can store simple arrays for example.
-     * 
+     *
      * @see http://www.php.net/setcookie
      *
      * @param $name string Name of the cookie
@@ -501,7 +547,7 @@ class Cookie implements \ArrayAccess
      * It calls $this->setCookie() with the default parameters. It
      * does not accept the setting of a "null" offset cookie.
      */
-    public function offsetSet($offset, $value) 
+    public function offsetSet($offset, $value)
     {
         if (null === $offset) {
             throw new Exception('You need to provide a cookie name.');
@@ -510,7 +556,7 @@ class Cookie implements \ArrayAccess
         unset($this->delete[$offset]);
     }
 
-    public function offsetExists($offset) 
+    public function offsetExists($offset)
     {
         if (isset($this->delete[$offset])) {
             return false;
@@ -518,16 +564,16 @@ class Cookie implements \ArrayAccess
         return isset($this->all[$offset]);
     }
 
-    public function offsetUnset($offset) 
+    public function offsetUnset($offset)
     {
         $this->delCookie($offset);
         $this->delete[$offset] = true;
     }
 
-    public function offsetGet($offset) 
+    public function offsetGet($offset)
     {
         return isset($this->all[$offset]) ? $this->all[$offset]['cookies'][$offset] : null;
-    }    
+    }
 }
 
 
@@ -610,7 +656,7 @@ class CookieHandler
             if (strlen($val) > 0) {
                 try {
                     $cookies[$name] = \photon\crypto\Sign::loads($val, $key);
-                }  catch (\Exception $e) { 
+                }  catch (\Exception $e) {
                     // We simply ignore bad cookies.
                 }
             }
@@ -647,8 +693,3 @@ class HeaderTool
         $response->headers['Vary'] = implode(',', $vary);
     }
 }
-
-
-
-
-
