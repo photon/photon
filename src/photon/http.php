@@ -236,7 +236,7 @@ class Response
                 continue;
             }
 
-            $conn->reply($msg, dechex($sz) . "\r\n" . $chunk);
+            $conn->reply($msg, dechex($sz) . "\r\n" . $chunk . "\r\n");
         }
 
         // End of chunked encoding
