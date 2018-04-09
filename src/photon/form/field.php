@@ -59,13 +59,13 @@ class Field
     public $initial = ''; /**< Default value when empty. */
     public $choices = null; /**< Predefined choices for the field. */
 
-    /** 
+    /**
      * Associative array of possible error messages.
      *
      * The base 'required' and 'invalid' are automatically set in the
      * constructor.
      */
-    public $error_messages = array(); 
+    public $error_messages = array();
 
     /*
      * Following member variables are more for internal cooking.
@@ -75,7 +75,7 @@ class Field
     /**
      * Returning multiple values (select multiple etc.)
      */
-    public $multiple = false; 
+    public $multiple = false;
     protected $empty_values = array('', null, array());
 
     /**
@@ -87,7 +87,7 @@ class Field
      * Constructor.
      *
      * Example:
-     * $field = new Your_Field(array('required'=>true, 
+     * $field = new Your_Field(array('required'=>true,
      *                               'widget'=>'\photon\form\widget\TextInput',
      *                               'initial'=>'your name here',
      *                               'label'=>__('Your name'),
@@ -235,7 +235,7 @@ class Field
             throw new Invalid($errors);
         }
     }
-    
+
     /**
      * Returns the HTML attributes to add to the field.
      *
@@ -345,7 +345,7 @@ class Date extends Varchar
             return '';
         }
 
-        if (is_object($value) 
+        if (is_object($value)
             && 'photon\datetime\Date' === get_class($value)) {
             return $value;
         }
@@ -378,7 +378,7 @@ class Datetime extends Varchar
             return '';
         }
 
-        if (is_object($value) 
+        if (is_object($value)
             && 'photon\datetime\DateTime' === get_class($value)) {
             return $value;
         }
@@ -567,8 +567,17 @@ class File extends Field
         $filename = $value['filename'];
         $size = $value['size'];
 
+        // Detect empty field
+        if ($filename === '' && $size === 0) {
+            if ($this->required === true) {
+                throw new Invalid($this->error_messages['invalid']);
+            }
+
+            return null;
+        }
+
         // Test the filename size
-        if (null !== $this->max_length 
+        if (null !== $this->max_length
             && strlen($filename) > $this->max_length) {
             throw new Invalid(sprintf($this->error_messages['max_length'],
                                       $this->max_length, strlen($filename)));
@@ -581,12 +590,12 @@ class File extends Field
         if (0 === $size) {
             throw new Invalid($this->error_messages['empty']);
         }
-        
+
         // Test the content size
         if (null !== $this->max_size && $size > $this->max_size) {
             throw new Invalid(sprintf($this->error_messages['big'], $this->max_size));
         }
-        
+
         return $value;
     }
 }
