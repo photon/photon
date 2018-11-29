@@ -162,6 +162,21 @@ class Response
     }
 
     /**
+     * Add HTTP headers to disable cache on this response
+     */
+    public function noCache()
+    {
+      // HTTP 1.1
+      $this->headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+
+      // HTTP 1.0
+      $this->headers['Pragma'] = 'no-cache';
+
+      // Proxies
+      $this->headers['Expires'] = '0';
+    }
+
+    /**
      * Render a response object.
      */
     public function render($output_body=true)

@@ -33,6 +33,12 @@ use \photon\tests\mongrel2Test\DummyZMQSocket;
 
 class ResponseTest extends TestCase
 {
+    public function testNoCache()
+    {
+        $res = new http\Response();
+        $res->noCache();
+    }
+
     public function testJsonResponse()
     {
         $obj = array('foo', 'bar');
