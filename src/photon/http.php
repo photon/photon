@@ -330,7 +330,7 @@ class Request
             \mb_parse_str($this->mess->headers->QUERY, $this->GET);
             $this->query = $this->mess->headers->QUERY;
         }
-        if ('POST' === $this->mess->headers->METHOD || 'PUT' === $this->mess->headers->METHOD) {
+        if (in_array($this->mess->headers->METHOD, array('POST', 'PUT', 'PATCH'), true)) {
             if (isset($this->mess->headers->{'content-type'}) === false) {
                 $this->BODY =& $mess->body;
             } else if (0 === strpos($this->mess->headers->{'content-type'}, 'multipart/form-data; boundary=')) {
