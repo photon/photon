@@ -96,6 +96,19 @@ class ResponseTest extends TestCase
         $res->sendIterable($mess, $conn, false);
     }
 
+    public function testSwitchingProtocols()
+    {
+        $res = new response\SwitchingProtocols();
+        $this->assertSame(101, $res->status_code);
+    }
+
+    public function testSwitchingToWebsocket()
+    {
+        $request = \photon\test\HTTP::baseRequest('WEBSOCKET_HANDSHAKE','/toto');
+        $res = new response\SwitchingToWebsocket($request);
+        $this->assertSame(101, $res->status_code);
+    }
+
     public function testCreatedRequest()
     {
         $res = new response\Created();

@@ -1,4 +1,4 @@
-<?php 
+<?php
 /* -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /*
 # ***** BEGIN LICENSE BLOCK *****
@@ -30,6 +30,34 @@ use \photon\core\URL as URL;
 use \photon\http\Response as Response;
 use \photon\mail\EMail as Mail;
 use \photon\template as template;
+
+class SwitchingProtocols extends Response
+{
+    /**
+     * The request has been fulfilled and resulted in a new resource being created.
+     *
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.1.2
+     */
+    function __construct($content='')
+    {
+        parent::__construct($content);
+        $this->status_code = 101;
+    }
+}
+
+class SwitchingToWebsocket extends SwitchingProtocols
+{
+    /**
+     * Helper for WebSockets
+     */
+    function __construct($request)
+    {
+        parent::__construct('');
+        $this->headers['Upgrade'] = 'websocket';
+        $this->headers['Connection'] = 'Upgrade';
+        $this->headers['Sec-WebSocket-Accept'] = base64_encode(sha1($request->getHeader('sec-websocket-key') . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true));
+    }
+}
 
 class Created extends Response
 {
