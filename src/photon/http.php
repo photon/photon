@@ -330,6 +330,7 @@ class Request
             \mb_parse_str($this->mess->headers->QUERY, $this->GET);
             $this->query = $this->mess->headers->QUERY;
         }
+
         if (in_array($this->mess->headers->METHOD, array('POST', 'PUT', 'PATCH'), true)) {
             if (isset($this->mess->headers->{'content-type'}) === false) {
                 $this->BODY =& $mess->body;
@@ -351,7 +352,8 @@ class Request
             } else {
                 $this->BODY =& $mess->body;
             }
-        } else if ('JSON' === $this->mess->headers->METHOD) {
+        } else {
+            // Do not try to parse : JSON, WEBSOCKET_HANDSHAKE, WEBSOCKET
             $this->BODY = $this->mess->body;
         }
         $this->COOKIE = CookieHandler::parse($this->mess->headers,

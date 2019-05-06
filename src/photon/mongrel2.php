@@ -256,7 +256,7 @@ class Connection
             // only if needed.
             $body = $fp;
         } else {
-            $body = '';
+            list($body,) = $this->parse_netstring(stream_get_contents($fp));
             fclose($fp);
         }
 
@@ -272,6 +272,19 @@ class Connection
     {
         $this->reply($mess, '');
     }
+
+    /**
+     * Reply on a WebSocket connection
+     *     *
+     * @param $mess Message
+     * @param $payload What to send to the listener
+     * @return bool
+     */
+    public function reply_ws($mess, $payload)
+    {
+        return $this->send($mess->sender, $mess->conn_id, $this->encode_ws($payload));
+    }
+
 
     /**
      * Reply to the listener which generated the request.
@@ -365,5 +378,32 @@ class Connection
             \substr($rest, 0, $len),
             \substr($rest, $len + 1)
         );
+    }
+
+    private function encode_ws($payload)
+    {
+      // Opcode
+      $opcode = 1;  // TEXT PAYLOAD
+      $header = chr(0x80 | $opcode);
+
+      // Encode payload size
+      $sz = strlen($payload);
+      if ($sz < 126) {
+        $header .= chr($sz);
+      } else if ($sz < 65536) {
+        $header .= chr(126);
+        $header .= chr($sz >> 8 & 0xff);
+        $header .= chr($sz & 0xff);
+      } else {
+        $header .= chr(127);
+        $header .= chr($sz >> 56 &0xff);
+        $header .= chr($sz >> 48 &0xff);
+        $header .= chr($sz >> 40 &0xff);
+        $header .= chr($sz >> 32 &0xff);
+        $header .= chr($sz >> 24 & 0xff);
+        $header .= chr($sz >> 16 & 0xff);
+      }
+
+      return $header . $payload;
     }
 }
