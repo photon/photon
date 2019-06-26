@@ -191,7 +191,7 @@ class AuthorizationRequired extends Response
     public function __construct()
     {
         $content = 'This server could not verify that you are authorized to access the document requested.' . "\n" .
-                   'Either you supplied the wrong credentials (e.g., bad password), or your browser ' . 
+                   'Either you supplied the wrong credentials (e.g., bad password), or your browser ' .
                    'doesn\'t understand how to supply the credentials required.' . "\n\n" .
                    '401 - Authorization Required';
         parent::__construct($content, 'text/plain');
@@ -251,11 +251,11 @@ class NotSupported extends Response
      */
     public function __construct($request, $allow=array('GET'))
     {
-        $content = sprintf('HTTP method %s is not supported for the URL %s.' 
+        $content = sprintf('HTTP method %s is not supported for the URL %s.'
                            . "\n" .
                            'Supported methods are: %s.' . "\n" .
                            '405 - Not Supported',
-                           htmlspecialchars($request->method), 
+                           htmlspecialchars($request->method),
                            str_replace(array('&',     '"',      '<',    '>'),
                                        array('&amp;', '&quot;', '&lt;', '&gt;'),
                                        $request->path),
@@ -491,8 +491,8 @@ class RedirectToLogin extends Response
      */
     function __construct($request, $loginurl=null)
     {
-        $redirect = array('_redirect_after' => 
-                          \photon\crypto\Sign::dumps($request->path, 
+        $redirect = array('_redirect_after' =>
+                          \photon\crypto\Sign::dumps($request->path,
                                                      Conf::f('secret_key')));
         if ($loginurl !== null) {
             $url = URL::generate($loginurl, $redirect, false);
@@ -500,7 +500,7 @@ class RedirectToLogin extends Response
         } else {
             $url = URL::forView(Conf::f('login_view', 'login_view'),
                                 array(), $redirect, false);
-            $encoded = URL::forView(Conf::f('login_view', 'login_view'), 
+            $encoded = URL::forView(Conf::f('login_view', 'login_view'),
                                     array(), $redirect);
         }
         $content = sprintf(__('<a href="%s">Please, click here to be redirected</a>.'), $encoded);
@@ -583,7 +583,7 @@ class ServerError extends Response
  * @param $req Photon request
  * @return Error message
  */
-function pretty_server_error($e, $req) 
+function pretty_server_error($e, $req)
 {
     $sub = create_function('$f',
                '$loc = "";
@@ -605,15 +605,15 @@ function pretty_server_error($e, $req)
     $out .= 'PHP: '.$e->getFile().', line '.$e->getLine()."\n";
     $out .= 'URI: '.$req->method.' '.$req->path."\n\n";
     $out .= '** Stacktrace **'."\n\n";
-    $frames = $e->getTrace(); 
-    foreach ($frames as $frame_id=>$frame) { 
+    $frames = $e->getTrace();
+    foreach ($frames as $frame_id=>$frame) {
         if (!isset($frame['file'])) {
             $frame['file'] = 'No File';
             $frame['line'] = '0';
         }
         $out .= '* '.$sub($frame).'
         ['.$frame['file'].', line '.$frame['line'].'] *'."\n";
-        if (is_readable($frame['file']) ) { 
+        if (is_readable($frame['file']) ) {
             $out .= '* Src *'."\n";
             $lines = $src2lines($frame['file']);
             $start = $frame['line'] < 5 ?
@@ -630,19 +630,19 @@ function pretty_server_error($e, $req)
                 // }
                 if ( $k >= $start ) {
                     if ( $k != $frame['line'] ) {
-                        $out2 .= ($start+$i).': '.$clean($line)."\n"; 
+                        $out2 .= ($start+$i).': '.$clean($line)."\n";
                     } else {
-                        $out2 .= '>> '.($start+$i).': '.$clean($line)."\n"; 
+                        $out2 .= '>> '.($start+$i).': '.$clean($line)."\n";
                     }
                     $i++;
                 }
             }
             $out .= $out2;
-        } else { 
+        } else {
             $out .= 'No src available.';
-        } 
+        }
         $out .= "\n";
-    } 
+    }
     $out .= "\n\n\n\n";
     $out .= '** Request **'."\n\n";
     $out .= 'Sender:   ' . $req->mess->sender . "\n";
@@ -685,7 +685,7 @@ class ServerErrorDebug extends Response
 /**
  * @credits http://www.sitepoint.com/blogs/2006/04/04/pretty-blue-screen/
  */
-function html_pretty_server_error($e, $req) 
+function html_pretty_server_error($e, $req)
 {
     $o = function ($in) {
         return htmlspecialchars($in);
@@ -711,7 +711,7 @@ function html_pretty_server_error($e, $req)
         if (isset($f['function'])) {
             try {
                 if (isset($f['class'])) {
-                    $r = new \ReflectionMethod($f['class'] 
+                    $r = new \ReflectionMethod($f['class']
                                               . '::' . $f['function']);
                 } else {
                     $r = new \ReflectionFunction($f['function']);
@@ -729,8 +729,8 @@ function html_pretty_server_error($e, $req)
         return explode('<br />', $src);
     };
 
-    $clean = function ($line) { 
-        return trim(strip_tags($line)); 
+    $clean = function ($line) {
+        return trim(strip_tags($line));
     };
 
     $desc = get_class($e)." making ".$req->method." request to ".$req->path;
@@ -754,11 +754,11 @@ function html_pretty_server_error($e, $req)
     h2 a { text-decoration:none; }
     h3 { margin:1em 0 .5em 0; }
     h4 { margin:0.5em 0 .5em 0; font-weight: normal; font-style: italic; }
-    table { 
+    table {
         border:1px solid #ccc; border-collapse: collapse; background:white; }
     tbody td, tbody th { vertical-align:top; padding:2px 3px; }
-    thead th { 
-        padding:1px 6px 1px 3px; background:#70FF94; text-align:left; 
+    thead th {
+        padding:1px 6px 1px 3px; background:#70FF94; text-align:left;
         font-weight:bold; font-size:11px; border:1px solid #ddd; }
     tbody th { text-align:right; color:#666; padding-right:.5em; }
     table.vars { margin:5px 0 2px 40px; }
@@ -767,14 +767,14 @@ function html_pretty_server_error($e, $req)
     table td.code { width:95%;}
     table td.code div { overflow:hidden; }
     table.source th { color:#666; }
-    table.source td { 
+    table.source td {
         font-family:monospace; white-space:pre; border-bottom:1px solid #eee; }
     ul.traceback { list-style-type:none; }
     ul.traceback li.frame { margin-bottom:1em; }
     div.context { margin:5px 0 2px 40px; background-color:#70FFDB; }
-    div.context ol { 
+    div.context ol {
         padding-left:30px; margin:0 10px; list-style-position: inside; }
-    div.context ol li { 
+    div.context ol li {
         font-family:monospace; white-space:pre; color:#666; cursor:pointer; }
     div.context li.current-line { color:black; background-color:#70FF94; }
     div.commands { margin-left: 40px; }
@@ -793,7 +793,7 @@ function html_pretty_server_error($e, $req)
   <script type="text/javascript">
   //<!--
     function getElementsByClassName(oElm, strTagName, strClassName){
-        // Written by Jonathan Snook, http://www.snook.ca/jon; 
+        // Written by Jonathan Snook, http://www.snook.ca/jon;
         // Add-ons by Robert Nyman, http://www.robertnyman.com
         var arrElements = (strTagName == "*" && document.all)? document.all :
         oElm.getElementsByTagName(strTagName);
@@ -839,7 +839,7 @@ function html_pretty_server_error($e, $req)
       span.innerHTML = span.innerHTML == uarr ? darr : uarr;
       return false;
     }
-    
+
     window.onload = function() {
       hideAll(getElementsByClassName(document, \'table\', \'vars\'));
       hideAll(getElementsByClassName(document, \'div\', \'context\'));
@@ -872,8 +872,8 @@ function html_pretty_server_error($e, $req)
     <a href=\'#\' onclick="return sectionToggle(\'tb_switch\',\'tb_list\')">
     <span id="tb_switch">▶</span></a></h2>
   <ul id="tb_list" class="traceback">';
-    $frames = $e->getTrace(); 
-    foreach ($frames as $frame_id=>$frame) { 
+    $frames = $e->getTrace();
+    foreach ($frames as $frame_id=>$frame) {
         if (!isset($frame['file'])) {
             $frame['file'] = 'No File';
             $frame['line'] = '0';
@@ -905,11 +905,11 @@ function html_pretty_server_error($e, $req)
                   <td class="code">
                     <pre>' . 'N/A' /* $o(print_r($v, true))*/ . '</pre>
                   </td>
-                  </tr>'; 
+                  </tr>';
             }
             $out .= '</tbody></table>';
-        } 
-        if (is_readable($frame['file']) ) { 
+        }
+        if (is_readable($frame['file']) ) {
             $out .= '
         <div class="commands">
             <a href=\'#\' onclick="return varToggle(this, \''
@@ -938,14 +938,14 @@ function html_pretty_server_error($e, $req)
           }
             $out .= "<ol start=\"$start\">\n".$out2. "</ol>\n";
             $out .= '</div>';
-        } else { 
+        } else {
             $out .= '<div class="commands">No src available</div>';
-        } 
+        }
         $out .= '</li>';
     } // End of foreach $frames
     $out .= '
   </ul>
-  
+
 </div>
 
 <div id="request">
@@ -999,7 +999,7 @@ function html_pretty_server_error($e, $req)
             $out .= (string) $o((string)$req->mess->body) . '</pre>';
         }
     $out .= '
-      
+
   </div>
 </div>';
     $out .= '
@@ -1008,4 +1008,3 @@ function html_pretty_server_error($e, $req)
 ';
     return $out;
 }
-
