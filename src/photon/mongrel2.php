@@ -61,6 +61,24 @@ class Message
                 && 'disconnect' === $this->body->type);
     }
 
+    public function is_ws_close()
+    {
+        if (isset($this->headers->METHOD) && $this->headers->METHOD === 'WEBSOCKET')
+          if (isset($this->headers->FLAGS) && $this->headers->FLAGS === '0x88')
+            return true;
+
+        return false;
+    }
+
+    public function is_ws_ping_pong()
+    {
+        if (isset($this->headers->METHOD) && $this->headers->METHOD === 'WEBSOCKET')
+          if (isset($this->headers->FLAGS) && $this->headers->FLAGS === '0x89')
+            return true;
+
+        return false;
+    }
+
     /**
      * We close the stream when the message is discarded.
      *
@@ -277,7 +295,7 @@ class Connection
      * Reply on a WebSocket connection
      *     *
      * @param $mess Message
-     * @param $payload What to send to the listener
+     * @param $payload What to send to the listener (Must be TEXT)
      * @return bool
      */
     public function reply_ws($mess, $payload)
@@ -285,6 +303,18 @@ class Connection
         return $this->send($mess->sender, $mess->conn_id, $this->encode_ws($payload));
     }
 
+    /**
+     * Reply a pong opcode on a WebSocket connection
+     *     *
+     * @param $mess Message
+     * @param $payload What to send to the listener
+     * @return bool
+     */
+    public function reply_ws_pong($mess, $payload)
+    {
+        $opcode = 10;
+        return $this->send($mess->sender, $mess->conn_id, $this->encode_ws($payload, $opcode));
+    }
 
     /**
      * Reply to the listener which generated the request.
@@ -380,10 +410,9 @@ class Connection
         );
     }
 
-    private function encode_ws($payload)
+    private function encode_ws($payload, $opcode = 1)
     {
       // Opcode
-      $opcode = 1;  // TEXT PAYLOAD
       $header = chr(0x80 | $opcode);
 
       // Encode payload size
