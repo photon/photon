@@ -155,9 +155,12 @@ class AssetDir
     public function serve($request, $match, $directory)
     {
         // Detect request to the root folder and try to serve index.html
-        if ($match[1] === '/') {
+        if ($match[1] === '/' || $match[1] === '') {
             $match[1] = 'index.html';
         }
+
+        // Remove the URL encoding (ie. %20)
+        $match[1] = urldecode($match[1]);
 
         // Handle phar content
         if (substr($directory, 0, 7) === 'phar://') {
