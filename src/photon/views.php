@@ -105,7 +105,7 @@ class AssetDir
      */
     public function serveFromPhar($request, $match, $directory)
     {
-        if (preg_match('/[^A-Za-z0-9\-\_\.\/]/', $match[1]) || false !== strpos($match[1], '..')) {
+        if (preg_match('/[^A-Za-z0-9\s\-\_\.\/]/', $match[1]) || false !== strpos($match[1], '..')) {
             return new \photon\http\response\Forbidden($request);
         }
 
