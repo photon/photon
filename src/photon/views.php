@@ -32,6 +32,7 @@ use \photon\shortcuts;
 use \photon\core\URL as URL;
 use \photon\http\response\Redirect;
 use \photon\http\response\NotModified;
+use \photon\http\response\NotFound;
 use \photon\translation\Translation;
 
 /**
@@ -86,6 +87,114 @@ class Simple
     }
 }
 
+/*
+ *  Smarter version of AssetDir,
+ *  When the request is a folder, we try to serve the index.html inside it.
+ *  It's allow to response assets for SPA website like vuepress
+ */
+class AssetSPADir
+{
+  private function serveFromPhar($request, $match, $directory)
+  {
+    list($pharPath, $subFolder) = explode('.phar', $directory);
+    $pharPath = substr($pharPath, 7) . '.phar';
+    $subFolder = ($subFolder[0] === '/') ? substr($subFolder, 1) : $subFolder;
+
+    $phar = new \Phar($pharPath);
+
+    if ($subFolder !== '') {
+      $path = $subFolder . '/' . $match[1];
+    } else {
+      $path = $match[1];
+    }
+    $path = preg_replace('#/+#','/', $path);  // Remove //
+
+    // Ensure file exists
+    try {
+      $fileinfo = $phar[$path];
+    } catch (\BadMethodCallException $e) {
+      return new NotFound($request);
+    }
+
+    // Check if the file is a directory
+    if ($fileinfo->isDir()) {
+      $path .= '/index.html';
+      $path = preg_replace('#/+#','/', $path);  // Remove //
+
+      try {
+        $fileinfo = $phar[$path];
+      } catch (\BadMethodCallException $e) {
+        return new NotFound($request);
+      }
+    }
+
+    // Retreive file metadata
+    $filename = $fileinfo->getFilename();
+    $crc32 = dechex($fileinfo->getCRC32());
+    $ext = substr($filename, 1 + strrpos($filename, '.'));
+    $mime = AssetDir::$mimes[$ext] ?? 'application/octet-stream';
+
+    // Check browser cache
+    $etag = $request->getHeader('if-none-match', null);
+    if ($etag == $crc32) {
+        return new NotModified('', $mime);
+    }
+
+    // Serve asset
+    $res = new \photon\http\Response($fileinfo->getContent(), $mime);
+    $res->headers['ETag'] = $crc32;
+    $res->headers['Cache-Control'] = 'max-age=604800';
+
+    return $res;
+  }
+
+  /**
+   * Serve a directory.
+   *
+   * It is not efficient because no caching is done, but it is
+   * practical for development.
+   *
+   * @param $request Photon request
+   * @param $match Array of the matched element
+   * @param $directory Directory to serve
+   */
+  public function serve($request, $match, $directory)
+  {
+      // Remove the URL encoding (ie. %20)
+      $match[1] = urldecode($match[1]);
+
+      // Handle phar content
+      if (substr($directory, 0, 7) === 'phar://') {
+          return self::serveFromPhar($request, $match, $directory);
+      }
+
+      // Create real path to asset folder, and requested content
+      $directory = realpath($directory);
+      $file = realpath($directory . '/' . $match[1]);
+
+      // Ensure the file is not is a parent directory of the asset folder
+      if (0 !== strpos($file, $directory)) {
+          throw new \photon\http\error\NotFound();
+      }
+
+      // Check if the file is a directory
+      if (is_dir($file)) {
+        $file .= '/index.html';
+      }
+
+      // Ensure the file exists
+      if (!file_exists($file) || !is_file($file)) {
+          throw new \photon\http\error\NotFound();
+      }
+
+      // Now we have the file, we need to find the mime type to send
+      // it correctly. We have a table to do it.
+      $ext = substr($file, 1 + strrpos($file, '.'));
+      $mime = AssetDir::$mimes[$ext] ?? 'application/octet-stream';
+      return new \photon\http\Response(file_get_contents($file), $mime);
+  }
+}
+
 class AssetDir
 {
     /**
@@ -121,6 +230,10 @@ class AssetDir
 
         if (!isset($phar[$path])) {
             throw new \photon\http\error\NotFound();
+        }
+
+        if ($phar[$path]->isDir()) {
+          throw new \photon\http\error\NotFound();
         }
 
         $file = $phar[$path];
@@ -167,22 +280,25 @@ class AssetDir
             return self::serveFromPhar($request, $match, $directory);
         }
 
+        // Create real path to asset folder, and requested content
         $directory = realpath($directory);
         $file = realpath($directory . '/' . $match[1]);
+
+        // Ensure the file is not is a parent directory of the asset folder
         if (0 !== strpos($file, $directory)) {
             throw new \photon\http\error\NotFound();
         }
+
+        // Ensure the file exists
         if (!file_exists($file) || !is_file($file)) {
             throw new \photon\http\error\NotFound();
         }
+
         // Now we have the file, we need to find the mime type to send
         // it correctly. We have a table to do it.
-        $comps = explode('.', $file);
-        $ext = array_pop($comps);
-        $mime = (isset(self::$mimes[$ext]))
-            ? self::$mimes[$ext] : 'application/octet-stream';
-        return new \photon\http\Response(file_get_contents($file),
-                                         $mime);
+        $ext = substr($file, 1 + strrpos($file, '.'));
+        $mime = self::$mimes[$ext] ?? 'application/octet-stream';
+        return new \photon\http\Response(file_get_contents($file), $mime);
     }
 
     static $mimes = array (
@@ -679,4 +795,3 @@ class AssetDir
                            );
 
 }
-
