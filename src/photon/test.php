@@ -34,6 +34,11 @@ use photon\config\Container as Conf;
  *
  * @codeCoverageIgnore
  */
+
+if (class_exists('\PHPUnit_Framework_TestCase')) {
+/**
+ *  PHPUnit legacy version
+ */
 abstract class TestCase extends \PHPUnit_Framework_TestCase
 {
     protected $conf;
@@ -51,6 +56,29 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase
     {
         Conf::load($this->conf);
     }
+}
+} else {
+/**
+ *  PHPUnit 6.0+ use namespaces and types
+ */
+abstract class TestCase extends \PHPUnit\Framework\TestCase
+{
+    protected $conf;
+
+    public function setUp(): void
+    {
+        $this->conf = Conf::dump();
+
+        if (isset($_ENV['photon.config'])) {
+            Conf::load(include $_ENV['photon.config']);
+        }
+    }
+
+    public function tearDown(): void
+    {
+        Conf::load($this->conf);
+    }
+}
 }
 
 /**
@@ -74,7 +102,7 @@ class HTTP
             'host' => 'test.example.com',
         );
         $headers = array_merge($_headers, $headers);
-        $msg = new \photon\mongrel2\Message('dummy', 'dummy', 
+        $msg = new \photon\mongrel2\Message('dummy', 'dummy',
                                             $path, (object) $headers, $body);
         return new \photon\http\Request($msg);
     }
@@ -88,6 +116,5 @@ class HTTP
             $uri .= '?' . $query;
         }
         return array($uri, $query);
-    }        
+    }
 }
-
